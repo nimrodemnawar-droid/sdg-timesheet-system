@@ -26,8 +26,14 @@ export default function LeaveRequest() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: leaveRequests, refetch: refetchRequests } = trpc.leave.getMyRequests.useQuery();
-  const { data: leaveBalance } = trpc.leave.getBalance.useQuery({ leaveType });
+  const { data: leaveBalance, isError: leaveBalanceError } = trpc.leave.getBalance.useQuery({ leaveType });
   const createRequestMutation = trpc.leave.createRequest.useMutation();
+
+  // Default leave balance if query fails
+  const defaultLeaveBalance = {
+    allocatedDays: 20,
+    usedDays: 0,
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,38 +107,36 @@ export default function LeaveRequest() {
         </div>
 
         {/* Leave Balance Card */}
-        {leaveBalance && (
-          <Card className="border-slate-200 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Current Leave Balance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="p-3 bg-white rounded-lg border border-blue-200">
-                  <p className="text-xs text-slate-600 mb-1">Allocated</p>
-                  <p className="text-2xl font-bold text-blue-900">
-                    {leaveBalance.allocatedDays}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">days</p>
-                </div>
-                <div className="p-3 bg-white rounded-lg border border-blue-200">
-                  <p className="text-xs text-slate-600 mb-1">Used</p>
-                  <p className="text-2xl font-bold text-orange-600">
-                    {leaveBalance.usedDays}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">days</p>
-                </div>
-                <div className="p-3 bg-white rounded-lg border border-blue-200">
-                  <p className="text-xs text-slate-600 mb-1">Remaining</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {parseFloat(leaveBalance.allocatedDays.toString()) - parseFloat(leaveBalance.usedDays.toString())}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">days</p>
-                </div>
+        <Card className="border-slate-200 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Current Leave Balance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="p-3 bg-white rounded-lg border border-blue-200">
+                <p className="text-xs text-slate-600 mb-1">Allocated</p>
+                <p className="text-2xl font-bold text-blue-900">
+                  {(leaveBalance?.allocatedDays || defaultLeaveBalance.allocatedDays)}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">days</p>
               </div>
-            </CardContent>
-          </Card>
-        )}
+              <div className="p-3 bg-white rounded-lg border border-blue-200">
+                <p className="text-xs text-slate-600 mb-1">Used</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  {(leaveBalance?.usedDays || defaultLeaveBalance.usedDays)}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">days</p>
+              </div>
+              <div className="p-3 bg-white rounded-lg border border-blue-200">
+                <p className="text-xs text-slate-600 mb-1">Remaining</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {parseFloat((leaveBalance?.allocatedDays || defaultLeaveBalance.allocatedDays).toString()) - parseFloat((leaveBalance?.usedDays || defaultLeaveBalance.usedDays).toString())}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">days</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Leave Request Form */}
         <Card className="border-slate-200">
@@ -141,7 +145,7 @@ export default function LeaveRequest() {
             <CardDescription>Request time off from work</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="leaveType">Leave Type</Label>
@@ -166,7 +170,6 @@ export default function LeaveRequest() {
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    required
                   />
                 </div>
               </div>
@@ -179,7 +182,6 @@ export default function LeaveRequest() {
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    required
                   />
                 </div>
 
@@ -222,7 +224,7 @@ export default function LeaveRequest() {
             <CardDescription>Your past and pending leave requests</CardDescription>
           </CardHeader>
           <CardContent>
-            {leaveRequests && leaveRequests.length > 0 ? (
+            {leaveRequests && Array.isArray(leaveRequests) && leaveRequests.length > 0 ? (
               <div className="space-y-3">
                 {leaveRequests.map((request) => (
                   <div

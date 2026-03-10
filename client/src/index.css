@@ -134,6 +134,12 @@
 }
 
 @layer components {
+  /* Hide browser validation styling on date inputs */
+  input[type="date"]:invalid {
+    outline: none;
+    box-shadow: none;
+  }
+
   /**
    * Custom container utility that centers content and adds responsive padding.
    *
