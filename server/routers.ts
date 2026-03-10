@@ -11,6 +11,7 @@ import {
   getAccuracyQuality,
 } from "./encryption";
 import { TRPCError } from "@trpc/server";
+import { analyticsRouter } from "./analyticsRouter";
 
 // Helper to ensure admin role
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -513,7 +514,9 @@ export const appRouter = router({
 
         return { success: true };
       }),
-  }),
-});
+   }),
 
+  // ============ ANALYTICS PROCEDURES ============
+  analytics: analyticsRouter,
+});
 export type AppRouter = typeof appRouter;

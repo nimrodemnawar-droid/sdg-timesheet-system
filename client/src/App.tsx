@@ -15,6 +15,7 @@ import LeaveRequest from "./pages/LeaveRequest";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
 import LiveGPSMap from "./pages/LiveGPSMap";
 import AdminDashboard from "./pages/AdminDashboard";
+import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 
 function Navigation() {
   const { user, logout } = useAuth();
@@ -31,7 +32,10 @@ function Navigation() {
           { label: "GPS Map", href: "/map" },
         ]
       : []),
-    ...(user.role === "admin" ? [{ label: "Admin", href: "/admin" }] : []),
+    ...(user.role === "admin" ? [
+      { label: "Admin", href: "/admin" },
+      { label: "Analytics", href: "/analytics" },
+    ] : []),
   ];
 
   return (
@@ -122,6 +126,7 @@ function Router() {
         <Route path="/supervisor" component={SupervisorDashboard} />
         <Route path="/map" component={LiveGPSMap} />
         <Route path="/admin" component={AdminDashboard} />
+        <Route path="/analytics" component={AnalyticsDashboard} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
