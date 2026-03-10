@@ -1,0 +1,1 @@
+ALTER TABLE `leaveBalance` MODIFY COLUMN `usedDays` decimal(5,2) NOT NULL DEFAULT '0';

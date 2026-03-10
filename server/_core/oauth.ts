@@ -28,10 +28,15 @@ export function registerOAuthRoutes(app: Express) {
         return;
       }
 
+      if (!userInfo.email) {
+        res.status(400).json({ error: "email missing from user info" });
+        return;
+      }
+
       await db.upsertUser({
         openId: userInfo.openId,
+        email: userInfo.email,
         name: userInfo.name || null,
-        email: userInfo.email ?? null,
         loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
         lastSignedIn: new Date(),
       });
