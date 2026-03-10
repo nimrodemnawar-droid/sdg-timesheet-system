@@ -276,7 +276,7 @@ export const appRouter = router({
           endDate: z.date(),
           daysRequested: z.string(),
           reason: z.string().optional(),
-          supportingDocumentUrl: z.string().optional(),
+
           supportingDocumentKey: z.string().optional(),
         })
       )
@@ -288,7 +288,7 @@ export const appRouter = router({
           endDate: input.endDate,
           daysRequested: input.daysRequested,
           reason: input.reason,
-          supportingDocumentUrl: input.supportingDocumentUrl,
+
           supportingDocumentKey: input.supportingDocumentKey,
         });
 
@@ -351,16 +351,12 @@ export const appRouter = router({
         // Create email notification
         const leaveRequest = await db.getLeaveRequest(input.leaveRequestId);
         if (leaveRequest) {
-          const staff = await db.getUserById(leaveRequest.userId);
-          if (staff?.email) {
-            await db.createEmailNotification({
-              recipientId: leaveRequest.userId,
-              recipientEmail: staff.email,
-              notificationType: "leave_approved",
-              subject: "Leave Request Approved",
-              body: `Your leave request for ${leaveRequest.leaveType} leave from ${leaveRequest.startDate} to ${leaveRequest.endDate} has been approved.`,
-            });
-          }
+          await db.createEmailNotification({
+            userId: leaveRequest.userId,
+            type: "leave_approved",
+            subject: "Leave Request Approved",
+            content: `Your leave request for ${leaveRequest.leaveType} leave from ${leaveRequest.startDate} to ${leaveRequest.endDate} has been approved.`,
+          });
         }
 
         return { success: true };
@@ -392,16 +388,12 @@ export const appRouter = router({
         // Create email notification
         const leaveRequest = await db.getLeaveRequest(input.leaveRequestId);
         if (leaveRequest) {
-          const staff = await db.getUserById(leaveRequest.userId);
-          if (staff?.email) {
-            await db.createEmailNotification({
-              recipientId: leaveRequest.userId,
-              recipientEmail: staff.email,
-              notificationType: "leave_rejected",
-              subject: "Leave Request Rejected",
-              body: `Your leave request for ${leaveRequest.leaveType} leave has been rejected. Reason: ${input.reason}`,
-            });
-          }
+          await db.createEmailNotification({
+            userId: leaveRequest.userId,
+            type: "leave_rejected",
+            subject: "Leave Request Rejected",
+            content: `Your leave request for ${leaveRequest.leaveType} leave has been rejected. Reason: ${input.reason}`,
+          });
         }
 
         return { success: true };
@@ -473,7 +465,7 @@ export const appRouter = router({
           action: "UPDATE_USER_PROFILE",
           entityType: "user",
           entityId: userId,
-          changes: updates,
+          details: updates,
           ipAddress: ctx.req.ip,
         });
 
@@ -509,17 +501,14 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        await db.createDocument({
+        await db.addDocument({
           userId: ctx.user.id,
           documentType: input.documentType,
           fileName: input.fileName,
           fileKey: input.fileKey,
-          fileUrl: input.fileUrl,
           mimeType: input.mimeType,
-          fileSizeBytes: input.fileSizeBytes,
-          uploadedBy: ctx.user.id,
-          relatedEntityType: input.relatedEntityType,
-          relatedEntityId: input.relatedEntityId,
+          fileSize: input.fileSizeBytes,
+          isEncrypted: true,
         });
 
         return { success: true };

@@ -125,7 +125,7 @@ export default function LeaveRequest() {
                 <div className="p-3 bg-white rounded-lg border border-blue-200">
                   <p className="text-xs text-slate-600 mb-1">Remaining</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {leaveBalance.remainingDays}
+                    {parseFloat(leaveBalance.allocatedDays.toString()) - parseFloat(leaveBalance.usedDays.toString())}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">days</p>
                 </div>

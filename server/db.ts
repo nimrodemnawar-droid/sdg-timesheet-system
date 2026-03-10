@@ -12,6 +12,11 @@ import {
   documents,
   auditLog,
   systemConfig,
+  sdgGoals,
+  activityCategories,
+  kpis,
+  supervisorConfirmations,
+  activityHeatmap,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -324,7 +329,7 @@ export async function createLeaveRequest(data: {
   endDate: Date;
   daysRequested: string;
   reason?: string;
-  supportingDocumentUrl?: string;
+
   supportingDocumentKey?: string;
 }) {
   const db = await getDb();
@@ -337,7 +342,7 @@ export async function createLeaveRequest(data: {
     endDate: data.endDate,
     daysRequested: data.daysRequested as any,
     reason: data.reason,
-    supportingDocumentUrl: data.supportingDocumentUrl,
+
     supportingDocumentKey: data.supportingDocumentKey,
     status: "pending",
   });
@@ -474,8 +479,6 @@ export async function updateLeaveBalance(
       .update(leaveBalance)
       .set({
         usedDays: newUsedDays.toString() as any,
-        remainingDays: newRemainingDays.toString() as any,
-        lastUpdated: new Date(),
       })
       .where(eq(leaveBalance.id, balance.id));
   }
@@ -496,7 +499,6 @@ export async function initializeLeaveBalance(
     year,
     allocatedDays: allocatedDays.toString() as any,
     usedDays: "0" as any,
-    remainingDays: allocatedDays.toString() as any,
   });
 }
 
@@ -534,81 +536,33 @@ export async function getSupervisorRemarks(attendanceId: number) {
 // ============ EMAIL NOTIFICATIONS ============
 
 export async function createEmailNotification(data: {
-  recipientId: number;
-  recipientEmail: string;
-  notificationType: string;
+  userId: number;
+  type: string;
   subject: string;
-  body: string;
+  content?: string;
 }) {
   const db = await getDb();
   if (!db) return;
 
   await db.insert(emailNotifications).values({
-    recipientId: data.recipientId,
-    recipientEmail: data.recipientEmail,
-    notificationType: data.notificationType as any,
+    userId: data.userId,
+    type: data.type,
     subject: data.subject,
-    body: data.body,
-    status: "pending",
+    content: data.content,
+    sentAt: new Date(),
   });
-}
-
-export async function getPendingEmailNotifications() {
-  const db = await getDb();
-  if (!db) return [];
-
-  return await db
-    .select()
-    .from(emailNotifications)
-    .where(eq(emailNotifications.status, "pending"));
-}
-
-export async function markEmailAsSent(
-  emailId: number,
-  sentAt: Date = new Date()
-) {
-  const db = await getDb();
-  if (!db) return;
-
-  await db
-    .update(emailNotifications)
-    .set({
-      status: "sent",
-      sentAt,
-    })
-    .where(eq(emailNotifications.id, emailId));
-}
-
-export async function markEmailAsFailed(
-  emailId: number,
-  failureReason: string
-) {
-  const db = await getDb();
-  if (!db) return;
-
-  await db
-    .update(emailNotifications)
-    .set({
-      status: "failed",
-      failureReason,
-    })
-    .where(eq(emailNotifications.id, emailId));
 }
 
 // ============ DOCUMENTS ============
 
-export async function createDocument(data: {
+export async function addDocument(data: {
   userId: number;
   documentType: string;
   fileName: string;
   fileKey: string;
-  fileUrl: string;
   mimeType?: string;
-  fileSizeBytes?: number;
-  uploadedBy: number;
-  relatedEntityType?: string;
-  relatedEntityId?: number;
-  expiresAt?: Date;
+  fileSize?: number;
+  isEncrypted?: boolean;
 }) {
   const db = await getDb();
   if (!db) return;
@@ -618,13 +572,9 @@ export async function createDocument(data: {
     documentType: data.documentType as any,
     fileName: data.fileName,
     fileKey: data.fileKey,
-    fileUrl: data.fileUrl,
     mimeType: data.mimeType,
-    fileSizeBytes: data.fileSizeBytes,
-    uploadedBy: data.uploadedBy,
-    relatedEntityType: data.relatedEntityType,
-    relatedEntityId: data.relatedEntityId,
-    expiresAt: data.expiresAt,
+    fileSize: data.fileSize,
+    isEncrypted: data.isEncrypted ?? true,
   });
 }
 
@@ -646,7 +596,7 @@ export async function logAuditEvent(data: {
   action: string;
   entityType: string;
   entityId?: number;
-  changes?: Record<string, any>;
+  details?: Record<string, any>;
   ipAddress?: string;
   userAgent?: string;
 }) {
@@ -658,7 +608,7 @@ export async function logAuditEvent(data: {
     action: data.action,
     entityType: data.entityType,
     entityId: data.entityId,
-    changes: data.changes ? JSON.stringify(data.changes) : undefined,
+    details: data.details ? JSON.stringify(data.details) : undefined,
     ipAddress: data.ipAddress,
     userAgent: data.userAgent,
   });
