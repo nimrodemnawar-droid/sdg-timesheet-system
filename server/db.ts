@@ -1,5 +1,5 @@
-import { eq, and, gte, lte, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import { and, eq, gte, lte, desc, asc } from "drizzle-orm";
 import {
   InsertUser,
   users,
@@ -207,7 +207,7 @@ export async function completeAttendance(
 
 export async function getTodayAttendance(userId: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -227,7 +227,7 @@ export async function getTodayAttendance(userId: number) {
     .orderBy(desc(attendance.checkInTime))
     .limit(1);
 
-  return result.length > 0 ? result[0] : undefined;
+  return result.length > 0 ? result[0] : null;
 }
 
 export async function getAttendanceRange(
