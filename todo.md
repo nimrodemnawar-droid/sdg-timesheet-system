@@ -47,28 +47,31 @@
 - [ ] Receive overtime threshold alerts
 
 ## Email Notifications
-- [ ] Send leave approval decision emails to staff
-- [ ] Send leave rejection reason emails to staff
-- [ ] Send overtime threshold alerts to admins
-- [ ] Send daily timesheet submission reminders to staff
-- [ ] Send leave balance update notifications
-- [ ] Email template system with customizable content
+- [x] Send leave approval decision emails to staff
+- [x] Send leave rejection reason emails to staff
+- [x] Send overtime threshold alerts to admins
+- [x] Send daily timesheet submission reminders to staff
+- [x] Send leave balance update notifications
+- [x] Email template system with customizable content
 
 ## File Storage & Security
-- [ ] Implement encrypted cloud storage for profile photos
-- [ ] Implement encrypted cloud storage for CSV reports
-- [ ] Implement encrypted cloud storage for leave request documents
-- [ ] File access control and authorization
-- [ ] Secure file download with expiring links
+- [x] Implement encrypted cloud storage for profile photos
+- [x] Implement encrypted cloud storage for CSV reports
+- [x] Implement encrypted cloud storage for leave request documents
+- [x] File access control and authorization
+- [x] Secure file download with expiring links
 - [ ] File deletion and cleanup procedures
 
 ## Testing & Quality
 - [x] Unit tests for GPS calculation functions
 - [x] Unit tests for timesheet calculation logic
 - [x] Unit tests for leave balance calculations
-- [ ] Integration tests for check-in/check-out workflows
-- [ ] Integration tests for leave approval workflow
-- [ ] Integration tests for email notifications
+- [x] Integration tests for check-in/check-out workflows
+- [x] Integration tests for leave approval workflow
+- [x] Integration tests for email notifications
+- [x] Email template generation tests
+- [x] CSV report generation tests
+- [x] File validation and encryption tests
 - [ ] End-to-end tests for critical user flows
 - [ ] Performance testing for map refresh and large datasets
 - [ ] Security testing for encrypted fields and file access
