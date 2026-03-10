@@ -5,40 +5,42 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Users,
   Clock,
   CheckCircle,
   AlertCircle,
-  Loader2,
   Download,
   MapPin,
   TrendingUp,
-  LogOut,
   Plus,
   Search,
-  Filter,
+  Edit2,
+  Trash2,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ExportDialog } from "@/components/ExportDialog";
 
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedRequest, setSelectedRequest] = useState<number | null>(null);
-  const [approvalReason, setApprovalReason] = useState<string>("");
+  const [approvalReason, setApprovalReason] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateFilter, setDateFilter] = useState("");
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [showExport, setShowExport] = useState<"attendance" | "overtime" | "leave" | null>(null);
 
+  // Queries
   const { data: stats } = trpc.attendance.getToday.useQuery() as any;
   const { data: leaveRequests, refetch: refetchRequests } = trpc.leave.getMyRequests.useQuery() as any;
   const { data: staffList } = trpc.users.getAll.useQuery();
+  const { data: attendanceRecords } = trpc.attendance.getToday.useQuery();
 
+  // Mutations
   const approveRequestMutation = trpc.leave.approve.useMutation() as any;
   const rejectRequestMutation = trpc.leave.reject.useMutation() as any;
 
@@ -54,14 +56,12 @@ export default function AdminDashboard() {
         leaveRequestId: requestId,
         reason: approvalReason,
       });
-
       toast.success("Leave request approved");
       setApprovalReason("");
       setSelectedRequest(null);
       await refetchRequests();
     } catch (error) {
       toast.error("Failed to approve request");
-      console.error(error);
     } finally {
       setIsProcessing(false);
     }
@@ -79,25 +79,15 @@ export default function AdminDashboard() {
         leaveRequestId: requestId,
         reason: approvalReason,
       });
-
       toast.success("Leave request rejected");
       setApprovalReason("");
       setSelectedRequest(null);
       await refetchRequests();
     } catch (error) {
       toast.error("Failed to reject request");
-      console.error(error);
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const formatDate = (date: Date | string) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
   };
 
   const filteredStaff = staffList?.filter((staff: any) =>
@@ -111,20 +101,14 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-white">Admin Dashboard</h1>
-            <p className="text-slate-400 mt-2">Complete timesheet management system</p>
-          </div>
-          <Button variant="outline" onClick={logout} className="gap-2 bg-slate-800 border-slate-600 text-white hover:bg-slate-700">
-            <LogOut className="w-4 h-4" />
-            Logout
-          </Button>
+        <div>
+          <h1 className="text-4xl font-bold text-white">Admin Dashboard</h1>
+          <p className="text-slate-400 mt-2">Complete timesheet management system</p>
         </div>
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-slate-800 border-slate-700 hover:border-blue-500 transition-colors">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -136,7 +120,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-slate-800 border-slate-700 hover:border-green-500 transition-colors">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -148,7 +132,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-slate-800 border-slate-700 hover:border-yellow-500 transition-colors">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -160,7 +144,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-slate-800 border-slate-700 hover:border-red-500 transition-colors">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -175,37 +159,35 @@ export default function AdminDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="bg-slate-800 border-slate-700">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="staff">Staff Management</TabsTrigger>
-            <TabsTrigger value="leave">Leave Requests</TabsTrigger>
-            <TabsTrigger value="attendance">Attendance</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsList className="bg-slate-800 border border-slate-700">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600">Overview</TabsTrigger>
+            <TabsTrigger value="staff" className="data-[state=active]:bg-blue-600">Staff Management</TabsTrigger>
+            <TabsTrigger value="leave" className="data-[state=active]:bg-blue-600">Leave Requests</TabsTrigger>
+            <TabsTrigger value="attendance" className="data-[state=active]:bg-blue-600">Attendance</TabsTrigger>
+            <TabsTrigger value="reports" className="data-[state=active]:bg-blue-600">Reports</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Recent Activity */}
               <Card className="bg-slate-800 border-slate-700">
                 <CardHeader>
                   <CardTitle className="text-white">Recent Activity</CardTitle>
-                  <CardDescription className="text-slate-400">Latest timesheet submissions</CardDescription>
+                  <CardDescription className="text-slate-400">Latest system events</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {staffList?.slice(0, 5).map((staff: any) => (
-                    <div key={staff.id} className="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
+                    <div key={staff.id} className="flex items-center justify-between p-3 bg-slate-700 rounded-lg hover:bg-slate-600 transition">
                       <div>
                         <p className="text-white font-medium">{staff.name}</p>
                         <p className="text-xs text-slate-400">{staff.email}</p>
                       </div>
-                      <Badge className="bg-green-600">{staff.role}</Badge>
+                      <Badge className={staff.role === "admin" ? "bg-red-600" : "bg-blue-600"}>{staff.role}</Badge>
                     </div>
                   ))}
                 </CardContent>
               </Card>
 
-              {/* Quick Actions */}
               <Card className="bg-slate-800 border-slate-700">
                 <CardHeader>
                   <CardTitle className="text-white">Quick Actions</CardTitle>
@@ -241,7 +223,6 @@ export default function AdminDashboard() {
                 <CardDescription className="text-slate-400">Manage all staff members</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Search and Filter */}
                 <div className="flex gap-2">
                   <div className="flex-1 relative">
                     <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
@@ -258,34 +239,36 @@ export default function AdminDashboard() {
                   </Button>
                 </div>
 
-                {/* Staff Table */}
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="border-b border-slate-600">
                       <tr>
-                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Name</th>
-                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Email</th>
-                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Role</th>
-                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Status</th>
-                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Actions</th>
+                        <th className="text-left py-3 px-4 text-slate-300">Name</th>
+                        <th className="text-left py-3 px-4 text-slate-300">Email</th>
+                        <th className="text-left py-3 px-4 text-slate-300">Role</th>
+                        <th className="text-left py-3 px-4 text-slate-300">Status</th>
+                        <th className="text-left py-3 px-4 text-slate-300">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredStaff?.map((staff: any) => (
                         <tr key={staff.id} className="border-b border-slate-700 hover:bg-slate-700/50">
                           <td className="py-3 px-4 text-white">{staff.name}</td>
-                          <td className="py-3 px-4 text-slate-300">{staff.email}</td>
+                          <td className="py-3 px-4 text-slate-400">{staff.email}</td>
                           <td className="py-3 px-4">
-                            <Badge className={staff.role === "admin" ? "bg-red-600" : staff.role === "supervisor" ? "bg-purple-600" : "bg-blue-600"}>
-                              {staff.role}
+                            <Badge className={staff.role === "admin" ? "bg-red-600" : "bg-blue-600"}>{staff.role}</Badge>
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge className={staff.isActive ? "bg-green-600" : "bg-gray-600"}>
+                              {staff.isActive ? "Active" : "Inactive"}
                             </Badge>
                           </td>
-                          <td className="py-3 px-4">
-                            <Badge className="bg-green-600">Active</Badge>
-                          </td>
-                          <td className="py-3 px-4">
-                            <Button size="sm" variant="outline" className="bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600">
-                              Edit
+                          <td className="py-3 px-4 flex gap-2">
+                            <Button size="sm" variant="outline" className="border-slate-600 hover:bg-slate-700">
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="outline" className="border-slate-600 hover:bg-red-700">
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </td>
                         </tr>
@@ -304,54 +287,44 @@ export default function AdminDashboard() {
                 <CardTitle className="text-white">Leave Request Management</CardTitle>
                 <CardDescription className="text-slate-400">Approve or reject leave requests</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {pendingRequests.length === 0 ? (
-                  <p className="text-slate-400 text-center py-8">No pending leave requests</p>
-                ) : (
+              <CardContent>
+                {pendingRequests.length > 0 ? (
                   <div className="space-y-4">
                     {pendingRequests.map((request: any) => (
-                      <div key={request.id} className="p-4 bg-slate-700 rounded-lg border border-slate-600">
-                        <div className="flex justify-between items-start mb-4">
+                      <div key={request.id} className="p-4 bg-slate-700 rounded-lg">
+                        <div className="flex justify-between items-start mb-3">
                           <div>
-                            <p className="text-white font-semibold">{request.leaveType} Leave</p>
-                            <p className="text-slate-400 text-sm">
-                              {formatDate(request.startDate)} to {formatDate(request.endDate)}
+                            <p className="font-medium text-white">{request.leaveType}</p>
+                            <p className="text-sm text-slate-400">
+                              {new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
                             </p>
                           </div>
-                          <Badge className="bg-amber-600">{request.daysRequested} days</Badge>
+                          <Badge className="bg-yellow-600">Pending</Badge>
                         </div>
-
-                        {request.reason && (
-                          <p className="text-slate-300 text-sm mb-4">Reason: {request.reason}</p>
-                        )}
-
+                        <p className="text-sm text-slate-300 mb-3">{request.reason}</p>
+                        
                         {selectedRequest === request.id ? (
                           <div className="space-y-3">
-                            <div>
-                              <Label className="text-slate-300 mb-2 block">Decision Notes</Label>
-                              <Textarea
-                                placeholder="Enter approval/rejection reason..."
-                                value={approvalReason}
-                                onChange={(e) => setApprovalReason(e.target.value)}
-                                className="bg-slate-600 border-slate-500 text-white placeholder:text-slate-400"
-                                rows={3}
-                              />
-                            </div>
+                            <Textarea
+                              placeholder="Enter approval/rejection reason..."
+                              value={approvalReason}
+                              onChange={(e) => setApprovalReason(e.target.value)}
+                              className="bg-slate-600 border-slate-500 text-white placeholder:text-slate-400"
+                            />
                             <div className="flex gap-2">
                               <Button
                                 onClick={() => handleApproveRequest(request.id)}
                                 disabled={isProcessing}
-                                className="flex-1 bg-green-600 hover:bg-green-700"
+                                className="bg-green-600 hover:bg-green-700 flex-1"
                               >
-                                {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Approve"}
+                                Approve
                               </Button>
                               <Button
                                 onClick={() => handleRejectRequest(request.id)}
                                 disabled={isProcessing}
-                                variant="destructive"
-                                className="flex-1"
+                                className="bg-red-600 hover:bg-red-700 flex-1"
                               >
-                                {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Reject"}
+                                Reject
                               </Button>
                               <Button
                                 onClick={() => {
@@ -359,7 +332,7 @@ export default function AdminDashboard() {
                                   setApprovalReason("");
                                 }}
                                 variant="outline"
-                                className="bg-slate-600 border-slate-500 text-slate-300 hover:bg-slate-500"
+                                className="border-slate-600"
                               >
                                 Cancel
                               </Button>
@@ -376,6 +349,10 @@ export default function AdminDashboard() {
                       </div>
                     ))}
                   </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-slate-400">No pending leave requests</p>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -389,22 +366,51 @@ export default function AdminDashboard() {
                 <CardDescription className="text-slate-400">View and manage attendance data</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex gap-2">
+                <div className="flex gap-2 mb-4">
                   <Input
                     type="date"
-                    value={dateFilter}
-                    onChange={(e) => setDateFilter(e.target.value)}
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
                     className="bg-slate-700 border-slate-600 text-white"
                   />
-                  <Button className="bg-blue-600 hover:bg-blue-700 gap-2">
-                    <Download className="w-4 h-4" />
-                    Export
-                  </Button>
                 </div>
-                <div className="p-8 text-center text-slate-400">
-                  <MapPin className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>Attendance records will be displayed here</p>
-                </div>
+
+                {attendanceRecords && attendanceRecords.checkInTime ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="border-b border-slate-600">
+                        <tr>
+                          <th className="text-left py-3 px-4 text-slate-300">Staff</th>
+                          <th className="text-left py-3 px-4 text-slate-300">Check-in</th>
+                          <th className="text-left py-3 px-4 text-slate-300">Check-out</th>
+                          <th className="text-left py-3 px-4 text-slate-300">Duration</th>
+                          <th className="text-left py-3 px-4 text-slate-300">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b border-slate-700 hover:bg-slate-700/50">
+                            <td className="py-3 px-4 text-white">Staff Member</td>
+                            <td className="py-3 px-4 text-slate-400">
+                              {new Date(attendanceRecords.checkInTime).toLocaleTimeString()}
+                            </td>
+                            <td className="py-3 px-4 text-slate-400">
+                              {attendanceRecords.checkOutTime ? new Date(attendanceRecords.checkOutTime).toLocaleTimeString() : "—"}
+                            </td>
+                            <td className="py-3 px-4 text-white">— hrs</td>
+                            <td className="py-3 px-4">
+                              <Badge className={attendanceRecords.checkOutTime ? "bg-green-600" : "bg-yellow-600"}>
+                                {attendanceRecords.checkOutTime ? "Completed" : "Active"}
+                              </Badge>
+                            </td>
+                          </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-slate-400">No attendance records for this date</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -414,37 +420,66 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="bg-slate-800 border-slate-700">
                 <CardHeader>
-                  <CardTitle className="text-white">Attendance Report</CardTitle>
-                  <CardDescription className="text-slate-400">Export attendance data as CSV or PDF</CardDescription>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <FileText className="w-5 h-5" /> Attendance Report
+                  </CardTitle>
+                  <CardDescription className="text-slate-400">Export attendance data</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ExportDialog reportType="attendance" />
+                  <Button
+                    onClick={() => setShowExport("attendance")}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Download className="w-4 h-4 mr-2" /> Export
+                  </Button>
                 </CardContent>
               </Card>
 
               <Card className="bg-slate-800 border-slate-700">
                 <CardHeader>
-                  <CardTitle className="text-white">Overtime Report</CardTitle>
-                  <CardDescription className="text-slate-400">Export overtime data as CSV or PDF</CardDescription>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <TrendingUp className="w-5 h-5" /> Overtime Report
+                  </CardTitle>
+                  <CardDescription className="text-slate-400">Export overtime data</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ExportDialog reportType="overtime" />
+                  <Button
+                    onClick={() => setShowExport("overtime")}
+                    className="w-full bg-orange-600 hover:bg-orange-700"
+                  >
+                    <Download className="w-4 h-4 mr-2" /> Export
+                  </Button>
                 </CardContent>
               </Card>
 
               <Card className="bg-slate-800 border-slate-700">
                 <CardHeader>
-                  <CardTitle className="text-white">Leave Report</CardTitle>
-                  <CardDescription className="text-slate-400">Export leave data as CSV or PDF</CardDescription>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <AlertCircle className="w-5 h-5" /> Leave Report
+                  </CardTitle>
+                  <CardDescription className="text-slate-400">Export leave data</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ExportDialog reportType="leave" />
+                  <Button
+                    onClick={() => setShowExport("leave")}
+                    className="w-full bg-red-600 hover:bg-red-700"
+                  >
+                    <Download className="w-4 h-4 mr-2" /> Export
+                  </Button>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Export Dialog */}
+      {showExport && (
+        <ExportDialog
+          reportType={showExport}
+          onExport={() => setShowExport(null)}
+        />
+      )}
     </div>
   );
 }
