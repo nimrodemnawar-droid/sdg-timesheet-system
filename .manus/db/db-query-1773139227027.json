@@ -1,0 +1,20 @@
+{
+  "query": "SELECT * FROM leaveBalance LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute SELECT * FROM leaveBalance LIMIT 1;",
+  "rows": [
+    {
+      "id": "1",
+      "userId": "1",
+      "leaveType": "annual",
+      "year": "2026",
+      "allocatedDays": "20.00",
+      "usedDays": "0.00",
+      "remainingDays": "20.00",
+      "lastUpdated": "2026-03-10 10:25:12"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tleaveType\tyear\tallocatedDays\tusedDays\tremainingDays\tlastUpdated\n1\t1\tannual\t2026\t20.00\t0.00\t20.00\t2026-03-10 10:25:12\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

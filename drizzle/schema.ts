@@ -208,12 +208,11 @@ export const leaveBalance = mysqlTable("leaveBalance", {
   allocatedDays: decimal("allocatedDays", { precision: 5, scale: 2 }).notNull(),
   usedDays: decimal("usedDays", { precision: 5, scale: 2 }).default("0").notNull(),
   remainingDays: decimal("remainingDays", { precision: 5, scale: 2 }).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
 export type LeaveBalance = typeof leaveBalance.$inferSelect;
 export type InsertLeaveBalance = typeof leaveBalance.$inferInsert;
+
 
 /**
  * Supervisor Remarks - Encrypted field notes for supervisors

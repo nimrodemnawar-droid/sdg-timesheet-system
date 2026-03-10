@@ -446,7 +446,15 @@ export async function getLeaveBalance(
 
   try {
     const result = await db
-      .select()
+      .select({
+        id: leaveBalance.id,
+        userId: leaveBalance.userId,
+        year: leaveBalance.year,
+        leaveType: leaveBalance.leaveType,
+        allocatedDays: leaveBalance.allocatedDays,
+        usedDays: leaveBalance.usedDays,
+        remainingDays: leaveBalance.remainingDays,
+      })
       .from(leaveBalance)
       .where(
         and(

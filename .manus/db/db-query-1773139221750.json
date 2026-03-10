@@ -1,0 +1,42 @@
+{
+  "query": "SELECT COLUMN_NAME, COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'leaveBalance' ORDER BY ORDINAL_POSITION;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute SELECT COLUMN_NAME, COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'leaveBalance' ORDER BY ORDINAL_POSITION;",
+  "rows": [
+    {
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "int"
+    },
+    {
+      "COLUMN_NAME": "userId",
+      "COLUMN_TYPE": "int"
+    },
+    {
+      "COLUMN_NAME": "leaveType",
+      "COLUMN_TYPE": "enum('annual','sick','unpaid','maternity','other')"
+    },
+    {
+      "COLUMN_NAME": "year",
+      "COLUMN_TYPE": "int"
+    },
+    {
+      "COLUMN_NAME": "allocatedDays",
+      "COLUMN_TYPE": "decimal(5,2)"
+    },
+    {
+      "COLUMN_NAME": "usedDays",
+      "COLUMN_TYPE": "decimal(5,2)"
+    },
+    {
+      "COLUMN_NAME": "remainingDays",
+      "COLUMN_TYPE": "decimal(5,2)"
+    },
+    {
+      "COLUMN_NAME": "lastUpdated",
+      "COLUMN_TYPE": "timestamp"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\tCOLUMN_TYPE\nid\tint\nuserId\tint\nleaveType\tenum('annual','sick','unpaid','maternity','other')\nyear\tint\nallocatedDays\tdecimal(5,2)\nusedDays\tdecimal(5,2)\nremainingDays\tdecimal(5,2)\nlastUpdated\ttimestamp\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}
