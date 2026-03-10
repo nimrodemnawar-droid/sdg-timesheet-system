@@ -21,8 +21,8 @@
 - [ ] Receive daily timesheet submission reminders
 
 ## Supervisor Features
-- [ ] Live GPS tracking map with 5-second auto-refresh showing staff locations
-- [ ] Multi-point waypoint visualization on map
+- [x] Live GPS tracking map with 5-second auto-refresh showing staff locations
+- [x] Multi-point waypoint visualization on map
 - [x] Attendance reporting with date range filtering
 - [x] Staff search and filter functionality
 - [x] View check-in/check-out locations with 8-decimal precision
@@ -33,10 +33,10 @@
 - [ ] Receive overtime threshold alerts
 
 ## Admin Features
-- [ ] Admin dashboard with KPIs (total hours, staff count, attendance rate)
-- [ ] Real-time staff metrics and performance indicators
-- [ ] Attendance overview by date range
-- [ ] Leave request review and approval workflow
+- [x] Admin dashboard with KPIs (total hours, staff count, attendance rate)
+- [x] Real-time staff metrics and performance indicators
+- [x] Attendance overview by date range
+- [x] Leave request review and approval workflow
 - [ ] Bulk leave approval/rejection actions
 - [ ] Leave balance management and adjustment
 - [ ] User management and role assignment

@@ -12,6 +12,9 @@ import { getLoginUrl } from "@/const";
 import Home from "./pages/Home";
 import StaffDashboard from "./pages/StaffDashboard";
 import LeaveRequest from "./pages/LeaveRequest";
+import SupervisorDashboard from "./pages/SupervisorDashboard";
+import LiveGPSMap from "./pages/LiveGPSMap";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function Navigation() {
   const { user, logout } = useAuth();
@@ -22,6 +25,13 @@ function Navigation() {
   const navItems = [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Leave", href: "/leave" },
+    ...(user.role === "admin" || user.role === "supervisor"
+      ? [
+          { label: "Attendance", href: "/supervisor" },
+          { label: "GPS Map", href: "/map" },
+        ]
+      : []),
+    ...(user.role === "admin" ? [{ label: "Admin", href: "/admin" }] : []),
   ];
 
   return (
@@ -109,6 +119,9 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/dashboard" component={StaffDashboard} />
         <Route path="/leave" component={LeaveRequest} />
+        <Route path="/supervisor" component={SupervisorDashboard} />
+        <Route path="/map" component={LiveGPSMap} />
+        <Route path="/admin" component={AdminDashboard} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
