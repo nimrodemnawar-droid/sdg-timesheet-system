@@ -1,0 +1,100 @@
+{
+  "query": "SELECT * FROM leaveBalance WHERE userId = 1 AND year = 2026;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute SELECT * FROM leaveBalance WHERE userId = 1 AND year = 2026;",
+  "rows": [
+    {
+      "id": "1",
+      "userId": "1",
+      "leaveType": "annual",
+      "year": "2026",
+      "allocatedDays": "20.00",
+      "usedDays": "0.00",
+      "remainingDays": "20.00",
+      "lastUpdated": "2026-03-10 10:25:12"
+    },
+    {
+      "id": "2",
+      "userId": "1",
+      "leaveType": "sick",
+      "year": "2026",
+      "allocatedDays": "10.00",
+      "usedDays": "0.00",
+      "remainingDays": "10.00",
+      "lastUpdated": "2026-03-10 10:25:12"
+    },
+    {
+      "id": "3",
+      "userId": "1",
+      "leaveType": "maternity",
+      "year": "2026",
+      "allocatedDays": "90.00",
+      "usedDays": "0.00",
+      "remainingDays": "90.00",
+      "lastUpdated": "2026-03-10 10:25:12"
+    },
+    {
+      "id": "4",
+      "userId": "1",
+      "leaveType": "unpaid",
+      "year": "2026",
+      "allocatedDays": "0.00",
+      "usedDays": "0.00",
+      "remainingDays": "0.00",
+      "lastUpdated": "2026-03-10 10:25:12"
+    },
+    {
+      "id": "5",
+      "userId": "1",
+      "leaveType": "annual",
+      "year": "2026",
+      "allocatedDays": "20.00",
+      "usedDays": "0.00",
+      "remainingDays": "20.00",
+      "lastUpdated": "2026-03-10 10:38:01"
+    },
+    {
+      "id": "6",
+      "userId": "1",
+      "leaveType": "sick",
+      "year": "2026",
+      "allocatedDays": "10.00",
+      "usedDays": "0.00",
+      "remainingDays": "10.00",
+      "lastUpdated": "2026-03-10 10:38:01"
+    },
+    {
+      "id": "7",
+      "userId": "1",
+      "leaveType": "maternity",
+      "year": "2026",
+      "allocatedDays": "90.00",
+      "usedDays": "0.00",
+      "remainingDays": "90.00",
+      "lastUpdated": "2026-03-10 10:38:01"
+    },
+    {
+      "id": "8",
+      "userId": "1",
+      "leaveType": "unpaid",
+      "year": "2026",
+      "allocatedDays": "0.00",
+      "usedDays": "0.00",
+      "remainingDays": "0.00",
+      "lastUpdated": "2026-03-10 10:38:01"
+    },
+    {
+      "id": "9",
+      "userId": "1",
+      "leaveType": "other",
+      "year": "2026",
+      "allocatedDays": "5.00",
+      "usedDays": "0.00",
+      "remainingDays": "5.00",
+      "lastUpdated": "2026-03-10 10:38:01"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tleaveType\tyear\tallocatedDays\tusedDays\tremainingDays\tlastUpdated\n1\t1\tannual\t2026\t20.00\t0.00\t20.00\t2026-03-10 10:25:12\n2\t1\tsick\t2026\t10.00\t0.00\t10.00\t2026-03-10 10:25:12\n3\t1\tmaternity\t2026\t90.00\t0.00\t90.00\t2026-03-10 10:25:12\n4\t1\tunpaid\t2026\t0.00\t0.00\t0.00\t2026-03-10 10:25:12\n5\t1\tannual\t2026\t20.00\t0.00\t20.00\t2026-03-10 10:38:01\n6\t1\tsick\t2026\t10.00\t0.00\t10.00\t2026-03-10 10:38:01\n7\t1\tmaternity\t2026\t90.00\t0.00\t90.00\t2026-03-10 10:38:01\n8\t1\tunpaid\t2026\t0.00\t0.00\t0.00\t2026-03-10 10:38:01\n9\t1\tother\t2026\t5.00\t0.00\t5.00\t2026-03-10 10:38:01\n",
+  "stderr": "",
+  "execution_time_ms": 67
+}

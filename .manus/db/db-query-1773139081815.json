@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO leaveBalance (userId, year, leaveType, allocatedDays, usedDays, remainingDays) VALUES \n(1, 2026, 'annual', '20', '0', '20'),\n(1, 2026, 'sick', '10', '0', '10'),\n(1, 2026, 'maternity', '90', '0', '90'),\n(1, 2026, 'unpaid', '0', '0', '0'),\n(1, 2026, 'other', '5', '0', '5')\nON DUPLICATE KEY UPDATE remainingDays = VALUES(remainingDays);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute INSERT INTO leaveBalance (userId, year, leaveType, allocatedDays, usedDays, remainingDays) VALUES \n(1, 2026, 'annual', '20', '0', '20'),\n(1, 2026, 'sick', '10', '0', '10'),\n(1, 2026, 'maternity', '90', '0', '90'),\n(1, 2026, 'unpaid', '0', '0', '0'),\n(1, 2026, 'other', '5', '0', '5')\nON DUPLICATE KEY UPDATE remainingDays = VALUES(remainingDays);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 62
+}
