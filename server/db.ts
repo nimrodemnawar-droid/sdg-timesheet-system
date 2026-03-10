@@ -442,21 +442,26 @@ export async function getLeaveBalance(
   year: number
 ) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
 
-  const result = await db
-    .select()
-    .from(leaveBalance)
-    .where(
-      and(
-        eq(leaveBalance.userId, userId),
-        eq(leaveBalance.leaveType, leaveType as any),
-        eq(leaveBalance.year, year)
+  try {
+    const result = await db
+      .select()
+      .from(leaveBalance)
+      .where(
+        and(
+          eq(leaveBalance.userId, userId),
+          eq(leaveBalance.leaveType, leaveType as "annual" | "sick" | "maternity" | "unpaid" | "other"),
+          eq(leaveBalance.year, year)
+        )
       )
-    )
-    .limit(1);
+      .limit(1);
 
-  return result.length > 0 ? result[0] : undefined;
+    return result.length > 0 ? result[0] : null;
+  } catch (error) {
+    console.error("Error fetching leave balance:", error);
+    return null;
+  }
 }
 
 export async function updateLeaveBalance(
