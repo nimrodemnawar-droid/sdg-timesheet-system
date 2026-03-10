@@ -24,6 +24,7 @@ import {
   Filter,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ExportDialog } from "@/components/ExportDialog";
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
@@ -410,52 +411,34 @@ export default function AdminDashboard() {
 
           {/* Reports Tab */}
           <TabsContent value="reports" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="bg-slate-800 border-slate-700">
                 <CardHeader>
-                  <CardTitle className="text-white">Monthly Report</CardTitle>
-                  <CardDescription className="text-slate-400">Generate monthly attendance report</CardDescription>
+                  <CardTitle className="text-white">Attendance Report</CardTitle>
+                  <CardDescription className="text-slate-400">Export attendance data as CSV or PDF</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <Select>
-                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                      <SelectValue placeholder="Select month" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-700 border-slate-600">
-                      <SelectItem value="jan">January</SelectItem>
-                      <SelectItem value="feb">February</SelectItem>
-                      <SelectItem value="mar">March</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 gap-2">
-                    <Download className="w-4 h-4" />
-                    Generate Report
-                  </Button>
+                <CardContent>
+                  <ExportDialog reportType="attendance" />
                 </CardContent>
               </Card>
 
               <Card className="bg-slate-800 border-slate-700">
                 <CardHeader>
                   <CardTitle className="text-white">Overtime Report</CardTitle>
-                  <CardDescription className="text-slate-400">View overtime statistics</CardDescription>
+                  <CardDescription className="text-slate-400">Export overtime data as CSV or PDF</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <Select>
-                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                      <SelectValue placeholder="Select staff" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-700 border-slate-600">
-                      {staffList?.map((staff: any) => (
-                        <SelectItem key={staff.id} value={staff.id.toString()}>
-                          {staff.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button className="w-full bg-purple-600 hover:bg-purple-700 gap-2">
-                    <TrendingUp className="w-4 h-4" />
-                    View Report
-                  </Button>
+                <CardContent>
+                  <ExportDialog reportType="overtime" />
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Leave Report</CardTitle>
+                  <CardDescription className="text-slate-400">Export leave data as CSV or PDF</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ExportDialog reportType="leave" />
                 </CardContent>
               </Card>
             </div>
