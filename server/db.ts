@@ -604,15 +604,20 @@ export async function logAuditEvent(data: {
   const db = await getDb();
   if (!db) return;
 
-  await db.insert(auditLog).values({
-    userId: data.userId,
-    action: data.action,
-    entityType: data.entityType,
-    entityId: data.entityId,
-    details: data.details ? JSON.stringify(data.details) : undefined,
-    ipAddress: data.ipAddress,
-    userAgent: data.userAgent,
-  });
+  try {
+    await db.insert(auditLog).values({
+      userId: data.userId,
+      action: data.action,
+      entityType: data.entityType,
+      entityId: data.entityId || null,
+      details: data.details ? JSON.stringify(data.details) : null,
+      ipAddress: data.ipAddress || null,
+      userAgent: data.userAgent || null,
+    });
+  } catch (error) {
+    console.error("[Audit Log] Failed to log event:", error);
+    // Don't throw - audit logging should not break the main operation
+  }
 }
 
 // ============ SYSTEM CONFIG ============
