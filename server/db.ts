@@ -499,6 +499,7 @@ export async function initializeLeaveBalance(
     year,
     allocatedDays: allocatedDays.toString() as any,
     usedDays: "0" as any,
+    remainingDays: allocatedDays.toString() as any,
   });
 }
 

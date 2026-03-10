@@ -207,6 +207,7 @@ export const leaveBalance = mysqlTable("leaveBalance", {
   leaveType: mysqlEnum("leaveType", ["annual", "sick", "unpaid", "maternity", "other"]).notNull(),
   allocatedDays: decimal("allocatedDays", { precision: 5, scale: 2 }).notNull(),
   usedDays: decimal("usedDays", { precision: 5, scale: 2 }).default("0").notNull(),
+  remainingDays: decimal("remainingDays", { precision: 5, scale: 2 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

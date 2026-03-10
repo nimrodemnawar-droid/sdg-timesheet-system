@@ -1,0 +1,8 @@
+{
+  "query": "INSERT INTO leaveBalance (userId, year, leaveType, allocatedDays, usedDays, createdAt, updatedAt) VALUES (1, 2026, 'annual', 20, 0, NOW(), NOW()), (1, 2026, 'sick', 10, 0, NOW(), NOW()), (1, 2026, 'maternity', 90, 0, NOW(), NOW()), (1, 2026, 'unpaid', 0, 0, NOW(), NOW());",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute INSERT INTO leaveBalance (userId, year, leaveType, allocatedDays, usedDays, createdAt, updatedAt) VALUES (1, 2026, 'annual', 20, 0, NOW(), NOW()), (1, 2026, 'sick', 10, 0, NOW(), NOW()), (1, 2026, 'maternity', 90, 0, NOW(), NOW()), (1, 2026, 'unpaid', 0, 0, NOW(), NOW());",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'createdAt' in 'field list'"
+  ]
+}
