@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, MapPin, Clock, AlertCircle, CheckCircle2, FileUp, Activity, Briefcase, Target } from "lucide-react";
+import { Loader2, MapPin, Clock, AlertCircle, CheckCircle2, FileUp, Activity, Briefcase, Target, Plus, Trash2, Navigation } from "lucide-react";
 import { toast } from "sonner";
 
 interface GPSCoordinates {
@@ -48,6 +48,15 @@ const SDG_GOALS = Array.from({ length: 17 }, (_, i) => ({
   color: `hsl(${(i * 21) % 360}, 70%, 50%)`,
 }));
 
+interface Waypoint {
+  id: number;
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  timestamp: Date;
+  cumulativeDistance: number;
+}
+
 export default function StaffDashboard() {
   const { user } = useAuth();
   const [gpsCoordinates, setGpsCoordinates] = useState<GPSCoordinates | null>(null);
@@ -75,10 +84,20 @@ export default function StaffDashboard() {
     evidenceFile: null as File | null,
   });
 
+  // Waypoint state
+  const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
+  const [isAddingWaypoint, setIsAddingWaypoint] = useState(false);
+  const [waypointNote, setWaypointNote] = useState("");
+
   const { data: todayAttendance, refetch: refetchAttendance } = trpc.attendance.getToday.useQuery();
   const { data: leaveBalance } = trpc.leave.getBalance.useQuery({ leaveType: 'annual' });
+  const { data: todayWaypoints, refetch: refetchWaypoints } = trpc.attendance.getWaypoints.useQuery(
+    todayAttendance?.id ? { attendanceId: todayAttendance.id } : { attendanceId: 0 },
+    { enabled: !!todayAttendance?.id }
+  );
   const checkInMutation = trpc.attendance.checkIn.useMutation();
   const checkOutMutation = trpc.attendance.checkOut.useMutation();
+  const addWaypointMutation = trpc.attendance.addWaypoint.useMutation();
 
   // Acquire GPS coordinates
   const acquireGPS = () => {
@@ -239,6 +258,10 @@ export default function StaffDashboard() {
             <TabsTrigger value="activities" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
               <Activity className="w-4 h-4 mr-2" />
               Activities
+            </TabsTrigger>
+            <TabsTrigger value="waypoints" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+              <Navigation className="w-4 h-4 mr-2" />
+              Waypoints
             </TabsTrigger>
           </TabsList>
 
@@ -530,6 +553,180 @@ export default function StaffDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Waypoints Tab */}
+          <TabsContent value="waypoints" className="space-y-4">
+            {isCheckedIn ? (
+              <>
+                <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <Navigation className="w-5 h-5 text-blue-400" />
+                      Add Waypoint
+                    </CardTitle>
+                    <CardDescription className="text-slate-400">Log your current field location</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Button
+                      onClick={acquireGPS}
+                      disabled={gpsStatus === "acquiring"}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0"
+                    >
+                      {gpsStatus === "acquiring" ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Acquiring GPS...
+                        </>
+                      ) : (
+                        <>
+                          <MapPin className="w-4 h-4 mr-2" />
+                          Get Current Location
+                        </>
+                      )}
+                    </Button>
+
+                    {gpsCoordinates && (
+                      <div className="p-4 bg-green-900/20 border border-green-500/50 rounded-lg space-y-2">
+                        <p className="text-green-300 font-medium flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4" />
+                          GPS Ready
+                        </p>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <p className="text-slate-400">Latitude</p>
+                            <p className="text-white font-mono">{gpsCoordinates.latitude.toFixed(8)}</p>
+                          </div>
+                          <div>
+                            <p className="text-slate-400">Longitude</p>
+                            <p className="text-white font-mono">{gpsCoordinates.longitude.toFixed(8)}</p>
+                          </div>
+                          <div className="col-span-2">
+                            <p className="text-slate-400">Accuracy</p>
+                            <p className="text-white font-mono">{gpsCoordinates.accuracy.toFixed(2)}m</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-300">Location Note (Optional)</Label>
+                      <Textarea
+                        placeholder="Add a note about this location (e.g., 'Community center visit', 'School meeting')"
+                        value={waypointNote}
+                        onChange={(e) => setWaypointNote(e.target.value)}
+                        className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 min-h-20"
+                      />
+                    </div>
+
+                    <Button
+                      onClick={async () => {
+                        if (!gpsCoordinates || !todayAttendance?.id) {
+                          toast.error("Please acquire GPS coordinates first");
+                          return;
+                        }
+
+                        setIsAddingWaypoint(true);
+                        try {
+                          await addWaypointMutation.mutateAsync({
+                            attendanceId: todayAttendance.id,
+                            latitude: gpsCoordinates.latitude.toString(),
+                            longitude: gpsCoordinates.longitude.toString(),
+                            accuracy: gpsCoordinates.accuracy.toString(),
+                            cumulativeDistance: '0',
+                          });
+                          toast.success("Waypoint added successfully");
+                          setWaypointNote("");
+                          await refetchWaypoints();
+                        } catch (error) {
+                          toast.error("Failed to add waypoint");
+                          console.error(error);
+                        } finally {
+                          setIsAddingWaypoint(false);
+                        }
+                      }}
+                      disabled={isAddingWaypoint || !gpsCoordinates}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white border-0"
+                    >
+                      {isAddingWaypoint ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Adding Waypoint...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Waypoint
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Waypoints List */}
+                <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <Navigation className="w-5 h-5 text-blue-400" />
+                      Today's Waypoints
+                    </CardTitle>
+                    <CardDescription className="text-slate-400">
+                      {waypoints.length} location{waypoints.length !== 1 ? 's' : ''} logged
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {waypoints.length > 0 ? (
+                      <div className="space-y-3">
+                        {waypoints.map((waypoint, index) => (
+                          <div key={waypoint.id} className="p-4 bg-slate-700/50 rounded-lg border border-slate-600/50 hover:border-blue-500/50 transition">
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <Badge className="bg-blue-600">Waypoint {index + 1}</Badge>
+                                <p className="text-xs text-slate-400">
+                                  {new Date(waypoint.timestamp).toLocaleTimeString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-sm mb-2">
+                              <div>
+                                <p className="text-slate-400">Latitude</p>
+                                <p className="text-white font-mono text-xs">{parseFloat(waypoint.latitude.toString()).toFixed(8)}</p>
+                              </div>
+                              <div>
+                                <p className="text-slate-400">Longitude</p>
+                                <p className="text-white font-mono text-xs">{parseFloat(waypoint.longitude.toString()).toFixed(8)}</p>
+                              </div>
+                              <div>
+                                <p className="text-slate-400">Accuracy</p>
+                                <p className="text-white font-mono text-xs">{parseFloat(waypoint.accuracy?.toString() || '0').toFixed(2)}m</p>
+                              </div>
+                              <div>
+                                <p className="text-slate-400">Distance</p>
+                                <p className="text-white font-mono text-xs">{parseFloat(waypoint.cumulativeDistance?.toString() || '0').toFixed(3)}km</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Navigation className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                        <p className="text-slate-400">No waypoints logged yet</p>
+                        <p className="text-slate-500 text-sm">Add your first waypoint to track your field locations</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+                <CardContent className="pt-12 pb-12 text-center">
+                  <Navigation className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                  <p className="text-slate-400 text-lg">Check in first to add waypoints</p>
+                  <p className="text-slate-500 text-sm mt-2">Waypoints can only be logged after checking in</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

@@ -224,6 +224,49 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await db.getWaypoints(input.attendanceId);
       }),
+
+    // Staff: Add waypoint during field work
+    addWaypoint: protectedProcedure
+      .input(
+        z.object({
+          attendanceId: z.number(),
+          latitude: z.string(),
+          longitude: z.string(),
+          accuracy: z.string(),
+          cumulativeDistance: z.string().optional(),
+          altitude: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const attendance = await db.getAttendanceById(input.attendanceId);
+        if (!attendance) {
+          throw new TRPCError({ code: "NOT_FOUND" });
+        }
+
+        if (attendance.userId !== ctx.user.id) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+
+        await db.addWaypoint({
+          attendanceId: input.attendanceId,
+          userId: ctx.user.id,
+          latitude: input.latitude,
+          longitude: input.longitude,
+          accuracy: input.accuracy,
+          cumulativeDistance: input.cumulativeDistance || '0',
+          altitude: input.altitude,
+        });
+
+        await db.logAuditEvent({
+          userId: ctx.user.id,
+          action: "ADD_WAYPOINT",
+          entityType: "waypoint",
+          entityId: input.attendanceId,
+          ipAddress: ctx.req.ip,
+        });
+
+        return { success: true };
+      }),
   }),
 
   // ============ WAYPOINT PROCEDURES ============

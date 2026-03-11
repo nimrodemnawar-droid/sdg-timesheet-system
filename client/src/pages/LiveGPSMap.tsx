@@ -117,6 +117,12 @@ export default function LiveGPSMap() {
     });
     markersRef.current.clear();
 
+    // Remove old polylines
+    polylineRef.current.forEach((polyline) => {
+      polyline.setMap(null);
+    });
+    polylineRef.current.clear();
+
     // Add new markers
     locations.forEach((staff) => {
       const position = { lat: staff.latitude, lng: staff.longitude };
@@ -484,6 +490,25 @@ export default function LiveGPSMap() {
                                 </p>
                               </div>
                             )}
+                          </div>
+                        )}
+
+                        {/* Waypoints */}
+                        {waypointsByStaff.get(staff.id) && waypointsByStaff.get(staff.id)!.length > 0 && (
+                          <div>
+                            <p className="text-sm text-slate-600 font-semibold mb-2 flex items-center gap-1">
+                              <Navigation className="w-4 h-4" />
+                              Waypoints ({waypointsByStaff.get(staff.id)!.length})
+                            </p>
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                              {waypointsByStaff.get(staff.id)!.map((wp, idx) => (
+                                <div key={wp.id} className="text-xs bg-blue-50 p-2 rounded border border-blue-200">
+                                  <p className="font-semibold text-blue-900">Waypoint {idx + 1}</p>
+                                  <p className="text-blue-800">{wp.latitude.toFixed(8)}, {wp.longitude.toFixed(8)}</p>
+                                  <p className="text-blue-700 text-xs mt-1">Accuracy: {wp.accuracy.toFixed(2)}m | Distance: {wp.cumulativeDistance.toFixed(3)}km</p>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
 
