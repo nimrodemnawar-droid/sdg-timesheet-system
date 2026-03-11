@@ -99,15 +99,15 @@ export async function getOvertimeLeaderboard(
     .select({
       userId: attendance.userId,
       userName: users.name,
-      totalOvertimeHours: sql<number>`SUM(CASE WHEN ${attendance.overtimeMinutes} > 0 THEN CAST(${attendance.overtimeMinutes} AS DECIMAL(10,2)) / 60 ELSE 0 END)`,
-      overtimeDays: sql<number>`COUNT(CASE WHEN ${attendance.overtimeMinutes} > 0 THEN 1 END)`,
+      totalOvertimeHours: sql<number>`SUM(CASE WHEN ${attendance.overtimeMinutes} > 0 THEN CAST(${attendance.overtimeMinutes} AS DECIMAL(10,2)) / 60 ELSE 0 END)`.as('totalOvertimeHours'),
+      overtimeDays: sql<number>`COUNT(CASE WHEN ${attendance.overtimeMinutes} > 0 THEN 1 END)`.as('overtimeDays'),
     })
     .from(attendance)
     .innerJoin(users, eq(attendance.userId, users.id))
     .where(
       sql`${attendance.checkInTime} >= ${startDate} AND ${attendance.checkInTime} <= ${endDate}`
     )
-    .groupBy(attendance.userId, users.name)
+    .groupBy(attendance.userId, users.id, users.name)
     .orderBy(sql`totalOvertimeHours DESC`)
     .limit(limit);
 
@@ -128,10 +128,10 @@ export async function getAttendanceTrend(
 
   const result = await db
     .select({
-      date: sql<string>`DATE(${attendance.checkInTime})`,
-      checkedIn: sql<number>`COUNT(DISTINCT CASE WHEN ${attendance.checkInTime} IS NOT NULL THEN ${attendance.userId} END)`,
-      checkedOut: sql<number>`COUNT(DISTINCT CASE WHEN ${attendance.checkOutTime} IS NOT NULL THEN ${attendance.userId} END)`,
-      avgHours: sql<number>`AVG(CAST(${attendance.durationMinutes} AS DECIMAL(10,2)) / 60)`,
+      date: sql<string>`DATE(${attendance.checkInTime})`.as('date'),
+      checkedIn: sql<number>`COUNT(DISTINCT CASE WHEN ${attendance.checkInTime} IS NOT NULL THEN ${attendance.userId} END)`.as('checkedIn'),
+      checkedOut: sql<number>`COUNT(DISTINCT CASE WHEN ${attendance.checkOutTime} IS NOT NULL THEN ${attendance.userId} END)`.as('checkedOut'),
+      avgHours: sql<number>`AVG(CAST(${attendance.durationMinutes} AS DECIMAL(10,2)) / 60)`.as('avgHours'),
     })
     .from(attendance)
     .where(
@@ -158,9 +158,9 @@ export async function getDepartmentMetrics(
   const result = await db
     .select({
       department: users.department,
-      staffCount: sql<number>`COUNT(DISTINCT ${users.id})`,
-      avgAttendance: sql<number>`COUNT(DISTINCT ${attendance.userId}) * 100.0 / COUNT(DISTINCT ${users.id})`,
-      avgOvertimeHours: sql<number>`SUM(CASE WHEN ${attendance.overtimeMinutes} > 0 THEN CAST(${attendance.overtimeMinutes} AS DECIMAL(10,2)) / 60 ELSE 0 END) / COUNT(DISTINCT ${users.id})`,
+      staffCount: sql<number>`COUNT(DISTINCT ${users.id})`.as('staffCount'),
+      avgAttendance: sql<number>`COUNT(DISTINCT ${attendance.userId}) * 100.0 / COUNT(DISTINCT ${users.id})`.as('avgAttendance'),
+      avgOvertimeHours: sql<number>`SUM(CASE WHEN ${attendance.overtimeMinutes} > 0 THEN CAST(${attendance.overtimeMinutes} AS DECIMAL(10,2)) / 60 ELSE 0 END) / COUNT(DISTINCT ${users.id})`.as('avgOvertimeHours'),
     })
     .from(users)
     .leftJoin(
