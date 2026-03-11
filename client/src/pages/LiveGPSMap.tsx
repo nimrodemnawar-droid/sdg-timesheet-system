@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { MapView } from "@/components/Map";
@@ -48,26 +48,86 @@ export default function LiveGPSMap() {
   const [showRoutes, setShowRoutes] = useState(true);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch staff attendance data
-  const { data: liveLocations, refetch } = trpc.attendance.getStaffAttendance.useQuery(
-    { userId: 0, startDate: new Date(), endDate: new Date() },
-    { enabled: false }
-  ) as any;
+  // Fetch all staff
+  const { data: allStaff } = trpc.users.getAll.useQuery() as any;
 
-  // Fetch waypoints for a specific staff member
-  const { data: waypointsData, refetch: refetchWaypoints } = trpc.attendance.getWaypoints.useQuery(
-    { attendanceId: 0 },
-    { enabled: false }
-  ) as any;
+  // Fetch attendance for a specific user
+  const fetchAttendanceForStaff = async (userId: number) => {
+    try {
+      const today = new Date();
+      const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+      
+      // Use the trpc query to fetch attendance
+      const response = await fetch(
+        `/api/trpc/attendance.getStaffAttendance?input=${encodeURIComponent(
+          JSON.stringify({ userId, startDate: startDate.toISOString(), endDate: endDate.toISOString() })
+        )}`
+      );
+      
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data.result?.data || null;
+    } catch (error) {
+      console.error("Error fetching attendance:", error);
+      return null;
+    }
+  };
+
+  // Fetch all staff attendance data
+  const fetchAllStaffLocations = async () => {
+    if (!allStaff || allStaff.length === 0) return;
+
+    setIsLoading(true);
+    try {
+      const locations: StaffLocation[] = [];
+
+      for (const staff of allStaff) {
+        const attendanceData = await fetchAttendanceForStaff(staff.id);
+        
+        if (attendanceData && Array.isArray(attendanceData) && attendanceData.length > 0) {
+          const latest = attendanceData[attendanceData.length - 1];
+          const status: "checked-in" | "checked-out" = latest.checkOutTime ? "checked-out" : "checked-in";
+          
+          locations.push({
+            id: staff.id,
+            name: staff.name || "Unknown",
+            email: staff.email || "",
+            latitude: parseFloat(latest.checkInLat || "-1.2921"),
+            longitude: parseFloat(latest.checkInLng || "36.8219"),
+            accuracy: parseFloat(latest.checkInAccuracy || "10"),
+            lastUpdated: new Date(latest.checkInTime),
+            status,
+            checkInLat: latest.checkInLat ? parseFloat(latest.checkInLat) : undefined,
+            checkInLng: latest.checkInLng ? parseFloat(latest.checkInLng) : undefined,
+            checkOutLat: latest.checkOutLat ? parseFloat(latest.checkOutLat) : undefined,
+            checkOutLng: latest.checkOutLng ? parseFloat(latest.checkOutLng) : undefined,
+          });
+        }
+      }
+
+      setStaffLocations(locations);
+
+      // Update markers on map
+      if (mapRef.current && locations.length > 0) {
+        updateMapMarkers(locations);
+      }
+    } catch (error) {
+      console.error("Error fetching staff locations:", error);
+      toast.error("Failed to fetch staff locations");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Auto-refresh every 5 seconds
   useEffect(() => {
     if (autoRefresh) {
       // Initial fetch
-      refetch();
-      
+      fetchAllStaffLocations();
+
       refreshIntervalRef.current = setInterval(() => {
-        refetch();
+        fetchAllStaffLocations();
       }, 5000);
     }
 
@@ -76,36 +136,7 @@ export default function LiveGPSMap() {
         clearInterval(refreshIntervalRef.current);
       }
     };
-  }, [autoRefresh, refetch]);
-
-  // Update staff locations when data changes
-  useEffect(() => {
-    if (liveLocations && Array.isArray(liveLocations)) {
-      const locations = liveLocations.map((loc: any) => {
-        const status: "checked-in" | "checked-out" = loc.checkOutTime ? "checked-out" : "checked-in";
-        return {
-          id: loc.userId,
-          name: loc.userName,
-          email: loc.userEmail,
-          latitude: parseFloat(loc.latitude),
-          longitude: parseFloat(loc.longitude),
-          accuracy: parseFloat(loc.accuracy),
-          lastUpdated: new Date(loc.checkInTime),
-          status,
-          checkInLat: loc.checkInLat ? parseFloat(loc.checkInLat) : undefined,
-          checkInLng: loc.checkInLng ? parseFloat(loc.checkInLng) : undefined,
-          checkOutLat: loc.checkOutLat ? parseFloat(loc.checkOutLat) : undefined,
-          checkOutLng: loc.checkOutLng ? parseFloat(loc.checkOutLng) : undefined,
-        };
-      });
-      setStaffLocations(locations);
-
-      // Update markers on map
-      if (mapRef.current) {
-        updateMapMarkers(locations);
-      }
-    }
-  }, [liveLocations]);
+  }, [autoRefresh, allStaff]);
 
   // Update map markers
   const updateMapMarkers = (locations: StaffLocation[]) => {
@@ -136,7 +167,7 @@ export default function LiveGPSMap() {
       // Add click listener to show details
       marker.addListener("click", () => {
         setSelectedStaff(selectedStaff === staff.id ? null : staff.id);
-        if (showWaypoints) {
+        if (showWaypoints && selectedStaff !== staff.id) {
           fetchAndShowWaypoints(staff.id);
         }
       });
@@ -155,11 +186,16 @@ export default function LiveGPSMap() {
   const createMarkerContent = (staff: StaffLocation) => {
     const div = document.createElement("div");
     div.className = "flex items-center justify-center";
-    
+
     const statusColor = staff.status === "checked-in" ? "bg-green-500" : "bg-red-500";
-    const accuracyColor = staff.accuracy < 10 ? "border-green-400" : 
-                         staff.accuracy < 50 ? "border-blue-400" :
-                         staff.accuracy < 100 ? "border-yellow-400" : "border-red-400";
+    const accuracyColor =
+      staff.accuracy < 10
+        ? "border-green-400"
+        : staff.accuracy < 50
+        ? "border-blue-400"
+        : staff.accuracy < 100
+        ? "border-yellow-400"
+        : "border-red-400";
 
     div.innerHTML = `
       <div class="relative">
@@ -179,8 +215,6 @@ export default function LiveGPSMap() {
   // Fetch and display waypoints for a staff member
   const fetchAndShowWaypoints = async (staffId: number) => {
     try {
-      // In a real implementation, you would fetch waypoints for the staff member's current attendance
-      // For now, we'll show a route between check-in and check-out if available
       const staff = staffLocations.find((s) => s.id === staffId);
       if (!staff || !mapRef.current) return;
 
@@ -217,21 +251,13 @@ export default function LiveGPSMap() {
     }
   };
 
-  // Handle manual refresh
+  // Manual refresh handler
   const handleManualRefresh = async () => {
-    setIsLoading(true);
-    try {
-      await refetch();
-      toast.success("Locations updated");
-    } catch (error) {
-      toast.error("Failed to refresh locations");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
+    await fetchAllStaffLocations();
+    toast.success("Locations refreshed");
   };
 
-  // Calculate distance using Haversine formula
+  // Calculate distance between two coordinates
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
     const R = 6371; // Earth's radius in km
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -281,21 +307,24 @@ export default function LiveGPSMap() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-slate-900">Live GPS Tracking</h1>
-          <p className="text-slate-600">Real-time staff location monitoring with 5-second auto-refresh</p>
+          <div className="flex items-center gap-3">
+            <MapPin className="w-8 h-8 text-blue-400" />
+            <h1 className="text-4xl font-bold text-white">Live GPS Tracking</h1>
+          </div>
+          <p className="text-slate-300">Real-time staff location monitoring with 5-second auto-refresh</p>
         </div>
 
         {/* Controls */}
-        <Card className="border-slate-200">
+        <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between flex-wrap gap-4">
-              <CardTitle className="text-lg">Map Controls</CardTitle>
+              <CardTitle className="text-white text-lg">Map Controls</CardTitle>
               <div className="flex items-center gap-3 flex-wrap">
-                <label className="flex items-center gap-2 text-sm">
+                <label className="flex items-center gap-2 text-sm text-slate-300">
                   <input
                     type="checkbox"
                     checked={autoRefresh}
@@ -304,7 +333,7 @@ export default function LiveGPSMap() {
                   />
                   Auto-refresh (5s)
                 </label>
-                <label className="flex items-center gap-2 text-sm">
+                <label className="flex items-center gap-2 text-sm text-slate-300">
                   <input
                     type="checkbox"
                     checked={showWaypoints}
@@ -313,7 +342,7 @@ export default function LiveGPSMap() {
                   />
                   Show Waypoints
                 </label>
-                <label className="flex items-center gap-2 text-sm">
+                <label className="flex items-center gap-2 text-sm text-slate-300">
                   <input
                     type="checkbox"
                     checked={showRoutes}
@@ -325,7 +354,7 @@ export default function LiveGPSMap() {
                 <Button
                   onClick={handleManualRefresh}
                   disabled={isLoading}
-                  variant="outline"
+                  className="bg-blue-600 hover:bg-blue-700 text-white border-0"
                   size="sm"
                 >
                   {isLoading ? (
@@ -338,14 +367,14 @@ export default function LiveGPSMap() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-slate-300">
               Showing {staffLocations.length} staff member{staffLocations.length !== 1 ? "s" : ""} currently checked in
             </p>
           </CardContent>
         </Card>
 
         {/* Map Container */}
-        <Card className="border-slate-200 overflow-hidden">
+        <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm overflow-hidden">
           <MapView
             initialCenter={{ lat: -1.2921, lng: 36.8219 }} // Nairobi center
             initialZoom={13}
@@ -360,11 +389,11 @@ export default function LiveGPSMap() {
         </Card>
 
         {/* Info Card */}
-        <Card className="border-slate-200 bg-blue-50 border-blue-200">
+        <Card className="bg-blue-900/30 border-blue-500/30 backdrop-blur-sm">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-blue-900">
+              <AlertCircle className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-blue-200">
                 <p className="font-semibold mb-1">Real-Time Tracking Features</p>
                 <ul className="space-y-1 text-xs">
                   <li>• Color-coded markers: Green (Excellent GPS), Blue (Good), Yellow (Fair), Red (Poor accuracy)</li>
@@ -379,10 +408,10 @@ export default function LiveGPSMap() {
         </Card>
 
         {/* Staff Locations List */}
-        <Card className="border-slate-200">
+        <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Staff Locations</CardTitle>
-            <CardDescription>Current GPS coordinates and accuracy metrics</CardDescription>
+            <CardTitle className="text-white text-lg">Staff Locations</CardTitle>
+            <CardDescription className="text-slate-400">Current GPS coordinates and accuracy metrics</CardDescription>
           </CardHeader>
           <CardContent>
             {staffLocations.length > 0 ? (
@@ -398,23 +427,22 @@ export default function LiveGPSMap() {
                     }}
                     className={`p-4 border-2 rounded-lg cursor-pointer transition ${
                       selectedStaff === staff.id
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-slate-200 hover:border-slate-300"
+                        ? "border-blue-500 bg-blue-900/30"
+                        : "border-slate-700 hover:border-slate-600 bg-slate-700/30"
                     }`}
                   >
                     {/* Header */}
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <p className="font-semibold text-slate-900">{staff.name}</p>
-                        <p className="text-sm text-slate-600">{staff.email}</p>
+                        <p className="font-semibold text-white">{staff.name}</p>
+                        <p className="text-sm text-slate-400">{staff.email}</p>
                       </div>
                       <div className="text-right">
                         <Badge
-                          variant="outline"
                           className={
                             staff.status === "checked-in"
-                              ? "bg-green-50 text-green-700 border-green-200"
-                              : "bg-red-50 text-red-700 border-red-200"
+                              ? "bg-green-600 text-white"
+                              : "bg-red-600 text-white"
                           }
                         >
                           {staff.status === "checked-in" ? "Checked In" : "Checked Out"}
@@ -425,25 +453,25 @@ export default function LiveGPSMap() {
 
                     {/* Coordinates */}
                     <div className="grid grid-cols-2 gap-3 mb-3">
-                      <div className="p-2 bg-slate-50 rounded">
-                        <p className="text-xs text-slate-600 mb-1">Latitude</p>
-                        <p className="font-mono text-sm font-semibold text-slate-900">
+                      <div className="p-2 bg-slate-700/50 rounded">
+                        <p className="text-xs text-slate-400 mb-1">Latitude</p>
+                        <p className="font-mono text-sm font-semibold text-white">
                           {staff.latitude.toFixed(8)}
                         </p>
                       </div>
-                      <div className="p-2 bg-slate-50 rounded">
-                        <p className="text-xs text-slate-600 mb-1">Longitude</p>
-                        <p className="font-mono text-sm font-semibold text-slate-900">
+                      <div className="p-2 bg-slate-700/50 rounded">
+                        <p className="text-xs text-slate-400 mb-1">Longitude</p>
+                        <p className="font-mono text-sm font-semibold text-white">
                           {staff.longitude.toFixed(8)}
                         </p>
                       </div>
                     </div>
 
                     {/* Accuracy */}
-                    <div className="flex items-center justify-between p-2 bg-slate-50 rounded mb-3">
+                    <div className="flex items-center justify-between p-2 bg-slate-700/50 rounded mb-3">
                       <div>
-                        <p className="text-xs text-slate-600">Accuracy</p>
-                        <p className="font-semibold text-slate-900">{staff.accuracy.toFixed(2)} m</p>
+                        <p className="text-xs text-slate-400">Accuracy</p>
+                        <p className="font-semibold text-white">{staff.accuracy.toFixed(2)} m</p>
                       </div>
                       <Badge className={getAccuracyColor(staff.accuracy)}>
                         {getAccuracyLabel(staff.accuracy)}
@@ -452,40 +480,40 @@ export default function LiveGPSMap() {
 
                     {/* Expanded Details */}
                     {selectedStaff === staff.id && (
-                      <div className="mt-4 pt-4 border-t border-slate-200 space-y-3">
+                      <div className="mt-4 pt-4 border-t border-slate-700 space-y-3">
                         <div className="grid grid-cols-2 gap-3 text-sm">
                           <div>
-                            <p className="text-slate-600 flex items-center gap-1">
+                            <p className="text-slate-400 flex items-center gap-1">
                               <Clock className="w-4 h-4" />
                               Last Updated
                             </p>
-                            <p className="font-semibold text-slate-900">{formatTime(staff.lastUpdated)}</p>
+                            <p className="font-semibold text-white">{formatTime(staff.lastUpdated)}</p>
                           </div>
                           <div>
-                            <p className="text-slate-600">Time Since Update</p>
-                            <p className="font-semibold text-slate-900">{getTimeSinceUpdate(staff.lastUpdated)}</p>
+                            <p className="text-slate-400">Time Since Update</p>
+                            <p className="font-semibold text-white">{getTimeSinceUpdate(staff.lastUpdated)}</p>
                           </div>
                         </div>
 
                         {/* Check-in/Check-out Info */}
                         {(staff.checkInLat || staff.checkOutLat) && (
                           <div className="space-y-2">
-                            <p className="text-sm text-slate-600 font-semibold flex items-center gap-1">
+                            <p className="text-sm text-slate-400 font-semibold flex items-center gap-1">
                               <Navigation className="w-4 h-4" />
                               Route Information
                             </p>
                             {staff.checkInLat && staff.checkInLng && (
-                              <div className="text-xs bg-green-50 p-2 rounded border border-green-200">
-                                <p className="font-semibold text-green-900">Check-in Location:</p>
-                                <p className="text-green-800">
+                              <div className="text-xs bg-green-900/30 p-2 rounded border border-green-500/30">
+                                <p className="font-semibold text-green-300">Check-in Location:</p>
+                                <p className="text-green-200">
                                   {staff.checkInLat.toFixed(8)}, {staff.checkInLng.toFixed(8)}
                                 </p>
                               </div>
                             )}
                             {staff.checkOutLat && staff.checkOutLng && (
-                              <div className="text-xs bg-red-50 p-2 rounded border border-red-200">
-                                <p className="font-semibold text-red-900">Check-out Location:</p>
-                                <p className="text-red-800">
+                              <div className="text-xs bg-red-900/30 p-2 rounded border border-red-500/30">
+                                <p className="font-semibold text-red-300">Check-out Location:</p>
+                                <p className="text-red-200">
                                   {staff.checkOutLat.toFixed(8)}, {staff.checkOutLng.toFixed(8)}
                                 </p>
                               </div>
@@ -496,16 +524,16 @@ export default function LiveGPSMap() {
                         {/* Waypoints */}
                         {waypointsByStaff.get(staff.id) && waypointsByStaff.get(staff.id)!.length > 0 && (
                           <div>
-                            <p className="text-sm text-slate-600 font-semibold mb-2 flex items-center gap-1">
+                            <p className="text-sm text-slate-400 font-semibold mb-2 flex items-center gap-1">
                               <Navigation className="w-4 h-4" />
                               Waypoints ({waypointsByStaff.get(staff.id)!.length})
                             </p>
                             <div className="space-y-2 max-h-48 overflow-y-auto">
                               {waypointsByStaff.get(staff.id)!.map((wp, idx) => (
-                                <div key={wp.id} className="text-xs bg-blue-50 p-2 rounded border border-blue-200">
-                                  <p className="font-semibold text-blue-900">Waypoint {idx + 1}</p>
-                                  <p className="text-blue-800">{wp.latitude.toFixed(8)}, {wp.longitude.toFixed(8)}</p>
-                                  <p className="text-blue-700 text-xs mt-1">Accuracy: {wp.accuracy.toFixed(2)}m | Distance: {wp.cumulativeDistance.toFixed(3)}km</p>
+                                <div key={wp.id} className="text-xs bg-blue-900/30 p-2 rounded border border-blue-500/30">
+                                  <p className="font-semibold text-blue-300">Waypoint {idx + 1}</p>
+                                  <p className="text-blue-200">{wp.latitude.toFixed(8)}, {wp.longitude.toFixed(8)}</p>
+                                  <p className="text-blue-300 text-xs mt-1">Accuracy: {wp.accuracy.toFixed(2)}m | Distance: {wp.cumulativeDistance.toFixed(3)}km</p>
                                 </div>
                               ))}
                             </div>
@@ -515,21 +543,17 @@ export default function LiveGPSMap() {
                         {/* Distance to other staff */}
                         {staffLocations.length > 1 && (
                           <div>
-                            <p className="text-sm text-slate-600 font-semibold mb-2">Distance to other staff:</p>
+                            <p className="text-sm text-slate-400 font-semibold mb-2">Distance to other staff:</p>
                             <div className="space-y-1">
                               {staffLocations
                                 .filter((s) => s.id !== staff.id)
                                 .slice(0, 3)
                                 .map((other) => (
-                                  <p key={other.id} className="text-sm text-slate-700">
+                                  <p key={other.id} className="text-sm text-slate-300">
                                     {other.name}:{" "}
-                                    {calculateDistance(
-                                      staff.latitude,
-                                      staff.longitude,
-                                      other.latitude,
-                                      other.longitude
-                                    )}{" "}
-                                    km
+                                    <span className="font-semibold">
+                                      {calculateDistance(staff.latitude, staff.longitude, other.latitude, other.longitude)} km
+                                    </span>
                                   </p>
                                 ))}
                             </div>
@@ -541,7 +565,11 @@ export default function LiveGPSMap() {
                 ))}
               </div>
             ) : (
-              <p className="text-center text-slate-600 py-8">No staff members currently checked in</p>
+              <div className="text-center py-12">
+                <MapPin className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                <p className="text-slate-400 text-lg">No staff members checked in</p>
+                <p className="text-slate-500 text-sm mt-2">Staff locations will appear here once they check in</p>
+              </div>
             )}
           </CardContent>
         </Card>
