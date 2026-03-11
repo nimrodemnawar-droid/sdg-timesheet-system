@@ -126,21 +126,22 @@ export async function getAttendanceTrend(
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db
-    .select({
-      date: sql<string>`DATE(${attendance.checkInTime})`.as('date'),
-      checkedIn: sql<number>`COUNT(DISTINCT CASE WHEN ${attendance.checkInTime} IS NOT NULL THEN ${attendance.userId} END)`.as('checkedIn'),
-      checkedOut: sql<number>`COUNT(DISTINCT CASE WHEN ${attendance.checkOutTime} IS NOT NULL THEN ${attendance.userId} END)`.as('checkedOut'),
-      avgHours: sql<number>`AVG(CAST(${attendance.durationMinutes} AS DECIMAL(10,2)) / 60)`.as('avgHours'),
-    })
-    .from(attendance)
-    .where(
-      sql`${attendance.checkInTime} >= ${startDate} AND ${attendance.checkInTime} <= ${endDate}`
-    )
-    .groupBy(sql`DATE(${attendance.checkInTime})`)
-    .orderBy(sql`DATE(${attendance.checkInTime})`);
+  // Use raw SQL for complex DATE grouping to avoid Drizzle ORM issues
+  const result = await db.execute(
+    sql`
+      SELECT 
+        DATE(checkInTime) as date,
+        COUNT(DISTINCT CASE WHEN checkInTime IS NOT NULL THEN userId END) as checkedIn,
+        COUNT(DISTINCT CASE WHEN checkOutTime IS NOT NULL THEN userId END) as checkedOut,
+        AVG(CAST(durationMinutes AS DECIMAL(10,2)) / 60) as avgHours
+      FROM attendance
+      WHERE checkInTime >= ${startDate} AND checkInTime <= ${endDate}
+      GROUP BY DATE(checkInTime)
+      ORDER BY DATE(checkInTime)
+    `
+  );
 
-  return result.map((r) => ({
+  return (result as any[]).map((r: any) => ({
     date: r.date || new Date().toISOString().split("T")[0],
     checkedIn: r.checkedIn || 0,
     checkedOut: r.checkedOut || 0,
