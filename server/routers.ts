@@ -217,6 +217,13 @@ export const appRouter = router({
           decryptedRemark: decryptData(r.encryptedRemark, r.encryptionIv),
         }));
       }),
+
+    // Supervisor/Admin: Get waypoints for attendance (for map visualization)
+    getWaypoints: supervisorProcedure
+      .input(z.object({ attendanceId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getWaypoints(input.attendanceId);
+      }),
   }),
 
   // ============ WAYPOINT PROCEDURES ============
