@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, MapPin, Clock, AlertCircle, CheckCircle2, FileUp } from "lucide-react";
+import { Loader2, MapPin, Clock, AlertCircle, CheckCircle2, FileUp, Activity, Briefcase, Target } from "lucide-react";
 import { toast } from "sonner";
 
 interface GPSCoordinates {
@@ -40,32 +40,13 @@ const ACTIVITY_CATEGORIES = [
   "Digital Transformation",
 ];
 
-const WORK_MODALITIES = [
-  "Nairobi Office",
-  "Homa Bay Office",
-  "Field",
-  "Remote",
-];
+const WORK_MODALITIES = ["Nairobi Office", "Homa Bay Office", "Field", "Remote"];
 
 const SDG_GOALS = Array.from({ length: 17 }, (_, i) => ({
   id: i + 1,
   title: `SDG ${i + 1}`,
   color: `hsl(${(i * 21) % 360}, 70%, 50%)`,
 }));
-
-const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
 
 export default function StaffDashboard() {
   const { user } = useAuth();
@@ -98,17 +79,19 @@ export default function StaffDashboard() {
   const { data: leaveBalance } = trpc.leave.getBalance.useQuery({ leaveType: 'annual' });
   const checkInMutation = trpc.attendance.checkIn.useMutation();
   const checkOutMutation = trpc.attendance.checkOut.useMutation();
-  const submitTimesheetMutation = trpc.attendance.submitTimesheet.useMutation();
 
-  // Request GPS permission and start tracking
-  useEffect(() => {
+  // Acquire GPS coordinates
+  const acquireGPS = () => {
+    setGpsStatus("acquiring");
+    setGpsError(null);
+
     if (!navigator.geolocation) {
       setGpsError("Geolocation is not supported by your browser");
+      setGpsStatus("idle");
       return;
     }
 
-    setGpsStatus("acquiring");
-    const watchId = navigator.geolocation.watchPosition(
+    navigator.geolocation.getCurrentPosition(
       (position) => {
         setGpsCoordinates({
           latitude: position.coords.latitude,
@@ -116,408 +99,343 @@ export default function StaffDashboard() {
           accuracy: position.coords.accuracy,
         });
         setGpsStatus("ready");
-        setGpsError(null);
       },
       (error) => {
-        let errorMessage = "Unable to get GPS location";
-        if (error.code === error.PERMISSION_DENIED) {
-          errorMessage = "GPS permission denied. Please enable location access.";
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          errorMessage = "GPS position unavailable";
-        } else if (error.code === error.TIMEOUT) {
-          errorMessage = "GPS request timed out";
-        }
-        setGpsError(errorMessage);
+        setGpsError(`GPS Error: ${error.message}`);
         setGpsStatus("idle");
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
-
-  const getAccuracyBadge = (accuracy: number) => {
-    if (accuracy < 10) return <Badge className="bg-green-500">Excellent</Badge>;
-    if (accuracy < 50) return <Badge className="bg-blue-500">Good</Badge>;
-    if (accuracy < 100) return <Badge className="bg-yellow-500">Fair</Badge>;
-    return <Badge className="bg-red-500">Poor</Badge>;
   };
 
   const handleCheckIn = async () => {
     if (!gpsCoordinates) {
-      toast.error("GPS location not available");
+      toast.error("Please acquire GPS coordinates first");
       return;
     }
 
     setIsCheckingIn(true);
     try {
       await checkInMutation.mutateAsync({
-        latitude: gpsCoordinates.latitude.toFixed(8),
-        longitude: gpsCoordinates.longitude.toFixed(8),
-        accuracy: gpsCoordinates.accuracy.toFixed(2),
+        latitude: gpsCoordinates.latitude.toString(),
+        longitude: gpsCoordinates.longitude.toString(),
+        accuracy: gpsCoordinates.accuracy.toString(),
       });
-
-      toast.success("✓ Checked in successfully");
+      toast.success("Checked in successfully");
       await refetchAttendance();
-      setActiveTab("timesheet");
     } catch (error) {
       toast.error("Failed to check in");
-      console.error(error);
     } finally {
       setIsCheckingIn(false);
     }
   };
 
   const handleCheckOut = async () => {
-    if (!todayAttendance) {
-      toast.error("No active check-in found");
+    if (!gpsCoordinates) {
+      toast.error("Please acquire GPS coordinates first");
       return;
     }
 
-    if (!gpsCoordinates) {
-      toast.error("GPS location not available");
+    if (!todayAttendance?.id) {
+      toast.error("No active check-in found");
       return;
     }
 
     setIsCheckingOut(true);
     try {
-      const distance = calculateDistance(
-        parseFloat(todayAttendance.checkInLat),
-        parseFloat(todayAttendance.checkInLng),
-        gpsCoordinates.latitude,
-        gpsCoordinates.longitude
-      );
-
       await checkOutMutation.mutateAsync({
         attendanceId: todayAttendance.id,
-        latitude: gpsCoordinates.latitude.toFixed(8),
-        longitude: gpsCoordinates.longitude.toFixed(8),
-        accuracy: gpsCoordinates.accuracy.toFixed(2),
-        distanceTraveled: distance.toFixed(2),
+        latitude: gpsCoordinates.latitude.toString(),
+        longitude: gpsCoordinates.longitude.toString(),
+        accuracy: gpsCoordinates.accuracy.toString(),
+        distanceTraveled: '0',
       });
-
-      toast.success("✓ Checked out successfully");
+      toast.success("Checked out successfully");
       await refetchAttendance();
     } catch (error) {
       toast.error("Failed to check out");
-      console.error(error);
     } finally {
       setIsCheckingOut(false);
     }
   };
 
-  const calculateTotalHours = () => {
-    let total = 0;
-    if (timesheetData.amStartTime && timesheetData.amEndTime) {
-      const [startH, startM] = timesheetData.amStartTime.split(":").map(Number);
-      const [endH, endM] = timesheetData.amEndTime.split(":").map(Number);
-      total += (endH * 60 + endM - (startH * 60 + startM)) / 60;
-    }
-    if (timesheetData.pmStartTime && timesheetData.pmEndTime) {
-      const [startH, startM] = timesheetData.pmStartTime.split(":").map(Number);
-      const [endH, endM] = timesheetData.pmEndTime.split(":").map(Number);
-      total += (endH * 60 + endM - (startH * 60 + startM)) / 60;
-    }
-    return total.toFixed(2);
-  };
-
-  const handleSubmitTimesheet = async () => {
-    if (!todayAttendance) {
-      toast.error("Please check in first");
-      return;
-    }
-
-    if (!timesheetData.amStartTime || !timesheetData.amEndTime) {
-      toast.error("Please fill in AM times");
-      return;
-    }
-
-    setIsSubmittingTimesheet(true);
-    try {
-      await submitTimesheetMutation.mutateAsync({
-        attendanceId: todayAttendance.id,
-      });
-
-      toast.success("✓ Timesheet submitted successfully");
-      setTimesheetData({
-        date: new Date().toISOString().split("T")[0],
-        amStartTime: "",
-        amEndTime: "",
-        pmStartTime: "",
-        pmEndTime: "",
-        workModality: "Field",
-        activityCategory: "Program Implementation",
-        sdgGoal: "1",
-        program: "",
-        kpi: "",
-        taskDescription: "",
-        staffRemarks: "",
-        evidenceFile: null,
-      });
-    } catch (error) {
-      toast.error("Failed to submit timesheet");
-      console.error(error);
-    } finally {
-      setIsSubmittingTimesheet(false);
-    }
-  };
-
-  const totalHours = calculateTotalHours();
-  const isOvertime = parseFloat(totalHours) > 8;
+  const isCheckedIn = todayAttendance?.checkInTime && !todayAttendance?.checkOutTime;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
-      {/* SDG Watermark Background */}
-      <div className="fixed inset-0 opacity-5 pointer-events-none text-center flex items-center justify-center">
-        <div className="text-9xl font-bold text-slate-400">SDG</div>
-      </div>
-
-      <div className="relative z-10 max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">Staff Dashboard</h1>
-          <p className="text-slate-600">Welcome, {user?.name}</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <Briefcase className="w-8 h-8 text-blue-400" />
+            <h1 className="text-4xl font-bold text-white">Staff Dashboard</h1>
+          </div>
+          <p className="text-slate-300">Welcome, {user?.name}. Track your time and activities.</p>
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Today's Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {todayAttendance ? (
-                  <span className="text-green-600">✓ Checked In</span>
-                ) : (
-                  <span className="text-slate-400">Not Started</span>
-                )}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-blue-500/30 hover:border-blue-400 transition-all duration-300 shadow-lg">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm mb-1 font-medium">Status Today</p>
+                  <p className="text-2xl font-bold text-white">
+                    {isCheckedIn ? "Checked In" : "Not Checked In"}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {todayAttendance?.checkInTime
+                      ? new Date(todayAttendance.checkInTime).toLocaleTimeString()
+                      : "No check-in yet"}
+                  </p>
+                </div>
+                <Activity className="w-10 h-10 text-blue-400 opacity-80" />
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Hours Today</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${isOvertime ? "text-orange-600" : "text-blue-600"}`}>
-                {totalHours} hrs
+          <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-green-500/30 hover:border-green-400 transition-all duration-300 shadow-lg">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm mb-1 font-medium">Leave Balance</p>
+                  <p className="text-2xl font-bold text-white">{leaveBalance?.remainingDays || 0}</p>
+                  <p className="text-xs text-slate-500 mt-1">Annual leave days</p>
+                </div>
+                <Clock className="w-10 h-10 text-green-400 opacity-80" />
               </div>
-              {isOvertime && <p className="text-xs text-orange-600 mt-1">⚠ Overtime</p>}
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Leave Balance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-slate-900">
-                {leaveBalance && leaveBalance.leaveType === 'annual' ? leaveBalance.remainingDays : 0} days
-              </div>
-              <p className="text-xs text-slate-600 mt-1">Annual Leave</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">GPS Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${gpsStatus === "ready" ? "bg-green-500" : "bg-slate-300"}`} />
-                <span className="text-sm font-medium capitalize">{gpsStatus}</span>
+          <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-amber-500/30 hover:border-amber-400 transition-all duration-300 shadow-lg">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm mb-1 font-medium">GPS Status</p>
+                  <p className="text-2xl font-bold text-white">
+                    {gpsStatus === "ready" ? "Ready" : gpsStatus === "acquiring" ? "Acquiring..." : "Idle"}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {gpsCoordinates ? `Accuracy: ${gpsCoordinates.accuracy.toFixed(1)}m` : "No coordinates"}
+                  </p>
+                </div>
+                <MapPin className="w-10 h-10 text-amber-400 opacity-80" />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Main Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
-            <TabsTrigger value="check-in">Check In/Out</TabsTrigger>
-            <TabsTrigger value="timesheet">Daily Timesheet</TabsTrigger>
-            <TabsTrigger value="leave">Leave</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="bg-slate-800/50 border border-slate-700 backdrop-blur-sm">
+            <TabsTrigger value="check-in" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+              <MapPin className="w-4 h-4 mr-2" />
+              Check In/Out
+            </TabsTrigger>
+            <TabsTrigger value="timesheet" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+              <Briefcase className="w-4 h-4 mr-2" />
+              Timesheet
+            </TabsTrigger>
+            <TabsTrigger value="activities" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+              <Activity className="w-4 h-4 mr-2" />
+              Activities
+            </TabsTrigger>
           </TabsList>
 
-          {/* Check-In/Out Tab */}
-          <TabsContent value="check-in">
-            <Card>
+          {/* Check In/Out Tab */}
+          <TabsContent value="check-in" className="space-y-4">
+            <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>GPS Check-In / Check-Out</CardTitle>
-                <CardDescription>Your location is being tracked for attendance verification</CardDescription>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-blue-400" />
+                  GPS Check In/Out
+                </CardTitle>
+                <CardDescription className="text-slate-400">Use GPS to check in and out of work</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* GPS Status */}
                 {gpsError && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3">
-                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div className="p-4 bg-red-900/20 border border-red-500/50 rounded-lg flex gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-medium text-red-900">GPS Error</p>
-                      <p className="text-sm text-red-700">{gpsError}</p>
+                      <p className="text-red-300 font-medium">GPS Error</p>
+                      <p className="text-red-200 text-sm">{gpsError}</p>
                     </div>
                   </div>
                 )}
 
                 {gpsCoordinates && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-blue-600" />
-                      <span className="font-medium text-blue-900">Current Location</span>
+                  <div className="p-4 bg-green-900/20 border border-green-500/50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-400" />
+                      <p className="text-green-300 font-medium">GPS Acquired</p>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-blue-600">Latitude</p>
-                        <p className="font-mono font-bold text-blue-900">{gpsCoordinates.latitude.toFixed(8)}</p>
-                      </div>
-                      <div>
-                        <p className="text-blue-600">Longitude</p>
-                        <p className="font-mono font-bold text-blue-900">{gpsCoordinates.longitude.toFixed(8)}</p>
-                      </div>
-                      <div>
-                        <p className="text-blue-600">Accuracy</p>
-                        <p className="font-mono font-bold text-blue-900">{gpsCoordinates.accuracy.toFixed(2)}m</p>
-                      </div>
-                      <div>
-                        <p className="text-blue-600">Quality</p>
-                        {getAccuracyBadge(gpsCoordinates.accuracy)}
-                      </div>
+                    <div className="text-sm text-green-200 space-y-1">
+                      <p>Latitude: {gpsCoordinates.latitude.toFixed(8)}</p>
+                      <p>Longitude: {gpsCoordinates.longitude.toFixed(8)}</p>
+                      <p>Accuracy: {gpsCoordinates.accuracy.toFixed(1)}m</p>
                     </div>
                   </div>
                 )}
 
-                {todayAttendance ? (
-                  <div className="space-y-4">
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle2 className="w-5 h-5 text-green-600" />
-                        <span className="font-medium text-green-900">Checked In</span>
-                      </div>
-                      <p className="text-sm text-green-700">
-                        Check-in time: {new Date(todayAttendance.checkInTime).toLocaleTimeString()}
-                      </p>
-                    </div>
+                {/* GPS Buttons */}
+                <div className="space-y-3">
+                  <Button
+                    onClick={acquireGPS}
+                    disabled={gpsStatus === "acquiring"}
+                    className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-white border-0 text-base"
+                  >
+                    {gpsStatus === "acquiring" ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Acquiring GPS...
+                      </>
+                    ) : (
+                      <>
+                        <MapPin className="w-4 h-4 mr-2" />
+                        Acquire GPS Coordinates
+                      </>
+                    )}
+                  </Button>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      onClick={handleCheckIn}
+                      disabled={!gpsCoordinates || isCheckingIn || isCheckedIn}
+                      className="bg-green-600 hover:bg-green-700 h-12 text-white border-0"
+                    >
+                      {isCheckingIn ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Checking In...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          Check In
+                        </>
+                      )}
+                    </Button>
+
                     <Button
                       onClick={handleCheckOut}
-                      disabled={isCheckingOut || !gpsCoordinates}
-                      className="w-full bg-red-600 hover:bg-red-700"
-                      size="lg"
+                      disabled={!gpsCoordinates || isCheckingOut || !isCheckedIn}
+                      className="bg-red-600 hover:bg-red-700 h-12 text-white border-0"
                     >
-                      {isCheckingOut ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                      Check Out
+                      {isCheckingOut ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Checking Out...
+                        </>
+                      ) : (
+                        <>
+                          <AlertCircle className="w-4 h-4 mr-2" />
+                          Check Out
+                        </>
+                      )}
                     </Button>
                   </div>
-                ) : (
-                  <Button
-                    onClick={handleCheckIn}
-                    disabled={isCheckingIn || !gpsCoordinates}
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    size="lg"
-                  >
-                    {isCheckingIn ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                    Check In
-                  </Button>
+                </div>
+
+                {/* Today's Attendance Summary */}
+                {todayAttendance && (
+                  <div className="p-4 bg-slate-700/50 rounded-lg border border-slate-600/50">
+                    <p className="text-white font-medium mb-3">Today's Summary</p>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Check In:</span>
+                        <span className="text-white">
+                          {todayAttendance.checkInTime
+                            ? new Date(todayAttendance.checkInTime).toLocaleTimeString()
+                            : "-"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Check Out:</span>
+                        <span className="text-white">
+                          {todayAttendance.checkOutTime
+                            ? new Date(todayAttendance.checkOutTime).toLocaleTimeString()
+                            : "-"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between border-t border-slate-600 pt-2">
+                        <span className="text-slate-400">Duration:</span>
+                        <span className="text-white font-medium">
+                          {todayAttendance.durationMinutes
+                            ? `${Math.floor(todayAttendance.durationMinutes / 60)}h ${todayAttendance.durationMinutes % 60}m`
+                            : "In Progress"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Daily Timesheet Tab */}
-          <TabsContent value="timesheet">
-            <Card>
+          {/* Timesheet Tab */}
+          <TabsContent value="timesheet" className="space-y-4">
+            <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>Daily Timesheet</CardTitle>
-                <CardDescription>Submit your daily work details and activities</CardDescription>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Briefcase className="w-5 h-5 text-blue-400" />
+                  Daily Timesheet
+                </CardTitle>
+                <CardDescription className="text-slate-400">Submit your daily work activities and hours</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Date */}
-                  <div>
-                    <Label htmlFor="date">Date</Label>
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">Date</Label>
                     <Input
-                      id="date"
                       type="date"
                       value={timesheetData.date}
                       onChange={(e) => setTimesheetData({ ...timesheetData, date: e.target.value })}
+                      className="bg-slate-700/50 border-slate-600 text-white"
                     />
                   </div>
 
-                  {/* Work Modality */}
-                  <div>
-                    <Label htmlFor="modality">Work Modality</Label>
-                    <Select value={timesheetData.workModality} onValueChange={(val) => setTimesheetData({ ...timesheetData, workModality: val })}>
-                      <SelectTrigger id="modality">
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">Work Modality</Label>
+                    <Select value={timesheetData.workModality} onValueChange={(value) => setTimesheetData({ ...timesheetData, workModality: value })}>
+                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        {WORK_MODALITIES.map((mod) => (
-                          <SelectItem key={mod} value={mod}>
-                            {mod}
+                      <SelectContent className="bg-slate-800 border-slate-700">
+                        {WORK_MODALITIES.map((modality) => (
+                          <SelectItem key={modality} value={modality} className="text-white">
+                            {modality}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {/* AM Start Time */}
-                  <div>
-                    <Label htmlFor="amStart">AM Start Time</Label>
-                    <Input
-                      id="amStart"
-                      type="time"
-                      value={timesheetData.amStartTime}
-                      onChange={(e) => setTimesheetData({ ...timesheetData, amStartTime: e.target.value })}
-                    />
-                  </div>
-
-                  {/* AM End Time */}
-                  <div>
-                    <Label htmlFor="amEnd">AM End Time</Label>
-                    <Input
-                      id="amEnd"
-                      type="time"
-                      value={timesheetData.amEndTime}
-                      onChange={(e) => setTimesheetData({ ...timesheetData, amEndTime: e.target.value })}
-                    />
-                  </div>
-
-                  {/* PM Start Time */}
-                  <div>
-                    <Label htmlFor="pmStart">PM Start Time (Optional)</Label>
-                    <Input
-                      id="pmStart"
-                      type="time"
-                      value={timesheetData.pmStartTime}
-                      onChange={(e) => setTimesheetData({ ...timesheetData, pmStartTime: e.target.value })}
-                    />
-                  </div>
-
-                  {/* PM End Time */}
-                  <div>
-                    <Label htmlFor="pmEnd">PM End Time (Optional)</Label>
-                    <Input
-                      id="pmEnd"
-                      type="time"
-                      value={timesheetData.pmEndTime}
-                      onChange={(e) => setTimesheetData({ ...timesheetData, pmEndTime: e.target.value })}
-                    />
-                  </div>
-
-                  {/* SDG Goal */}
-                  <div>
-                    <Label htmlFor="sdg">SDG Goal</Label>
-                    <Select value={timesheetData.sdgGoal} onValueChange={(val) => setTimesheetData({ ...timesheetData, sdgGoal: val })}>
-                      <SelectTrigger id="sdg">
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">Activity Category</Label>
+                    <Select value={timesheetData.activityCategory} onValueChange={(value) => setTimesheetData({ ...timesheetData, activityCategory: value })}>
+                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-slate-800 border-slate-700 max-h-60">
+                        {ACTIVITY_CATEGORIES.map((category) => (
+                          <SelectItem key={category} value={category} className="text-white">
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">SDG Goal</Label>
+                    <Select value={timesheetData.sdgGoal} onValueChange={(value) => setTimesheetData({ ...timesheetData, sdgGoal: value })}>
+                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-700 max-h-60">
                         {SDG_GOALS.map((goal) => (
-                          <SelectItem key={goal.id} value={goal.id.toString()}>
+                          <SelectItem key={goal.id} value={goal.id.toString()} className="text-white">
                             {goal.title}
                           </SelectItem>
                         ))}
@@ -525,161 +443,91 @@ export default function StaffDashboard() {
                     </Select>
                   </div>
 
-                  {/* Activity Category */}
-                  <div>
-                    <Label htmlFor="category">Primary Activity Category</Label>
-                    <Select value={timesheetData.activityCategory} onValueChange={(val) => setTimesheetData({ ...timesheetData, activityCategory: val })}>
-                      <SelectTrigger id="category">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ACTIVITY_CATEGORIES.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Program */}
-                  <div>
-                    <Label htmlFor="program">Program/Department</Label>
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">AM Start Time</Label>
                     <Input
-                      id="program"
-                      placeholder="e.g., Health Initiative"
-                      value={timesheetData.program}
-                      onChange={(e) => setTimesheetData({ ...timesheetData, program: e.target.value })}
+                      type="time"
+                      value={timesheetData.amStartTime}
+                      onChange={(e) => setTimesheetData({ ...timesheetData, amStartTime: e.target.value })}
+                      className="bg-slate-700/50 border-slate-600 text-white"
                     />
                   </div>
 
-                  {/* KPI */}
-                  <div>
-                    <Label htmlFor="kpi">Linked KPI</Label>
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">AM End Time</Label>
                     <Input
-                      id="kpi"
-                      placeholder="e.g., KPI-001"
-                      value={timesheetData.kpi}
-                      onChange={(e) => setTimesheetData({ ...timesheetData, kpi: e.target.value })}
+                      type="time"
+                      value={timesheetData.amEndTime}
+                      onChange={(e) => setTimesheetData({ ...timesheetData, amEndTime: e.target.value })}
+                      className="bg-slate-700/50 border-slate-600 text-white"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">PM Start Time</Label>
+                    <Input
+                      type="time"
+                      value={timesheetData.pmStartTime}
+                      onChange={(e) => setTimesheetData({ ...timesheetData, pmStartTime: e.target.value })}
+                      className="bg-slate-700/50 border-slate-600 text-white"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">PM End Time</Label>
+                    <Input
+                      type="time"
+                      value={timesheetData.pmEndTime}
+                      onChange={(e) => setTimesheetData({ ...timesheetData, pmEndTime: e.target.value })}
+                      className="bg-slate-700/50 border-slate-600 text-white"
                     />
                   </div>
                 </div>
 
-                {/* Total Hours Display */}
-                <div className={`p-4 rounded-lg border-2 ${isOvertime ? "border-orange-300 bg-orange-50" : "border-blue-300 bg-blue-50"}`}>
-                  <div className="flex items-center justify-between">
-                    <span className={`font-medium ${isOvertime ? "text-orange-900" : "text-blue-900"}`}>
-                      Total Hours
-                    </span>
-                    <span className={`text-2xl font-bold ${isOvertime ? "text-orange-600" : "text-blue-600"}`}>
-                      {totalHours} hrs
-                    </span>
-                  </div>
-                  {isOvertime && <p className="text-xs text-orange-700 mt-2">⚠ This exceeds 8 hours (overtime)</p>}
-                </div>
-
-                {/* Task Description */}
-                <div>
-                  <Label htmlFor="task">Task Description</Label>
+                <div className="space-y-2">
+                  <Label className="text-slate-300">Task Description</Label>
                   <Textarea
-                    id="task"
-                    placeholder="Describe your main activities and accomplishments today..."
+                    placeholder="Describe your work activities..."
                     value={timesheetData.taskDescription}
                     onChange={(e) => setTimesheetData({ ...timesheetData, taskDescription: e.target.value })}
-                    rows={4}
+                    className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 min-h-24"
                   />
                 </div>
 
-                {/* Staff Remarks */}
-                <div>
-                  <Label htmlFor="remarks">Staff Remarks</Label>
+                <div className="space-y-2">
+                  <Label className="text-slate-300">Staff Remarks</Label>
                   <Textarea
-                    id="remarks"
-                    placeholder="Any additional notes or observations..."
+                    placeholder="Any additional remarks..."
                     value={timesheetData.staffRemarks}
                     onChange={(e) => setTimesheetData({ ...timesheetData, staffRemarks: e.target.value })}
-                    rows={3}
+                    className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 min-h-20"
                   />
                 </div>
 
-                {/* Evidence Upload */}
-                <div>
-                  <Label htmlFor="evidence">Evidence/Supporting Documents</Label>
-                  <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-slate-400 transition">
-                    <FileUp className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                    <Input
-                      id="evidence"
-                      type="file"
-                      className="hidden"
-                      onChange={(e) => setTimesheetData({ ...timesheetData, evidenceFile: e.target.files?.[0] || null })}
-                    />
-                    <label htmlFor="evidence" className="cursor-pointer">
-                      <p className="text-sm text-slate-600">Click to upload or drag and drop</p>
-                      <p className="text-xs text-slate-500">PDF, images, or documents (max 10MB)</p>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                <Button
-                  onClick={handleSubmitTimesheet}
-                  disabled={isSubmittingTimesheet}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  size="lg"
-                >
-                  {isSubmittingTimesheet ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-white border-0 text-base">
+                  <FileUp className="w-4 h-4 mr-2" />
                   Submit Timesheet
                 </Button>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Leave Tab */}
-          <TabsContent value="leave">
-            <Card>
+          {/* Activities Tab */}
+          <TabsContent value="activities" className="space-y-4">
+            <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>Leave Management</CardTitle>
-                <CardDescription>View your leave balance and submit requests</CardDescription>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-blue-400" />
+                  Recent Activities
+                </CardTitle>
+                <CardDescription className="text-slate-400">Your submitted activities and work logs</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <p className="text-sm text-blue-600 font-medium">Annual Leave</p>
-                    <p className="text-2xl font-bold text-blue-900">{leaveBalance && leaveBalance.leaveType === 'annual' ? leaveBalance.remainingDays : 0}</p>
-                    <p className="text-xs text-blue-600 mt-1">days remaining</p>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                    <p className="text-sm text-green-600 font-medium">Sick Leave</p>
-                    <p className="text-2xl font-bold text-green-900">{leaveBalance && leaveBalance.leaveType === 'sick' ? leaveBalance.remainingDays : 0}</p>
-                    <p className="text-xs text-green-600 mt-1">days remaining</p>
-                  </div>
-                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                    <p className="text-sm text-purple-600 font-medium">Maternity Leave</p>
-                    <p className="text-2xl font-bold text-purple-900">{leaveBalance && leaveBalance.leaveType === 'maternity' ? leaveBalance.remainingDays : 0}</p>
-                    <p className="text-xs text-purple-600 mt-1">days remaining</p>
-                  </div>
-                  <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                    <p className="text-sm text-slate-600 font-medium">Unpaid Leave</p>
-                    <p className="text-2xl font-bold text-slate-900">Unlimited</p>
-                    <p className="text-xs text-slate-600 mt-1">subject to approval</p>
-                  </div>
+                <div className="text-center py-8">
+                  <Activity className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                  <p className="text-slate-400">No activities submitted yet</p>
+                  <p className="text-slate-500 text-sm">Submit your first timesheet to see activities here</p>
                 </div>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700" size="lg">
-                  Request Leave
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* History Tab */}
-          <TabsContent value="history">
-            <Card>
-              <CardHeader>
-                <CardTitle>Submission History</CardTitle>
-                <CardDescription>View your past timesheets and submissions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-slate-600">No submissions yet</p>
               </CardContent>
             </Card>
           </TabsContent>

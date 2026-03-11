@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Users, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { MapPin, Users, Clock, AlertCircle, Loader2, CheckCircle2, MessageSquare, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SupervisorDashboard() {
@@ -18,6 +18,7 @@ export default function SupervisorDashboard() {
     new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
   const [endDate, setEndDate] = useState<string>(new Date().toISOString().split("T")[0]);
+  const [activeTab, setActiveTab] = useState("overview");
 
   const { data: staffList } = trpc.users.getAll.useQuery();
   const { data: attendanceData, refetch: refetchAttendance } = trpc.attendance.getStaffAttendance.useQuery(
@@ -85,253 +86,247 @@ export default function SupervisorDashboard() {
 
   const getAccuracyQuality = (accuracy: number | string) => {
     const acc = typeof accuracy === "string" ? parseFloat(accuracy) : accuracy;
-    if (acc < 10) return { label: "Excellent", color: "bg-green-100 text-green-800" };
-    if (acc < 50) return { label: "Good", color: "bg-blue-100 text-blue-800" };
-    if (acc < 100) return { label: "Fair", color: "bg-yellow-100 text-yellow-800" };
-    return { label: "Poor", color: "bg-red-100 text-red-800" };
+    if (acc < 10) return { label: "Excellent", color: "bg-green-600" };
+    if (acc < 50) return { label: "Good", color: "bg-blue-600" };
+    if (acc < 100) return { label: "Fair", color: "bg-yellow-600" };
+    return { label: "Poor", color: "bg-red-600" };
   };
 
+  const selectedStaffData = staffList?.find((s: any) => s.id === selectedStaff);
+  const totalStaffCount = staffList?.length || 0;
+  const checkedInCount = staffList?.filter((s: any) => s.isActive)?.length || 0;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-slate-900">Supervisor Dashboard</h1>
-          <p className="text-slate-600">Monitor staff attendance and field activities</p>
+          <div className="flex items-center gap-3">
+            <Users className="w-8 h-8 text-blue-400" />
+            <h1 className="text-4xl font-bold text-white">Supervisor Dashboard</h1>
+          </div>
+          <p className="text-slate-300">Monitor staff attendance and field activities</p>
         </div>
 
-        {/* Staff Selection */}
-        <Card className="border-slate-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Select Staff Member</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-              {staffList?.map((staff) => (
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-blue-500/30 hover:border-blue-400 transition-all duration-300 shadow-lg">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm mb-1 font-medium">Total Staff</p>
+                  <p className="text-3xl font-bold text-white">{totalStaffCount}</p>
+                  <p className="text-xs text-slate-500 mt-1">Under supervision</p>
+                </div>
+                <Users className="w-10 h-10 text-blue-400 opacity-80" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-green-500/30 hover:border-green-400 transition-all duration-300 shadow-lg">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm mb-1 font-medium">Active Today</p>
+                  <p className="text-3xl font-bold text-white">{checkedInCount}</p>
+                  <p className="text-xs text-slate-500 mt-1">Checked in</p>
+                </div>
+                <CheckCircle2 className="w-10 h-10 text-green-400 opacity-80" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-amber-500/30 hover:border-amber-400 transition-all duration-300 shadow-lg">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm mb-1 font-medium">Selected Staff</p>
+                  <p className="text-3xl font-bold text-white">{selectedStaffData?.name || "None"}</p>
+                  <p className="text-xs text-slate-500 mt-1">For detailed view</p>
+                </div>
+                <MapPin className="w-10 h-10 text-amber-400 opacity-80" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          {/* Staff List */}
+          <Card className="lg:col-span-1 bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-400" />
+                Staff List
+              </CardTitle>
+              <CardDescription className="text-slate-400">Select staff to view details</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {staffList?.map((staff: any) => (
                 <button
                   key={staff.id}
                   onClick={() => setSelectedStaff(staff.id)}
-                  className={`p-3 rounded-lg border-2 transition text-left ${
+                  className={`w-full text-left p-3 rounded-lg transition border ${
                     selectedStaff === staff.id
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-slate-200 hover:border-slate-300"
+                      ? "bg-blue-600 border-blue-500 text-white"
+                      : "bg-slate-700/50 border-slate-600/50 text-slate-300 hover:bg-slate-700"
                   }`}
                 >
-                  <p className="font-semibold text-slate-900">{staff.name}</p>
-                  <p className="text-xs text-slate-600">{staff.email}</p>
+                  <p className="font-medium">{staff.name}</p>
+                  <p className="text-xs opacity-75">{staff.email}</p>
+                  <Badge className={`mt-1 ${staff.isActive ? "bg-green-600" : "bg-slate-600"}`}>
+                    {staff.isActive ? "Active" : "Inactive"}
+                  </Badge>
                 </button>
               ))}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {selectedStaff && (
-          <>
-            {/* Date Range Filter */}
-            <Card className="border-slate-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Date Range</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-slate-700 mb-2 block">
-                      Start Date
-                    </label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-700 mb-2 block">
-                      End Date
-                    </label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Attendance Details */}
+          <div className="lg:col-span-3 space-y-4">
+            {selectedStaff ? (
+              <>
+                {/* Date Range Filter */}
+                <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-blue-400" />
+                      Filter Period
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex gap-4">
+                    <div className="flex-1">
+                      <label className="text-sm text-slate-400 block mb-1">From</label>
+                      <Input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="bg-slate-700/50 border-slate-600 text-white"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-sm text-slate-400 block mb-1">To</label>
+                      <Input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="bg-slate-700/50 border-slate-600 text-white"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
 
-            {/* Attendance Records */}
-            <Card className="border-slate-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Attendance Records</CardTitle>
-                <CardDescription>
-                  {attendanceData?.length || 0} records found
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {attendanceData && attendanceData.length > 0 ? (
-                  <div className="space-y-4">
-                    {attendanceData.map((record) => (
-                      <div
-                        key={record.id}
-                        className="p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition space-y-3"
-                      >
-                        {/* Header */}
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-semibold text-slate-900">
-                              {formatDate(record.checkInTime)}
-                            </p>
-                            <p className="text-sm text-slate-600">
-                              {formatTime(record.checkInTime)} - {record.checkOutTime ? formatTime(record.checkOutTime) : "In Progress"}
-                            </p>
-                          </div>
-                          <Badge
-                            variant="outline"
-                            className={
-                              record.checkOutTime
-                                ? "bg-green-50 text-green-700 border-green-200"
-                                : "bg-blue-50 text-blue-700 border-blue-200"
-                            }
-                          >
-                            {record.checkOutTime ? "Completed" : "Active"}
-                          </Badge>
-                        </div>
-
-                        {/* Location Data */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                          <div className="p-2 bg-slate-50 rounded">
-                            <p className="text-xs text-slate-600">Check-In Lat</p>
-                            <p className="font-mono font-semibold text-slate-900">
-                              {record.checkInLat}
-                            </p>
-                          </div>
-                          <div className="p-2 bg-slate-50 rounded">
-                            <p className="text-xs text-slate-600">Check-In Lng</p>
-                            <p className="font-mono font-semibold text-slate-900">
-                              {record.checkInLng}
-                            </p>
-                          </div>
-                          {record.checkOutLat && (
-                            <div className="p-2 bg-slate-50 rounded">
-                              <p className="text-xs text-slate-600">Check-Out Lat</p>
-                              <p className="font-mono font-semibold text-slate-900">
-                                {record.checkOutLat}
-                              </p>
-                            </div>
-                          )}
-                          {record.checkOutLng && (
-                            <div className="p-2 bg-slate-50 rounded">
-                              <p className="text-xs text-slate-600">Check-Out Lng</p>
-                              <p className="font-mono font-semibold text-slate-900">
-                                {record.checkOutLng}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Metrics */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                          <div className="p-2 bg-slate-50 rounded">
-                            <p className="text-xs text-slate-600">Duration</p>
-                            <p className="font-semibold text-slate-900">
-                              {calculateDuration(record.checkInTime, record.checkOutTime)}
-                            </p>
-                          </div>
-                          <div className="p-2 bg-slate-50 rounded">
-                            <p className="text-xs text-slate-600">Distance</p>
-                            <p className="font-semibold text-slate-900">
-                              {record.distanceTraveled?.toString() || "0"} km
-                            </p>
-                          </div>
-                          <div className="p-2 bg-slate-50 rounded">
-                            <p className="text-xs text-slate-600">Check-In Accuracy</p>
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="font-semibold text-slate-900">
-                                {record.checkInAccuracy?.toString() || "N/A"} m
-                              </p>
-                              {record.checkInAccuracy && (
-                                <Badge
-                                  className={
-                                    getAccuracyQuality(record.checkInAccuracy).color
-                                  }
-                                >
-                                  {getAccuracyQuality(record.checkInAccuracy).label}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                          {record.checkOutAccuracy && (
-                            <div className="p-2 bg-slate-50 rounded">
-                              <p className="text-xs text-slate-600">Check-Out Accuracy</p>
-                              <div className="flex items-center justify-between gap-2">
-                                <p className="font-semibold text-slate-900">
-                                  {record.checkOutAccuracy.toString()} m
-                                </p>
-                                <Badge
-                                  className={
-                                    getAccuracyQuality(record.checkOutAccuracy).color
-                                  }
-                                >
-                                  {getAccuracyQuality(record.checkOutAccuracy).label}
-                                </Badge>
+                {/* Attendance Records */}
+                <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-blue-400" />
+                      Attendance Records
+                    </CardTitle>
+                    <CardDescription className="text-slate-400">
+                      {formatDate(startDate)} to {formatDate(endDate)}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {attendanceData && Array.isArray(attendanceData) && attendanceData.length > 0 ? (
+                      attendanceData.map((record: any) => {
+                        const accuracyQuality = getAccuracyQuality(record.checkInAccuracy || 0);
+                        return (
+                          <div key={record.id} className="p-4 bg-slate-700/50 rounded-lg border border-slate-600/50 hover:border-blue-500/50 transition">
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <p className="text-white font-medium">{formatDate(record.checkInTime)}</p>
+                                <div className="flex gap-2 mt-1">
+                                  <Badge className={`${accuracyQuality.color} text-white`}>
+                                    {accuracyQuality.label} GPS
+                                  </Badge>
+                                  <Badge className={record.checkOutTime ? "bg-green-600" : "bg-blue-600"}>
+                                    {record.checkOutTime ? "Completed" : "In Progress"}
+                                  </Badge>
+                                </div>
                               </div>
                             </div>
-                          )}
-                        </div>
 
-                        {/* Remark Section */}
-                        <div className="pt-3 border-t border-slate-200 space-y-2">
-                          <p className="text-sm font-medium text-slate-700">Add Remark</p>
-                          <div className="flex gap-2">
-                            <Textarea
-                              placeholder="Add observation or note about this work session..."
-                              value={remark}
-                              onChange={(e) => setRemark(e.target.value)}
-                              className="flex-1 text-sm"
-                              rows={2}
-                            />
-                            <Button
-                              onClick={() => handleAddRemark(record.id)}
-                              disabled={isAddingRemark || !remark.trim()}
-                              className="bg-blue-600 hover:bg-blue-700"
-                            >
-                              {isAddingRemark ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                "Add"
-                              )}
-                            </Button>
+                            <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                              <div>
+                                <p className="text-slate-400">Check In</p>
+                                <p className="text-white font-medium">{formatTime(record.checkInTime)}</p>
+                              </div>
+                              <div>
+                                <p className="text-slate-400">Check Out</p>
+                                <p className="text-white font-medium">
+                                  {record.checkOutTime ? formatTime(record.checkOutTime) : "-"}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-slate-400">Duration</p>
+                                <p className="text-white font-medium">
+                                  {calculateDuration(record.checkInTime, record.checkOutTime)}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-slate-400">Accuracy</p>
+                                <p className="text-white font-medium">
+                                  {record.checkInAccuracy ? `${parseFloat(record.checkInAccuracy).toFixed(1)}m` : "-"}
+                                </p>
+                              </div>
+                            </div>
+
+                            {record.supervisorRemark && (
+                              <div className="p-2 bg-blue-900/20 rounded border border-blue-500/30 mb-3">
+                                <p className="text-xs text-blue-300 font-medium mb-1">Supervisor Remark</p>
+                                <p className="text-blue-200 text-sm">{record.supervisorRemark}</p>
+                              </div>
+                            )}
+
+                            <div className="space-y-2">
+                              <Textarea
+                                placeholder="Add supervisor remark..."
+                                value={remark}
+                                onChange={(e) => setRemark(e.target.value)}
+                                className="bg-slate-600/50 border-slate-600 text-white placeholder:text-slate-400 text-sm min-h-16"
+                              />
+                              <Button
+                                onClick={() => handleAddRemark(record.id)}
+                                disabled={isAddingRemark || !remark.trim()}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0"
+                              >
+                                {isAddingRemark ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Adding Remark...
+                                  </>
+                                ) : (
+                                  <>
+                                    <MessageSquare className="w-4 h-4 mr-2" />
+                                    Add Remark
+                                  </>
+                                )}
+                              </Button>
+                            </div>
                           </div>
-                        </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-8">
+                        <AlertCircle className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                        <p className="text-slate-400">No attendance records found for this period</p>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-slate-600 py-8">
-                    No attendance records found for the selected date range
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </>
-        )}
-
-        {/* Info Card */}
-        <Card className="border-slate-200 bg-blue-50 border-blue-200">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-blue-900">
-                <p className="font-semibold mb-1">GPS Precision Tracking</p>
-                <p>
-                  All staff locations are recorded with 8-decimal GPS precision. Accuracy metrics help identify
-                  signal quality. Add remarks to document observations about field work quality and performance.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+                <CardContent className="pt-12 pb-12 text-center">
+                  <Users className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                  <p className="text-slate-400 text-lg">Select a staff member to view their attendance records</p>
+                  <p className="text-slate-500 text-sm mt-2">Choose from the staff list on the left</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

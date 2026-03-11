@@ -39,11 +39,11 @@ function Navigation() {
   ];
 
   return (
-    <nav className="bg-white border-b border-slate-200 shadow-sm">
+    <nav className="bg-slate-900 border-b border-slate-700 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-8">
-            <h1 className="text-xl font-bold text-slate-900">SDG Timesheet</h1>
+            <h1 className="text-xl font-bold text-blue-400">SDG Timesheet</h1>
             <div className="hidden md:flex gap-1">
               {navItems.map((item) => (
                 <button
@@ -51,8 +51,8 @@ function Navigation() {
                   onClick={() => navigate(item.href)}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition ${
                     location === item.href
-                      ? "bg-blue-100 text-blue-900"
-                      : "text-slate-700 hover:bg-slate-100"
+                      ? "bg-blue-600 text-white"
+                      : "text-slate-300 hover:bg-slate-800"
                   }`}
                 >
                   {item.label}
@@ -62,10 +62,10 @@ function Navigation() {
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-600">{user.name}</span>
+            <span className="text-sm text-slate-300">{user.name}</span>
             <button
               onClick={() => logout()}
-              className="px-4 py-2 text-sm font-medium text-white bg-slate-600 hover:bg-slate-700 rounded-md transition"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition"
             >
               Logout
             </button>
@@ -81,10 +81,10 @@ function Router() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-900">
         <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600" />
-          <p className="text-slate-600">Loading...</p>
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-400" />
+          <p className="text-slate-400">Loading...</p>
         </div>
       </div>
     );
@@ -92,15 +92,15 @@ function Router() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-slate-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-blue-900">
         <div className="text-center space-y-6 max-w-md">
           <div className="space-y-2">
-            <h1 className="text-4xl font-bold text-slate-900">SDG Timesheet System</h1>
-            <p className="text-slate-600">GPS-based workforce attendance and field tracking</p>
+            <h1 className="text-4xl font-bold text-blue-300">SDG Timesheet System</h1>
+            <p className="text-slate-400">GPS-based workforce attendance and field tracking</p>
           </div>
 
           <div className="space-y-4 pt-4">
-            <p className="text-slate-700">
+            <p className="text-slate-300">
               Track your work hours, manage leave requests, and monitor field activities with precision GPS tracking.
             </p>
 
@@ -137,7 +137,7 @@ function Router() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <Toaster />
           <Router />
