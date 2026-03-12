@@ -37,14 +37,24 @@ export default function AdminDashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [showExport, setShowExport] = useState<"attendance" | "overtime" | "leave" | null>(null);
 
-  // Queries
-  const { data: stats } = trpc.attendance.getToday.useQuery() as any;
-  const { data: leaveRequests, refetch: refetchRequests } = trpc.leave.getMyRequests.useQuery() as any;
-  const { data: staffList } = trpc.users.getAll.useQuery();
-  const { data: attendanceRecords } = trpc.attendance.getToday.useQuery();
-  const { data: analyticsMetrics } = trpc.analytics.metrics.useQuery({
+  // Queries with real-time polling for live updates
+  const { data: stats, refetch: refetchStats } = trpc.attendance.getToday.useQuery(undefined, {
+    refetchInterval: 3000,
+  }) as any;
+  const { data: leaveRequests, refetch: refetchRequests } = trpc.leave.getMyRequests.useQuery(undefined, {
+    refetchInterval: 5000,
+  }) as any;
+  const { data: staffList, refetch: refetchStaffList } = trpc.users.getAll.useQuery(undefined, {
+    refetchInterval: 10000,
+  });
+  const { data: attendanceRecords, refetch: refetchAttendance } = trpc.attendance.getToday.useQuery(undefined, {
+    refetchInterval: 3000,
+  });
+  const { data: analyticsMetrics, refetch: refetchAnalytics } = trpc.analytics.metrics.useQuery({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     endDate: new Date(),
+  }, {
+    refetchInterval: 30000,
   }) as any;
 
   // Mutations
@@ -203,20 +213,32 @@ export default function AdminDashboard() {
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <Activity className="w-5 h-5 text-blue-400" />
-                    Recent Activity
+                    Live Staff Status
                   </CardTitle>
-                  <CardDescription className="text-slate-400">Latest system events</CardDescription>
+                  <CardDescription className="text-slate-400">Real-time check-in/out (updates every 3s)</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {staffList?.slice(0, 5).map((staff: any) => (
-                    <div key={staff.id} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition border border-slate-600/50">
-                      <div>
-                        <p className="text-white font-medium">{staff.name}</p>
-                        <p className="text-xs text-slate-400">{staff.email}</p>
+                  {staffList?.slice(0, 5).map((staff: any) => {
+                    const staffAttendance = Array.isArray(attendanceRecords) ? attendanceRecords.find((att: any) => att.userId === staff.id) : null;
+                    const isCheckedIn = staffAttendance && !staffAttendance.checkOutTime;
+                    return (
+                      <div key={staff.id} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition border border-slate-600/50">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${isCheckedIn ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
+                            <p className="text-white font-medium">{staff.name}</p>
+                          </div>
+                          <p className="text-xs text-slate-400">{staff.email}</p>
+                        </div>
+                        <div className="text-right">
+                          <Badge className={isCheckedIn ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}>
+                            {isCheckedIn ? "Checked In" : "Checked Out"}
+                          </Badge>
+                          <p className="text-xs text-slate-400 mt-1">{staffAttendance ? new Date(staffAttendance.checkInTime).toLocaleTimeString() : "N/A"}</p>
+                        </div>
                       </div>
-                      <Badge className={staff.role === "admin" ? "bg-red-600 hover:bg-red-700" : staff.role === "supervisor" ? "bg-purple-600 hover:bg-purple-700" : "bg-blue-600 hover:bg-blue-700"}>{staff.role}</Badge>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </CardContent>
               </Card>
 
@@ -403,6 +425,7 @@ export default function AdminDashboard() {
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Check In</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Check Out</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Duration</th>
+                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Waypoints</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Status</th>
                       </tr>
                     </thead>
@@ -413,6 +436,11 @@ export default function AdminDashboard() {
                           <td className="py-3 px-4 text-slate-400">{new Date(record.checkInTime).toLocaleTimeString()}</td>
                           <td className="py-3 px-4 text-slate-400">{record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString() : "-"}</td>
                           <td className="py-3 px-4 text-slate-400">{record.durationMinutes ? `${Math.floor(record.durationMinutes / 60)}h ${record.durationMinutes % 60}m` : "-"}</td>
+                          <td className="py-3 px-4">
+                            <Badge className="bg-blue-600 hover:bg-blue-700">
+                              {record.waypointCount || 0} waypoints
+                            </Badge>
+                          </td>
                           <td className="py-3 px-4">
                             <Badge className={record.checkOutTime ? "bg-green-600" : "bg-blue-600"}>
                               {record.checkOutTime ? "Checked Out" : "Checked In"}
