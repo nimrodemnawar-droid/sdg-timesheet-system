@@ -173,6 +173,9 @@ export default function LiveGPSMap() {
       });
 
       markersRef.current.set(staff.id, marker);
+
+      // Add check-in location marker
+      addCheckInMarker(staff);
     });
 
     // Center map on first staff member if available
@@ -207,6 +210,49 @@ export default function LiveGPSMap() {
         <div class="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-white px-2 py-1 rounded text-xs font-semibold whitespace-nowrap shadow-md">
           ${staff.name}
         </div>
+      </div>
+    `;
+    return div;
+  };
+
+  // Add check-in location marker
+  const addCheckInMarker = (staff: StaffLocation) => {
+    if (!mapRef.current || !window.google || !staff.checkInLat || !staff.checkInLng) return;
+
+    const checkInPosition = { lat: staff.checkInLat, lng: staff.checkInLng };
+    const checkInMarker = new window.google.maps.marker.AdvancedMarkerElement({
+      map: mapRef.current,
+      position: checkInPosition,
+      title: `${staff.name} - Check In Location`,
+      content: createCheckInMarkerContent(staff),
+    });
+
+    const infoWindow = new window.google.maps.InfoWindow({
+      content: `
+        <div style="background: white; padding: 12px; border-radius: 6px; max-width: 280px; font-family: Arial, sans-serif;">
+          <h3 style="font-weight: bold; color: #1f2937; margin: 0 0 6px 0; font-size: 14px;">${staff.name}</h3>
+          <p style="color: #4b5563; font-size: 12px; margin: 0 0 6px 0;">Check-in Location</p>
+          <p style="color: #6b7280; font-size: 11px; margin: 2px 0;">Time: ${formatTime(staff.lastUpdated)}</p>
+          <p style="color: #6b7280; font-size: 11px; margin: 2px 0;">Accuracy: ${staff.accuracy.toFixed(1)}m</p>
+          <p style="color: #6b7280; font-size: 11px; margin: 2px 0;">Lat: ${staff.checkInLat.toFixed(8)}</p>
+          <p style="color: #6b7280; font-size: 11px; margin: 2px 0;">Lng: ${staff.checkInLng.toFixed(8)}</p>
+        </div>
+      `,
+    });
+
+    checkInMarker.addListener("click", () => {
+      infoWindow.open(mapRef.current, checkInMarker);
+    });
+  };
+
+  // Create check-in marker content
+  const createCheckInMarkerContent = (staff: StaffLocation) => {
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <div style="width: 32px; height: 32px; background: #3b82f6; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+        <svg style="width: 16px; height: 16px; color: white;" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+        </svg>
       </div>
     `;
     return div;
