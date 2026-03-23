@@ -46,6 +46,8 @@ export default function LiveGPSMap() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [showWaypoints, setShowWaypoints] = useState(true);
   const [showRoutes, setShowRoutes] = useState(true);
+  const [showCheckInMarkers, setShowCheckInMarkers] = useState(true);
+  const [showCheckOutMarkers, setShowCheckOutMarkers] = useState(true);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch all staff
@@ -176,6 +178,9 @@ export default function LiveGPSMap() {
 
       // Add check-in location marker
       addCheckInMarker(staff);
+
+      // Add check-out location marker
+      addCheckOutMarker(staff);
     });
 
     // Center map on first staff member if available
@@ -217,7 +222,7 @@ export default function LiveGPSMap() {
 
   // Add check-in location marker
   const addCheckInMarker = (staff: StaffLocation) => {
-    if (!mapRef.current || !window.google || !staff.checkInLat || !staff.checkInLng) return;
+    if (!showCheckInMarkers || !mapRef.current || !window.google || !staff.checkInLat || !staff.checkInLng) return;
 
     const checkInPosition = { lat: staff.checkInLat, lng: staff.checkInLng };
     const checkInMarker = new window.google.maps.marker.AdvancedMarkerElement({
@@ -250,6 +255,49 @@ export default function LiveGPSMap() {
     const div = document.createElement("div");
     div.innerHTML = `
       <div style="width: 32px; height: 32px; background: #3b82f6; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+        <svg style="width: 16px; height: 16px; color: white;" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+        </svg>
+      </div>
+    `;
+    return div;
+  };
+
+  // Add check-out location marker
+  const addCheckOutMarker = (staff: StaffLocation) => {
+    if (!showCheckOutMarkers || !mapRef.current || !window.google || !staff.checkOutLat || !staff.checkOutLng) return;
+
+    const checkOutPosition = { lat: staff.checkOutLat, lng: staff.checkOutLng };
+    const checkOutMarker = new window.google.maps.marker.AdvancedMarkerElement({
+      map: mapRef.current,
+      position: checkOutPosition,
+      title: `${staff.name} - Check Out Location`,
+      content: createCheckOutMarkerContent(staff),
+    });
+
+    const infoWindow = new window.google.maps.InfoWindow({
+      content: `
+        <div style="background: white; padding: 12px; border-radius: 6px; max-width: 280px; font-family: Arial, sans-serif;">
+          <h3 style="font-weight: bold; color: #1f2937; margin: 0 0 6px 0; font-size: 14px;">${staff.name}</h3>
+          <p style="color: #4b5563; font-size: 12px; margin: 0 0 6px 0;">Check-out Location</p>
+          <p style="color: #6b7280; font-size: 11px; margin: 2px 0;">Time: ${formatTime(staff.lastUpdated)}</p>
+          <p style="color: #6b7280; font-size: 11px; margin: 2px 0;">Accuracy: ${staff.accuracy.toFixed(1)}m</p>
+          <p style="color: #6b7280; font-size: 11px; margin: 2px 0;">Lat: ${staff.checkOutLat.toFixed(8)}</p>
+          <p style="color: #6b7280; font-size: 11px; margin: 2px 0;">Lng: ${staff.checkOutLng.toFixed(8)}</p>
+        </div>
+      `,
+    });
+
+    checkOutMarker.addListener("click", () => {
+      infoWindow.open(mapRef.current, checkOutMarker);
+    });
+  };
+
+  // Create check-out marker content
+  const createCheckOutMarkerContent = (staff: StaffLocation) => {
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <div style="width: 32px; height: 32px; background: #ef4444; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
         <svg style="width: 16px; height: 16px; color: white;" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
         </svg>
@@ -396,6 +444,30 @@ export default function LiveGPSMap() {
                     className="w-4 h-4 rounded"
                   />
                   Show Routes
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={showCheckInMarkers}
+                    onChange={(e) => setShowCheckInMarkers(e.target.checked)}
+                    className="w-4 h-4 rounded"
+                  />
+                  <span className="flex items-center gap-1">
+                    <span className="w-3 h-3 bg-blue-500 rounded-full border border-white"></span>
+                    Check-in
+                  </span>
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={showCheckOutMarkers}
+                    onChange={(e) => setShowCheckOutMarkers(e.target.checked)}
+                    className="w-4 h-4 rounded"
+                  />
+                  <span className="flex items-center gap-1">
+                    <span className="w-3 h-3 bg-red-500 rounded-full border border-white"></span>
+                    Check-out
+                  </span>
                 </label>
                 <Button
                   onClick={handleManualRefresh}
