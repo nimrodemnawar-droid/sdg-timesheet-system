@@ -313,3 +313,29 @@ export const activityHeatmap = mysqlTable("activityHeatmap", {
 
 export type ActivityHeatmap = typeof activityHeatmap.$inferSelect;
 export type InsertActivityHeatmap = typeof activityHeatmap.$inferInsert;
+
+/**
+ * Notification Preferences - Admin customizable settings
+ */
+export const notificationPreferences = mysqlTable("notificationPreferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  enableCheckInNotifications: boolean("enableCheckInNotifications").default(true).notNull(),
+  enableCheckOutNotifications: boolean("enableCheckOutNotifications").default(true).notNull(),
+  enableLeaveApprovalNotifications: boolean("enableLeaveApprovalNotifications").default(true).notNull(),
+  enableOvertimeAlerts: boolean("enableOvertimeAlerts").default(true).notNull(),
+  quietHoursEnabled: boolean("quietHoursEnabled").default(false).notNull(),
+  quietHoursStart: varchar("quietHoursStart", { length: 5 }), // HH:MM format (24-hour)
+  quietHoursEnd: varchar("quietHoursEnd", { length: 5 }), // HH:MM format (24-hour)
+  quietHoursTimezone: varchar("quietHoursTimezone", { length: 50 }).default("UTC").notNull(),
+  notificationChannels: json("notificationChannels").$type<{
+    inApp: boolean;
+    email: boolean;
+    push: boolean;
+  }>().default({ inApp: true, email: false, push: false }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type NotificationPreferences = typeof notificationPreferences.$inferSelect;
+export type InsertNotificationPreferences = typeof notificationPreferences.$inferInsert;

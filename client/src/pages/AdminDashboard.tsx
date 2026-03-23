@@ -27,6 +27,7 @@ import {
 import { toast } from "sonner";
 import { ExportDialog } from "@/components/ExportDialog";
 import { NotificationCenter, type Notification } from "@/components/NotificationCenter";
+import { NotificationPreferencesDialog } from "@/components/NotificationPreferencesDialog";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -190,11 +191,14 @@ export default function AdminDashboard() {
               <Shield className="w-8 h-8 text-blue-400" />
               <h1 className="text-4xl font-bold text-white">Admin Dashboard</h1>
             </div>
-            <NotificationCenter
-              notifications={notifications}
-              onClear={handleClearNotification}
-              onClearAll={handleClearAllNotifications}
-            />
+            <div className="flex items-center gap-2">
+              <NotificationPreferencesDialog />
+              <NotificationCenter
+                notifications={notifications}
+                onClear={handleClearNotification}
+                onClearAll={handleClearAllNotifications}
+              />
+            </div>
           </div>
           <p className="text-slate-300">Complete timesheet management and system oversight</p>
         </div>

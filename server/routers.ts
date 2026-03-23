@@ -71,11 +71,15 @@ export const appRouter = router({
           ipAddress: ctx.req.ip,
         });
 
-        // Send notification to admin
-        await notifyOwner({
-          title: `Staff Check-In: ${ctx.user.name}`,
-          content: `${ctx.user.name} checked in at ${new Date().toLocaleTimeString()}. Location: (${parseFloat(input.latitude).toFixed(4)}, ${parseFloat(input.longitude).toFixed(4)}). Accuracy: ${parseFloat(input.accuracy).toFixed(1)}m`,
-        }).catch((err) => console.error("Failed to send check-in notification:", err));
+        // Send notification to admin if enabled and not in quiet hours
+        const prefs = await db.getNotificationPreferences(ctx.user.id);
+        const isQuietHours = db.isWithinQuietHours(prefs);
+        if (prefs?.enableCheckInNotifications && !isQuietHours) {
+          await notifyOwner({
+            title: `Staff Check-In: ${ctx.user.name}`,
+            content: `${ctx.user.name} checked in at ${new Date().toLocaleTimeString()}. Location: (${parseFloat(input.latitude || "0").toFixed(4)}, ${parseFloat(input.longitude || "0").toFixed(4)}). Accuracy: ${parseFloat(input.accuracy || "0").toFixed(1)}m`,
+          }).catch((err) => console.error("Failed to send check-in notification:", err));
+        }
 
         return { success: true };
       }),
@@ -116,14 +120,18 @@ export const appRouter = router({
           ipAddress: ctx.req.ip,
         });
 
-        // Send notification to admin
-        const checkInTime = new Date(attendance.checkInTime);
-        const checkOutTime = new Date();
-        const hoursWorked = ((checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60 * 60)).toFixed(2);
-        await notifyOwner({
-          title: `Staff Check-Out: ${ctx.user.name}`,
-          content: `${ctx.user.name} checked out at ${checkOutTime.toLocaleTimeString()}. Location: (${parseFloat(input.latitude).toFixed(4)}, ${parseFloat(input.longitude).toFixed(4)}). Accuracy: ${parseFloat(input.accuracy).toFixed(1)}m. Hours worked: ${hoursWorked}h. Distance: ${parseFloat(input.distanceTraveled).toFixed(2)}m`,
-        }).catch((err) => console.error("Failed to send check-out notification:", err));
+        // Send notification to admin if enabled and not in quiet hours
+        const prefs = await db.getNotificationPreferences(ctx.user.id);
+        const isQuietHours = db.isWithinQuietHours(prefs);
+        if (prefs?.enableCheckOutNotifications && !isQuietHours) {
+          const checkInTime = new Date(attendance.checkInTime);
+          const checkOutTime = new Date();
+          const hoursWorked = ((checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60 * 60)).toFixed(2);
+          await notifyOwner({
+            title: `Staff Check-Out: ${ctx.user.name}`,
+            content: `${ctx.user.name} checked out at ${checkOutTime.toLocaleTimeString()}. Location: (${parseFloat(input.latitude).toFixed(4)}, ${parseFloat(input.longitude).toFixed(4)}). Accuracy: ${parseFloat(input.accuracy).toFixed(1)}m. Hours worked: ${hoursWorked}h. Distance: ${parseFloat(input.distanceTraveled).toFixed(2)}m`,
+          }).catch((err) => console.error("Failed to send check-out notification:", err));
+        }
 
         return { success: true };
       }),
@@ -581,6 +589,42 @@ export const appRouter = router({
         return { success: true };
       }),
    }),
+
+  // ============ NOTIFICATION PREFERENCES ============
+  notificationPreferences: router({
+    get: protectedProcedure.query(async ({ ctx }) => {
+      let prefs = await db.getNotificationPreferences(ctx.user.id);
+      if (!prefs) {
+        prefs = await db.createNotificationPreferences(ctx.user.id);
+      }
+      return prefs;
+    }),
+
+    update: protectedProcedure
+      .input(
+        z.object({
+          enableCheckInNotifications: z.boolean().optional(),
+          enableCheckOutNotifications: z.boolean().optional(),
+          enableLeaveApprovalNotifications: z.boolean().optional(),
+          enableOvertimeAlerts: z.boolean().optional(),
+          quietHoursEnabled: z.boolean().optional(),
+          quietHoursStart: z.string().optional().nullable(),
+          quietHoursEnd: z.string().optional().nullable(),
+          quietHoursTimezone: z.string().optional(),
+          notificationChannels: z
+            .object({
+              inApp: z.boolean().optional(),
+              email: z.boolean().optional(),
+              push: z.boolean().optional(),
+            })
+            .optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const updated = await db.updateNotificationPreferences(ctx.user.id, input);
+        return updated || { success: false };
+      }),
+  }),
 
   // ============ ANALYTICS PROCEDURES ============
   analytics: analyticsRouter,

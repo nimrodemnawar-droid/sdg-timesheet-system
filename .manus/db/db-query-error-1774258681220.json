@@ -1,0 +1,13 @@
+{
+  "query": "CREATE TABLE `notificationPreferences` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`enableCheckInNotifications` boolean NOT NULL DEFAULT true,\n\t`enableCheckOutNotifications` boolean NOT NULL DEFAULT true,\n\t`enableLeaveApprovalNotifications` boolean NOT NULL DEFAULT true,\n\t`enableOvertimeAlerts` boolean NOT NULL DEFAULT true,\n\t`quietHoursEnabled` boolean NOT NULL DEFAULT false,\n\t`quietHoursStart` varchar(5),\n\t`quietHoursEnd` varchar(5),\n\t`quietHoursTimezone` varchar(50) NOT NULL DEFAULT 'UTC',\n\t`notificationChannels` json NOT NULL DEFAULT ('{\"inApp\":true,\"email\":false,\"push\":false}'),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `notificationPreferences_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `notificationPreferences_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute CREATE TABLE `notificationPreferences` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`enableCheckInNotifications` boolean NOT NULL DEFAULT true,\n\t`enableCheckOutNotifications` boolean NOT NULL DEFAULT true,\n\t`enableLeaveApprovalNotifications` boolean NOT NULL DEFAULT true,\n\t`enableOvertimeAlerts` boolean NOT NULL DEFAULT true,\n\t`quietHoursEnabled` boolean NOT NULL DEFAULT false,\n\t`quietHoursStart` varchar(5),\n\t`quietHoursEnd` varchar(5),\n\t`quietHoursTimezone` varchar(50) NOT NULL DEFAULT 'UTC',\n\t`notificationChannels` json NOT NULL DEFAULT ('{\"inApp\":true,\"email\":false,\"push\":false}'),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `notificationPreferences_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `notificationPreferences_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade\n);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 12 column 91 near \"'{\"inApp\":true,\"email\":false,\"push\":false}'),",
+    "\t`createdAt` timestamp NOT NULL DEFAULT (now()),",
+    "\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,",
+    "\tCONSTRAINT `notificationPreferences_id` PRIMARY KEY(`id`),",
+    "\tCONSTRAINT `notificationPreferences_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade",
+    ")\""
+  ]
+}

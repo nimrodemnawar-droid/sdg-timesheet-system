@@ -17,6 +17,7 @@ import {
   kpis,
   supervisorConfirmations,
   activityHeatmap,
+  notificationPreferences,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -676,5 +677,127 @@ export async function setSystemConfig(
       description,
       updatedBy,
     });
+  }
+}
+
+// ============ NOTIFICATION PREFERENCES ============
+
+export async function getNotificationPreferences(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db
+      .select()
+      .from(notificationPreferences)
+      .where(eq(notificationPreferences.userId, userId))
+      .limit(1);
+
+    return result.length > 0 ? result[0] : null;
+  } catch (error) {
+    console.error("Error fetching notification preferences:", error);
+    return null;
+  }
+}
+
+export async function createNotificationPreferences(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db.insert(notificationPreferences).values({
+      userId,
+      enableCheckInNotifications: true,
+      enableCheckOutNotifications: true,
+      enableLeaveApprovalNotifications: true,
+      enableOvertimeAlerts: true,
+      quietHoursEnabled: false,
+      quietHoursTimezone: "UTC",
+      notificationChannels: { inApp: true, email: false, push: false },
+    });
+
+    return await getNotificationPreferences(userId);
+  } catch (error) {
+    console.error("Error creating notification preferences:", error);
+    return null;
+  }
+}
+
+export async function updateNotificationPreferences(
+  userId: number,
+  updates: {
+    enableCheckInNotifications?: boolean;
+    enableCheckOutNotifications?: boolean;
+    enableLeaveApprovalNotifications?: boolean;
+    enableOvertimeAlerts?: boolean;
+    quietHoursEnabled?: boolean;
+    quietHoursStart?: string | null;
+    quietHoursEnd?: string | null;
+    quietHoursTimezone?: string;
+    notificationChannels?: {
+      inApp?: boolean;
+      email?: boolean;
+      push?: boolean;
+    };
+  }
+) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const existing = await getNotificationPreferences(userId);
+
+    if (!existing) {
+      // Create default preferences if they don't exist
+      return await createNotificationPreferences(userId);
+    }
+
+    // Merge notification channels
+    const currentChannels = existing.notificationChannels as any || { inApp: true, email: false, push: false };
+    const newChannels = updates.notificationChannels
+      ? { ...currentChannels, ...updates.notificationChannels }
+      : currentChannels;
+
+    await db
+      .update(notificationPreferences)
+      .set({
+        enableCheckInNotifications: updates.enableCheckInNotifications ?? existing.enableCheckInNotifications,
+        enableCheckOutNotifications: updates.enableCheckOutNotifications ?? existing.enableCheckOutNotifications,
+        enableLeaveApprovalNotifications: updates.enableLeaveApprovalNotifications ?? existing.enableLeaveApprovalNotifications,
+        enableOvertimeAlerts: updates.enableOvertimeAlerts ?? existing.enableOvertimeAlerts,
+        quietHoursEnabled: updates.quietHoursEnabled ?? existing.quietHoursEnabled,
+        quietHoursStart: updates.quietHoursStart !== undefined ? updates.quietHoursStart : existing.quietHoursStart,
+        quietHoursEnd: updates.quietHoursEnd !== undefined ? updates.quietHoursEnd : existing.quietHoursEnd,
+        quietHoursTimezone: updates.quietHoursTimezone ?? existing.quietHoursTimezone,
+        notificationChannels: newChannels as any,
+        updatedAt: new Date(),
+      })
+      .where(eq(notificationPreferences.userId, userId));
+
+    return await getNotificationPreferences(userId);
+  } catch (error) {
+    console.error("Error updating notification preferences:", error);
+    return null;
+  }
+}
+
+export function isWithinQuietHours(preferences: any): boolean {
+  if (!preferences?.quietHoursEnabled) return false;
+
+  const start = preferences.quietHoursStart; // HH:MM
+  const end = preferences.quietHoursEnd; // HH:MM
+
+  if (!start || !end) return false;
+
+  const now = new Date();
+  const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+  // Simple string comparison for HH:MM format
+  if (start <= end) {
+    // Normal case: 09:00 to 18:00
+    return currentTime >= start && currentTime <= end;
+  } else {
+    // Overnight case: 22:00 to 06:00
+    return currentTime >= start || currentTime <= end;
   }
 }
