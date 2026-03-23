@@ -95,9 +95,27 @@ export default function StaffDashboard() {
     todayAttendance?.id ? { attendanceId: todayAttendance.id } : { attendanceId: 0 },
     { enabled: !!todayAttendance?.id }
   );
-  const checkInMutation = trpc.attendance.checkIn.useMutation();
-  const checkOutMutation = trpc.attendance.checkOut.useMutation();
-  const addWaypointMutation = trpc.attendance.addWaypoint.useMutation();
+  const utils = trpc.useUtils();
+  const checkInMutation = trpc.attendance.checkIn.useMutation({
+    onSuccess: () => {
+      // Invalidate all attendance-related queries to trigger immediate updates
+      utils.attendance.getToday.invalidate();
+      utils.attendance.getStaffAttendance.invalidate();
+    },
+  });
+  const checkOutMutation = trpc.attendance.checkOut.useMutation({
+    onSuccess: () => {
+      // Invalidate all attendance-related queries to trigger immediate updates
+      utils.attendance.getToday.invalidate();
+      utils.attendance.getStaffAttendance.invalidate();
+    },
+  });
+  const addWaypointMutation = trpc.attendance.addWaypoint.useMutation({
+    onSuccess: () => {
+      // Invalidate waypoint queries
+      utils.attendance.getWaypoints.invalidate();
+    },
+  });
 
   // Acquire GPS coordinates
   const acquireGPS = () => {

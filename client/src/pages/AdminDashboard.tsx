@@ -39,16 +39,16 @@ export default function AdminDashboard() {
 
   // Queries with real-time polling for live updates
   const { data: stats, refetch: refetchStats } = trpc.attendance.getToday.useQuery(undefined, {
-    refetchInterval: 3000,
+    refetchInterval: 1000,
   }) as any;
   const { data: leaveRequests, refetch: refetchRequests } = trpc.leave.getMyRequests.useQuery(undefined, {
-    refetchInterval: 5000,
+    refetchInterval: 2000,
   }) as any;
   const { data: staffList, refetch: refetchStaffList } = trpc.users.getAll.useQuery(undefined, {
-    refetchInterval: 10000,
+    refetchInterval: 2000,
   });
   const { data: attendanceRecords, refetch: refetchAttendance } = trpc.attendance.getToday.useQuery(undefined, {
-    refetchInterval: 3000,
+    refetchInterval: 1000,
   });
   const { data: analyticsMetrics, refetch: refetchAnalytics } = trpc.analytics.metrics.useQuery({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),

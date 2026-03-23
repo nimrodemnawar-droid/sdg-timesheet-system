@@ -122,7 +122,7 @@ export default function LiveGPSMap() {
     }
   };
 
-  // Auto-refresh every 5 seconds
+  // Auto-refresh every 2 seconds for real-time updates
   useEffect(() => {
     if (autoRefresh) {
       // Initial fetch
@@ -130,7 +130,7 @@ export default function LiveGPSMap() {
 
       refreshIntervalRef.current = setInterval(() => {
         fetchAllStaffLocations();
-      }, 5000);
+      }, 2000);
     }
 
     return () => {
