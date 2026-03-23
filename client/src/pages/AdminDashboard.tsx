@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { ExportDialog } from "@/components/ExportDialog";
+import { NotificationCenter, type Notification } from "@/components/NotificationCenter";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -36,6 +37,8 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [showExport, setShowExport] = useState<"attendance" | "overtime" | "leave" | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [lastAttendanceState, setLastAttendanceState] = useState<Map<number, boolean>>(new Map());
 
   // Queries with real-time polling for live updates
   const { data: stats, refetch: refetchStats } = trpc.attendance.getToday.useQuery(undefined, {
@@ -114,14 +117,84 @@ export default function AdminDashboard() {
 
   const pendingRequests = leaveRequests?.filter((req: any) => req.status === "pending") || [];
 
+  // Track attendance changes and create notifications
+  React.useEffect(() => {
+    if (!Array.isArray(attendanceRecords)) return;
+
+    const currentState = new Map<number, boolean>();
+    const newNotifications: Notification[] = [];
+
+    attendanceRecords.forEach((record: any) => {
+      const isCheckedIn = record.checkInTime && !record.checkOutTime;
+      const wasCheckedIn = lastAttendanceState.get(record.userId);
+      const staff = staffList?.find((s: any) => s.id === record.userId);
+
+      if (staff && isCheckedIn !== wasCheckedIn) {
+        if (isCheckedIn && wasCheckedIn === false) {
+          newNotifications.push({
+            id: `checkin-${record.id}-${Date.now()}`,
+            type: "check-in",
+            staffName: staff.name || "Unknown",
+            message: "Checked in",
+            timestamp: new Date(record.checkInTime),
+            read: false,
+            details: {
+              location: record.checkInLat && record.checkInLng ? `(${parseFloat(record.checkInLat).toFixed(4)}, ${parseFloat(record.checkInLng).toFixed(4)})` : null,
+              accuracy: record.checkInAccuracy ? `${parseFloat(record.checkInAccuracy).toFixed(1)}m` : null,
+            },
+          });
+        } else if (!isCheckedIn && wasCheckedIn === true) {
+          const hoursWorked = record.durationMinutes ? (record.durationMinutes / 60).toFixed(2) : "0";
+          newNotifications.push({
+            id: `checkout-${record.id}-${Date.now()}`,
+            type: "check-out",
+            staffName: staff.name || "Unknown",
+            message: "Checked out",
+            timestamp: new Date(record.checkOutTime || new Date()),
+            read: false,
+            details: {
+              location: record.checkOutLat && record.checkOutLng ? `(${parseFloat(record.checkOutLat).toFixed(4)}, ${parseFloat(record.checkOutLng).toFixed(4)})` : null,
+              accuracy: record.checkOutAccuracy ? `${parseFloat(record.checkOutAccuracy).toFixed(1)}m` : null,
+              hoursWorked: `${hoursWorked}h`,
+              distance: record.distanceTraveled ? `${parseFloat(record.distanceTraveled).toFixed(2)}m` : null,
+            },
+          });
+        }
+      }
+
+      currentState.set(record.userId, isCheckedIn);
+    });
+
+    if (newNotifications.length > 0) {
+      setNotifications((prev) => [...newNotifications, ...prev].slice(0, 50));
+    }
+
+    setLastAttendanceState(currentState);
+  }, [attendanceRecords, staffList]);
+
+  const handleClearNotification = (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  const handleClearAllNotifications = () => {
+    setNotifications([]);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <Shield className="w-8 h-8 text-blue-400" />
-            <h1 className="text-4xl font-bold text-white">Admin Dashboard</h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Shield className="w-8 h-8 text-blue-400" />
+              <h1 className="text-4xl font-bold text-white">Admin Dashboard</h1>
+            </div>
+            <NotificationCenter
+              notifications={notifications}
+              onClear={handleClearNotification}
+              onClearAll={handleClearAllNotifications}
+            />
           </div>
           <p className="text-slate-300">Complete timesheet management and system oversight</p>
         </div>

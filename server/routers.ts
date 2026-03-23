@@ -12,6 +12,7 @@ import {
 } from "./encryption";
 import { TRPCError } from "@trpc/server";
 import { analyticsRouter } from "./analyticsRouter";
+import { notifyOwner } from "./_core/notification";
 
 // Helper to ensure admin role
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -70,6 +71,12 @@ export const appRouter = router({
           ipAddress: ctx.req.ip,
         });
 
+        // Send notification to admin
+        await notifyOwner({
+          title: `Staff Check-In: ${ctx.user.name}`,
+          content: `${ctx.user.name} checked in at ${new Date().toLocaleTimeString()}. Location: (${parseFloat(input.latitude).toFixed(4)}, ${parseFloat(input.longitude).toFixed(4)}). Accuracy: ${parseFloat(input.accuracy).toFixed(1)}m`,
+        }).catch((err) => console.error("Failed to send check-in notification:", err));
+
         return { success: true };
       }),
 
@@ -108,6 +115,15 @@ export const appRouter = router({
           entityId: input.attendanceId,
           ipAddress: ctx.req.ip,
         });
+
+        // Send notification to admin
+        const checkInTime = new Date(attendance.checkInTime);
+        const checkOutTime = new Date();
+        const hoursWorked = ((checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60 * 60)).toFixed(2);
+        await notifyOwner({
+          title: `Staff Check-Out: ${ctx.user.name}`,
+          content: `${ctx.user.name} checked out at ${checkOutTime.toLocaleTimeString()}. Location: (${parseFloat(input.latitude).toFixed(4)}, ${parseFloat(input.longitude).toFixed(4)}). Accuracy: ${parseFloat(input.accuracy).toFixed(1)}m. Hours worked: ${hoursWorked}h. Distance: ${parseFloat(input.distanceTraveled).toFixed(2)}m`,
+        }).catch((err) => console.error("Failed to send check-out notification:", err));
 
         return { success: true };
       }),
