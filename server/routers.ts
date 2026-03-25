@@ -600,6 +600,21 @@ export const appRouter = router({
       return prefs;
     }),
 
+    getHistory: protectedProcedure
+      .input(
+        z.object({
+          limit: z.number().optional().default(50),
+          offset: z.number().optional().default(0),
+          eventType: z.string().optional(),
+          deliveryStatus: z.string().optional(),
+          startDate: z.date().optional(),
+          endDate: z.date().optional(),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        return await db.getNotificationHistory(ctx.user.id, input);
+      }),
+
     update: protectedProcedure
       .input(
         z.object({

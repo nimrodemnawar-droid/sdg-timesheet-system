@@ -18,6 +18,7 @@ import {
   supervisorConfirmations,
   activityHeatmap,
   notificationPreferences,
+  notificationHistory,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -800,4 +801,126 @@ export function isWithinQuietHours(preferences: any): boolean {
     // Overnight case: 22:00 to 06:00
     return currentTime >= start || currentTime <= end;
   }
+}
+
+// Notification History Functions
+export async function logNotification(data: {
+  userId: number;
+  title: string;
+  content: string;
+  eventType: "CHECK_IN" | "CHECK_OUT" | "LEAVE_APPROVAL" | "OVERTIME_ALERT" | "SYSTEM";
+  eventEntityId?: number;
+  channels: { inApp: boolean; email: boolean; push: boolean };
+}) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot log notification: database not available");
+    return;
+  }
+  const result = await db
+    .insert(notificationHistory)
+    .values({
+      userId: data.userId,
+      title: data.title,
+      content: data.content,
+      eventType: data.eventType,
+      eventEntityId: data.eventEntityId,
+      channels: data.channels,
+      deliveryStatus: "PENDING",
+    });
+  return result;
+}
+
+export async function getNotificationHistory(
+  userId: number,
+  options?: {
+    limit?: number;
+    offset?: number;
+    eventType?: string;
+    deliveryStatus?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }
+) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get notification history: database not available");
+    return [];
+  }
+  const conditions = [eq(notificationHistory.userId, userId)];
+
+  if (options?.eventType) {
+    conditions.push(eq(notificationHistory.eventType, options.eventType as any));
+  }
+
+  if (options?.deliveryStatus) {
+    conditions.push(eq(notificationHistory.deliveryStatus, options.deliveryStatus as any));
+  }
+
+  if (options?.startDate) {
+    conditions.push(gte(notificationHistory.createdAt, options.startDate));
+  }
+
+  if (options?.endDate) {
+    conditions.push(lte(notificationHistory.createdAt, options.endDate));
+  }
+
+  let query: any = db
+    .select()
+    .from(notificationHistory)
+    .where(and(...conditions))
+    .orderBy(desc(notificationHistory.createdAt));
+
+  if (options?.limit) {
+    query = query.limit(options.limit);
+  }
+
+  if (options?.offset) {
+    query = query.offset(options.offset);
+  }
+
+  return await query;
+}
+
+export async function updateNotificationStatus(
+  notificationId: number,
+  status: "PENDING" | "SENT" | "DELIVERED" | "FAILED",
+  details?: any
+) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot update notification status: database not available");
+    return;
+  }
+  return await db
+    .update(notificationHistory)
+    .set({
+      deliveryStatus: status,
+      deliveryDetails: details || {},
+    })
+    .where(eq(notificationHistory.id, notificationId));
+}
+
+export async function markNotificationAsRead(notificationId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot mark notification as read: database not available");
+    return;
+  }
+  return await db
+    .update(notificationHistory)
+    .set({ readAt: new Date() })
+    .where(eq(notificationHistory.id, notificationId));
+}
+
+export async function archiveNotification(notificationId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot archive notification: database not available");
+    return;
+  }
+  return await db
+    .update(notificationHistory)
+    .set({ archivedAt: new Date() })
+    .where(eq(notificationHistory.id, notificationId));
 }

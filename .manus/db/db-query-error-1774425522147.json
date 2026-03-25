@@ -1,0 +1,15 @@
+{
+  "query": "CREATE TABLE `notificationHistory` (\n`id` int AUTO_INCREMENT NOT NULL,\n`userId` int NOT NULL,\n`title` varchar(255) NOT NULL,\n`content` text NOT NULL,\n`eventType` enum('CHECK_IN','CHECK_OUT','LEAVE_APPROVAL','OVERTIME_ALERT','SYSTEM') NOT NULL,\n`eventEntityId` int,\n`deliveryStatus` enum('PENDING','SENT','DELIVERED','FAILED') NOT NULL DEFAULT 'PENDING',\n`channels` json NOT NULL,\n`deliveryDetails` json NOT NULL DEFAULT ('{}'),\n`readAt` timestamp,\n`archivedAt` timestamp,\n`createdAt` timestamp NOT NULL DEFAULT (now()),\n`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\nCONSTRAINT `notificationHistory_id` PRIMARY KEY(`id`),\nCONSTRAINT `notificationHistory_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute CREATE TABLE `notificationHistory` (\n`id` int AUTO_INCREMENT NOT NULL,\n`userId` int NOT NULL,\n`title` varchar(255) NOT NULL,\n`content` text NOT NULL,\n`eventType` enum('CHECK_IN','CHECK_OUT','LEAVE_APPROVAL','OVERTIME_ALERT','SYSTEM') NOT NULL,\n`eventEntityId` int,\n`deliveryStatus` enum('PENDING','SENT','DELIVERED','FAILED') NOT NULL DEFAULT 'PENDING',\n`channels` json NOT NULL,\n`deliveryDetails` json NOT NULL DEFAULT ('{}'),\n`readAt` timestamp,\n`archivedAt` timestamp,\n`createdAt` timestamp NOT NULL DEFAULT (now()),\n`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\nCONSTRAINT `notificationHistory_id` PRIMARY KEY(`id`),\nCONSTRAINT `notificationHistory_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade\n);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 10 column 46 near \"'{}'),",
+    "`readAt` timestamp,",
+    "`archivedAt` timestamp,",
+    "`createdAt` timestamp NOT NULL DEFAULT (now()),",
+    "`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,",
+    "CONSTRAINT `notificationHistory_id` PRIMARY KEY(`id`),",
+    "CONSTRAINT `notificationHistory_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade",
+    ")\""
+  ]
+}

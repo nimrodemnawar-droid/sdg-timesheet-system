@@ -339,3 +339,32 @@ export const notificationPreferences = mysqlTable("notificationPreferences", {
 
 export type NotificationPreferences = typeof notificationPreferences.$inferSelect;
 export type InsertNotificationPreferences = typeof notificationPreferences.$inferInsert;
+
+/**
+ * Notification History - Log of all sent notifications with delivery status
+ */
+export const notificationHistory = mysqlTable("notificationHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  eventType: mysqlEnum("eventType", ["CHECK_IN", "CHECK_OUT", "LEAVE_APPROVAL", "OVERTIME_ALERT", "SYSTEM"]).notNull(),
+  eventEntityId: int("eventEntityId"), // ID of the entity that triggered the notification (attendance ID, leave request ID, etc.)
+  deliveryStatus: mysqlEnum("deliveryStatus", ["PENDING", "SENT", "DELIVERED", "FAILED"]).default("PENDING").notNull(),
+  channels: json("channels").$type<{
+    inApp: boolean;
+    email: boolean;
+    push: boolean;
+  }>().notNull(),
+  deliveryDetails: json("deliveryDetails").$type<{
+    inApp?: { status: string; timestamp?: string };
+    email?: { status: string; timestamp?: string; error?: string };
+    push?: { status: string; timestamp?: string; error?: string };
+  }>().default({}).notNull(),
+  readAt: timestamp("readAt"),
+  archivedAt: timestamp("archivedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type NotificationHistory = typeof notificationHistory.$inferSelect;
+export type InsertNotificationHistory = typeof notificationHistory.$inferInsert;
