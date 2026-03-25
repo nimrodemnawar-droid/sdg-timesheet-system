@@ -23,6 +23,11 @@ import {
   BarChart3,
   Activity,
   Shield,
+  Filter,
+  Calendar,
+  User,
+  CheckCheck,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ExportDialog } from "@/components/ExportDialog";
@@ -40,6 +45,8 @@ export default function AdminDashboard() {
   const [showExport, setShowExport] = useState<"attendance" | "overtime" | "leave" | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [lastAttendanceState, setLastAttendanceState] = useState<Map<number, boolean>>(new Map());
+  const [leaveFilterStatus, setLeaveFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [leaveSearchTerm, setLeaveSearchTerm] = useState("");
 
   // Queries with real-time polling for live updates
   const { data: stats, refetch: refetchStats } = trpc.attendance.getToday.useQuery(undefined, {
@@ -417,66 +424,211 @@ export default function AdminDashboard() {
 
           {/* Leave Requests Tab */}
           <TabsContent value="leave" className="space-y-4">
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card className="bg-gradient-to-br from-amber-900/30 to-amber-900/10 border-amber-500/30">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-amber-300 text-sm font-medium">Pending</p>
+                      <p className="text-2xl font-bold text-white">{leaveRequests?.filter((r: any) => r.status === "pending").length || 0}</p>
+                    </div>
+                    <AlertCircle className="w-8 h-8 text-amber-400" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-green-900/30 to-green-900/10 border-green-500/30">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-green-300 text-sm font-medium">Approved</p>
+                      <p className="text-2xl font-bold text-white">{leaveRequests?.filter((r: any) => r.status === "approved").length || 0}</p>
+                    </div>
+                    <CheckCheck className="w-8 h-8 text-green-400" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-red-900/30 to-red-900/10 border-red-500/30">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-red-300 text-sm font-medium">Rejected</p>
+                      <p className="text-2xl font-bold text-white">{leaveRequests?.filter((r: any) => r.status === "rejected").length || 0}</p>
+                    </div>
+                    <X className="w-8 h-8 text-red-400" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-blue-900/30 to-blue-900/10 border-blue-500/30">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-blue-300 text-sm font-medium">Total</p>
+                      <p className="text-2xl font-bold text-white">{leaveRequests?.length || 0}</p>
+                    </div>
+                    <FileText className="w-8 h-8 text-blue-400" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Leave Requests Card */}
             <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <FileText className="w-5 h-5 text-blue-400" />
                   Leave Requests
                 </CardTitle>
-                <CardDescription className="text-slate-400">Review and approve leave requests</CardDescription>
+                <CardDescription className="text-slate-400">Review and approve/decline leave requests from staff</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {pendingRequests.length === 0 ? (
-                  <p className="text-slate-400 text-center py-8">No pending leave requests</p>
+                {/* Filters and Search */}
+                <div className="flex flex-col gap-3 md:flex-row md:items-center">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                    <Input
+                      placeholder="Search by staff name or email..."
+                      value={leaveSearchTerm}
+                      onChange={(e) => setLeaveSearchTerm(e.target.value)}
+                      className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => setLeaveFilterStatus("all")}
+                      variant={leaveFilterStatus === "all" ? "default" : "outline"}
+                      className={leaveFilterStatus === "all" ? "bg-blue-600 hover:bg-blue-700 text-white border-0" : "border-slate-600 text-slate-300 hover:bg-slate-700"}
+                    >
+                      All
+                    </Button>
+                    <Button
+                      onClick={() => setLeaveFilterStatus("pending")}
+                      variant={leaveFilterStatus === "pending" ? "default" : "outline"}
+                      className={leaveFilterStatus === "pending" ? "bg-amber-600 hover:bg-amber-700 text-white border-0" : "border-slate-600 text-slate-300 hover:bg-slate-700"}
+                    >
+                      Pending
+                    </Button>
+                    <Button
+                      onClick={() => setLeaveFilterStatus("approved")}
+                      variant={leaveFilterStatus === "approved" ? "default" : "outline"}
+                      className={leaveFilterStatus === "approved" ? "bg-green-600 hover:bg-green-700 text-white border-0" : "border-slate-600 text-slate-300 hover:bg-slate-700"}
+                    >
+                      Approved
+                    </Button>
+                    <Button
+                      onClick={() => setLeaveFilterStatus("rejected")}
+                      variant={leaveFilterStatus === "rejected" ? "default" : "outline"}
+                      className={leaveFilterStatus === "rejected" ? "bg-red-600 hover:bg-red-700 text-white border-0" : "border-slate-600 text-slate-300 hover:bg-slate-700"}
+                    >
+                      Rejected
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Leave Requests List */}
+                {!leaveRequests || leaveRequests.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                    <p className="text-slate-400">No leave requests found</p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
-                    {pendingRequests.map((request: any) => (
-                      <div key={request.id} className="p-4 bg-slate-700/50 rounded-lg border border-slate-600/50 hover:border-blue-500/50 transition">
-                        <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <p className="text-white font-medium">{request.staffName || "Staff Member"}</p>
-                            <p className="text-sm text-slate-400">{request.leaveType}</p>
+                    {leaveRequests
+                      .filter((request: any) => {
+                        const matchesStatus = leaveFilterStatus === "all" || request.status === leaveFilterStatus;
+                        const matchesSearch = !leaveSearchTerm || 
+                          request.staffName?.toLowerCase().includes(leaveSearchTerm.toLowerCase()) ||
+                          request.staffEmail?.toLowerCase().includes(leaveSearchTerm.toLowerCase());
+                        return matchesStatus && matchesSearch;
+                      })
+                      .map((request: any) => (
+                        <div key={request.id} className="p-4 bg-slate-700/50 rounded-lg border border-slate-600/50 hover:border-blue-500/50 transition">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <User className="w-4 h-4 text-slate-400" />
+                                <p className="text-white font-semibold">{request.staffName || "Staff Member"}</p>
+                              </div>
+                              <p className="text-xs text-slate-400 ml-6">{request.staffEmail || "No email"}</p>
+                            </div>
+                            <Badge className={request.status === "pending" ? "bg-amber-600" : request.status === "approved" ? "bg-green-600" : "bg-red-600"}>
+                              {request.status?.charAt(0).toUpperCase() + request.status?.slice(1) || "Pending"}
+                            </Badge>
                           </div>
-                          <Badge className="bg-amber-600">Pending</Badge>
-                        </div>
-                        <p className="text-sm text-slate-300 mb-3">{request.reason}</p>
-                        {selectedRequest === request.id && (
-                          <div className="space-y-3 mt-3 pt-3 border-t border-slate-600">
-                            <Textarea
-                              placeholder="Enter approval/rejection reason..."
-                              value={approvalReason}
-                              onChange={(e) => setApprovalReason(e.target.value)}
-                              className="bg-slate-600/50 border-slate-600 text-white placeholder:text-slate-400"
-                            />
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => handleApproveRequest(request.id)}
-                                disabled={isProcessing}
-                                className="flex-1 bg-green-600 hover:bg-green-700 text-white border-0"
-                              >
-                                Approve
-                              </Button>
-                              <Button
-                                onClick={() => handleRejectRequest(request.id)}
-                                disabled={isProcessing}
-                                className="flex-1 bg-red-600 hover:bg-red-700 text-white border-0"
-                              >
-                                Reject
-                              </Button>
+
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 text-sm">
+                            <div className="bg-slate-600/30 p-2 rounded">
+                              <p className="text-slate-400 text-xs">Leave Type</p>
+                              <p className="text-white font-medium">{request.leaveType || "N/A"}</p>
+                            </div>
+                            <div className="bg-slate-600/30 p-2 rounded">
+                              <p className="text-slate-400 text-xs">From Date</p>
+                              <p className="text-white font-medium">{request.startDate ? new Date(request.startDate).toLocaleDateString() : "N/A"}</p>
+                            </div>
+                            <div className="bg-slate-600/30 p-2 rounded">
+                              <p className="text-slate-400 text-xs">To Date</p>
+                              <p className="text-white font-medium">{request.endDate ? new Date(request.endDate).toLocaleDateString() : "N/A"}</p>
+                            </div>
+                            <div className="bg-slate-600/30 p-2 rounded">
+                              <p className="text-slate-400 text-xs">Days</p>
+                              <p className="text-white font-medium">{request.numberOfDays || "N/A"}</p>
                             </div>
                           </div>
-                        )}
-                        {selectedRequest !== request.id && (
-                          <Button
-                            onClick={() => setSelectedRequest(request.id)}
-                            variant="outline"
-                            className="w-full border-slate-600 text-slate-300 hover:bg-slate-700"
-                          >
-                            Review Request
-                          </Button>
-                        )}
-                      </div>
-                    ))}
+
+                          <div className="mb-3 p-3 bg-slate-600/20 rounded border border-slate-600/30">
+                            <p className="text-xs text-slate-400 mb-1">Reason</p>
+                            <p className="text-sm text-slate-300">{request.reason || "No reason provided"}</p>
+                          </div>
+
+                          {selectedRequest === request.id && (
+                            <div className="space-y-3 mt-3 pt-3 border-t border-slate-600">
+                              <Textarea
+                                placeholder={request.status === "pending" ? "Enter approval/rejection reason..." : "Reason already provided"}
+                                value={approvalReason}
+                                onChange={(e) => setApprovalReason(e.target.value)}
+                                disabled={request.status !== "pending"}
+                                className="bg-slate-600/50 border-slate-600 text-white placeholder:text-slate-400 disabled:opacity-50"
+                              />
+                              {request.status === "pending" && (
+                                <div className="flex gap-2">
+                                  <Button
+                                    onClick={() => handleApproveRequest(request.id)}
+                                    disabled={isProcessing}
+                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white border-0 gap-2"
+                                  >
+                                    <CheckCheck className="w-4 h-4" />
+                                    Approve & Notify Staff
+                                  </Button>
+                                  <Button
+                                    onClick={() => handleRejectRequest(request.id)}
+                                    disabled={isProcessing}
+                                    className="flex-1 bg-red-600 hover:bg-red-700 text-white border-0 gap-2"
+                                  >
+                                    <X className="w-4 h-4" />
+                                    Decline & Notify Staff
+                                  </Button>
+                                </div>
+                              )}
+                              {request.status !== "pending" && (
+                                <div className="p-3 bg-slate-600/30 rounded text-sm text-slate-300">
+                                  <p className="font-medium mb-1">Decision Reason:</p>
+                                  <p>{request.adminReason || "No reason provided"}</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {selectedRequest !== request.id && (
+                            <Button
+                              onClick={() => setSelectedRequest(request.id)}
+                              variant="outline"
+                              className="w-full border-slate-600 text-slate-300 hover:bg-slate-700"
+                              disabled={request.status !== "pending"}
+                            >
+                              {request.status === "pending" ? "Review & Decide" : "View Details"}
+                            </Button>
+                          )}
+                        </div>
+                      ))}
                   </div>
                 )}
               </CardContent>

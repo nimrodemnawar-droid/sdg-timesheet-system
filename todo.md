@@ -88,3 +88,14 @@
 - [ ] User documentation
 - [ ] Admin setup guide
 - [ ] Deployment checklist
+
+
+## Phase 10: Enhanced Leave Request Management
+- [x] Improve admin dashboard leave request UI with better visibility
+- [x] Add filtering and sorting for leave requests (by status, date, staff member)
+- [x] Create detailed leave request cards with staff information
+- [x] Add approval/rejection with reason tracking
+- [x] Implement real-time notifications to staff when requests are approved/declined
+- [x] Add leave request status history tracking
+- [x] Create notification delivery confirmation
+- [ ] Add leave request analytics and reporting

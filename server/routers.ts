@@ -423,9 +423,20 @@ export const appRouter = router({
           ipAddress: ctx.req.ip,
         });
 
-        // Create email notification
+        // Get leave request and send notifications to staff
         const leaveRequest = await db.getLeaveRequest(input.leaveRequestId);
         if (leaveRequest) {
+          // Create in-app notification for staff
+          await db.logNotification({
+            userId: leaveRequest.userId,
+            title: "Leave Request Approved",
+            content: `Your ${leaveRequest.leaveType} leave request from ${new Date(leaveRequest.startDate).toLocaleDateString()} to ${new Date(leaveRequest.endDate).toLocaleDateString()} has been approved.${input.reason ? ` Admin note: ${input.reason}` : ""}`,
+            eventType: "LEAVE_APPROVAL",
+            eventEntityId: input.leaveRequestId,
+            channels: { inApp: true, email: true, push: false },
+          });
+
+          // Create email notification
           await db.createEmailNotification({
             userId: leaveRequest.userId,
             type: "leave_approved",
@@ -460,14 +471,25 @@ export const appRouter = router({
           ipAddress: ctx.req.ip,
         });
 
-        // Create email notification
+        // Get leave request and send notifications to staff
         const leaveRequest = await db.getLeaveRequest(input.leaveRequestId);
         if (leaveRequest) {
+          // Create in-app notification for staff
+          await db.logNotification({
+            userId: leaveRequest.userId,
+            title: "Leave Request Declined",
+            content: `Your ${leaveRequest.leaveType} leave request from ${new Date(leaveRequest.startDate).toLocaleDateString()} to ${new Date(leaveRequest.endDate).toLocaleDateString()} has been declined. Reason: ${input.reason}`,
+            eventType: "LEAVE_APPROVAL",
+            eventEntityId: input.leaveRequestId,
+            channels: { inApp: true, email: true, push: false },
+          });
+
+          // Create email notification
           await db.createEmailNotification({
             userId: leaveRequest.userId,
             type: "leave_rejected",
-            subject: "Leave Request Rejected",
-            content: `Your leave request for ${leaveRequest.leaveType} leave has been rejected. Reason: ${input.reason}`,
+            subject: "Leave Request Declined",
+            content: `Your leave request for ${leaveRequest.leaveType} leave has been declined. Reason: ${input.reason}`,
           });
         }
 
