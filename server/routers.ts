@@ -395,6 +395,28 @@ export const appRouter = router({
         return await db.getLeaveBalance(ctx.user.id, input.leaveType, year);
       }),
 
+    // Staff: Get all leave balances for dashboard
+    getAllBalances: protectedProcedure
+      .input(
+        z.object({
+          year: z.number().optional(),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        const year = input.year || new Date().getFullYear();
+        const leaveTypes = ["annual", "sick", "maternity", "unpaid", "other"];
+        const balances = [];
+
+        for (const leaveType of leaveTypes) {
+          const balance = await db.getLeaveBalance(ctx.user.id, leaveType, year);
+          if (balance) {
+            balances.push(balance);
+          }
+        }
+
+        return balances;
+      }),
+
     // Admin: Get pending leave requests
     getPending: adminProcedure.query(async () => {
       return await db.getPendingLeaveRequests();

@@ -99,3 +99,13 @@
 - [x] Add leave request status history tracking
 - [x] Create notification delivery confirmation
 - [ ] Add leave request analytics and reporting
+
+
+## Phase 11: Leave Balance Dashboard for Staff
+- [x] Create leave balance dashboard page with visual components
+- [x] Add leave balance query procedures for fetching staff leave balances
+- [x] Implement remaining days calculation based on approved leave requests
+- [x] Add progress bars showing leave usage by type
+- [x] Create leave balance history and trends visualization
+- [x] Add leave request submission from dashboard
+- [x] Write comprehensive tests for leave balance features
