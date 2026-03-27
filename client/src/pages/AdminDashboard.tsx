@@ -52,7 +52,7 @@ export default function AdminDashboard() {
   const { data: stats, refetch: refetchStats } = trpc.attendance.getToday.useQuery(undefined, {
     refetchInterval: 1000,
   }) as any;
-  const { data: leaveRequests, refetch: refetchRequests } = trpc.leave.getMyRequests.useQuery(undefined, {
+  const { data: leaveRequests, refetch: refetchRequests } = trpc.leave.getPending.useQuery(undefined, {
     refetchInterval: 2000,
   }) as any;
   const { data: staffList, refetch: refetchStaffList } = trpc.users.getAll.useQuery(undefined, {

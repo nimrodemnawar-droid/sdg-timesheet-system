@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, MapPin, Clock, AlertCircle, CheckCircle2, FileUp, Activity, Briefcase, Target, Plus, Trash2, Navigation } from "lucide-react";
 import { toast } from "sonner";
+import { NotificationBanner } from "@/components/NotificationBanner";
 
 interface GPSCoordinates {
   latitude: number;
@@ -198,9 +199,14 @@ export default function StaffDashboard() {
 
   const isCheckedIn = todayAttendance?.checkInTime && !todayAttendance?.checkOutTime;
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+   return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-blue-900 p-4 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Notification Banner */}
+        <div className="mb-6">
+          <NotificationBanner />
+        </div>
+
         {/* Header */}
         <div className="space-y-2">
           <div className="flex items-center gap-3">

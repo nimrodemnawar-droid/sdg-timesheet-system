@@ -109,3 +109,17 @@
 - [x] Create leave balance history and trends visualization
 - [x] Add leave request submission from dashboard
 - [x] Write comprehensive tests for leave balance features
+
+
+## Phase 12: Leave Request Approval/Decline with Real-time Notifications
+- [x] Enhance admin dashboard with approval/decline modal dialogs
+- [x] Add reason input field for approval/decline decisions
+- [x] Implement approval procedure with validation
+- [x] Implement decline procedure with validation
+- [x] Add real-time notifications to staff when requests are approved
+- [x] Add real-time notifications to staff when requests are declined
+- [x] Create notification display in staff dashboard
+- [x] Add notification sound/toast alerts for staff
+- [x] Implement notification history tracking
+- [x] Write comprehensive tests for approval/decline features
+- [x] Write comprehensive tests for notification system
