@@ -866,7 +866,19 @@ export async function getNotificationHistory(
   }
 
   let query: any = db
-    .select()
+    .select({
+      id: notificationHistory.id,
+      userId: notificationHistory.userId,
+      title: notificationHistory.title,
+      content: notificationHistory.content,
+      eventType: notificationHistory.eventType,
+      eventEntityId: notificationHistory.eventEntityId,
+      deliveryStatus: notificationHistory.deliveryStatus,
+      readAt: notificationHistory.readAt,
+      archivedAt: notificationHistory.archivedAt,
+      createdAt: notificationHistory.createdAt,
+      updatedAt: notificationHistory.updatedAt,
+    })
     .from(notificationHistory)
     .where(and(...conditions))
     .orderBy(desc(notificationHistory.createdAt));
