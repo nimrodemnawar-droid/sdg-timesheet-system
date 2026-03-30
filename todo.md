@@ -153,3 +153,24 @@
 - [x] Test on multiple devices (iPhone, Android, iPad, tablets)
 - [x] Implement mobile viewport meta tags
 - [x] Add touch gestures support
+
+
+## Phase 15: Advanced Staff Tracking & Multi-Format Reporting
+- [x] Implement unique daily staff numbering system (001-100 based on check-in time)
+- [x] Enforce single daily check-in per staff member
+- [x] Enforce single daily check-out per staff member
+- [x] Capture check-in location (GPS coordinates) and address
+- [x] Capture check-out location (GPS coordinates) and address
+- [ ] Allow waypoint tracking throughout the day (after check-in)
+- [ ] Create admin map view showing all check-in locations
+- [ ] Add staff details popup on map (name, number, time, location)
+- [ ] Implement PDF report export with location data
+- [ ] Implement Excel report export with location data
+- [ ] Implement CSV report export with location data
+- [ ] Add location-based analytics (check-in heatmap, distance traveled)
+- [ ] Create attendance summary with staff numbers and locations
+- [ ] Add date range filtering for reports
+- [ ] Add department filtering for reports
+- [ ] Write comprehensive tests for staff numbering system
+- [ ] Write comprehensive tests for check-in/out enforcement
+- [ ] Write comprehensive tests for report generation

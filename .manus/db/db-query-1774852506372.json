@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `attendance` ADD `dailyStaffNumber` varchar(3);\nALTER TABLE `attendance` ADD `checkInAddress` text;\nALTER TABLE `attendance` ADD `checkOutAddress` text;\nALTER TABLE `attendance` ADD `hasCheckedInToday` boolean DEFAULT false NOT NULL;\nALTER TABLE `attendance` ADD `hasCheckedOutToday` boolean DEFAULT false NOT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute ALTER TABLE `attendance` ADD `dailyStaffNumber` varchar(3);\nALTER TABLE `attendance` ADD `checkInAddress` text;\nALTER TABLE `attendance` ADD `checkOutAddress` text;\nALTER TABLE `attendance` ADD `hasCheckedInToday` boolean DEFAULT false NOT NULL;\nALTER TABLE `attendance` ADD `hasCheckedOutToday` boolean DEFAULT false NOT NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2093
+}

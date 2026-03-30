@@ -93,13 +93,16 @@ export type InsertKPI = typeof kpis.$inferInsert;
 export const attendance = mysqlTable("attendance", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  dailyStaffNumber: varchar("dailyStaffNumber", { length: 3 }),
   checkInTime: timestamp("checkInTime").notNull(),
   checkOutTime: timestamp("checkOutTime"),
-  checkInLat: decimal("checkInLat", { precision: 11, scale: 8 }).notNull(), // 8-decimal precision
+  checkInLat: decimal("checkInLat", { precision: 11, scale: 8 }).notNull(),
   checkInLng: decimal("checkInLng", { precision: 11, scale: 8 }).notNull(),
+  checkInAddress: text("checkInAddress"),
   checkOutLat: decimal("checkOutLat", { precision: 11, scale: 8 }),
   checkOutLng: decimal("checkOutLng", { precision: 11, scale: 8 }),
-  checkInAccuracy: decimal("checkInAccuracy", { precision: 6, scale: 2 }), // in meters
+  checkOutAddress: text("checkOutAddress"),
+  checkInAccuracy: decimal("checkInAccuracy", { precision: 6, scale: 2 }),
   checkOutAccuracy: decimal("checkOutAccuracy", { precision: 6, scale: 2 }),
   distanceTraveled: decimal("distanceTraveled", { precision: 10, scale: 3 }), // in km
   durationMinutes: int("durationMinutes"), // calculated field
@@ -122,8 +125,10 @@ export const attendance = mysqlTable("attendance", {
   isSubmitted: boolean("isSubmitted").default(false).notNull(),
   submittedAt: timestamp("submittedAt"),
   isApproved: boolean("isApproved").default(false).notNull(),
-  approvedBy: int("approvedBy"), // Admin user ID
+  approvedBy: int("approvedBy"),
   approvedAt: timestamp("approvedAt"),
+  hasCheckedInToday: boolean("hasCheckedInToday").default(false).notNull(),
+  hasCheckedOutToday: boolean("hasCheckedOutToday").default(false).notNull(),
   
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

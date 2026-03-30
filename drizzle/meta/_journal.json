@@ -36,6 +36,13 @@
       "when": 1774425803119,
       "tag": "0004_purple_toxin",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1774852493908,
+      "tag": "0005_lively_sprite",
+      "breakpoints": true
     }
   ]
 }
