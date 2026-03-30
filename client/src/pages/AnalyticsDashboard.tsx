@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Calendar, TrendingUp, Users, Clock } from "lucide-react";
+import { Calendar, TrendingUp, Users, Clock, Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function AnalyticsDashboard() {
   const [startDate, setStartDate] = useState<string>(
@@ -40,6 +41,23 @@ export default function AnalyticsDashboard() {
     endDate: endDateObj,
   });
 
+  const exportAttendanceMutation = trpc.analytics.exportAttendance.useMutation({
+    onSuccess: () => {
+      toast.success("Attendance report exported successfully");
+    },
+    onError: () => {
+      toast.error("Failed to export attendance report");
+    },
+  });
+
+  const handleExport = async (format: "csv" | "pdf") => {
+    await exportAttendanceMutation.mutateAsync({
+      startDate: startDateObj,
+      endDate: endDateObj,
+      format,
+    });
+  };
+
   const COLORS = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"];
 
   return (
@@ -54,10 +72,10 @@ export default function AnalyticsDashboard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5" />
-            Date Range
+            Date Range & Export
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex gap-4">
+        <CardContent className="flex gap-4 flex-wrap items-end">
           <div className="flex-1">
             <Label htmlFor="startDate">Start Date</Label>
             <Input
@@ -75,6 +93,34 @@ export default function AnalyticsDashboard() {
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
             />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={() => handleExport("csv")}
+              disabled={exportAttendanceMutation.isPending}
+              className="gap-2"
+            >
+              {exportAttendanceMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              CSV
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => handleExport("pdf")}
+              disabled={exportAttendanceMutation.isPending}
+              className="gap-2"
+            >
+              {exportAttendanceMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              PDF
+            </Button>
           </div>
         </CardContent>
       </Card>
