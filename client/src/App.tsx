@@ -17,6 +17,7 @@ import LiveGPSMap from "./pages/LiveGPSMap";
 import AdminDashboard from "./pages/AdminDashboard";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import LeaveBalanceDashboard from "./pages/LeaveBalanceDashboard";
+import WaypointHistory from "./pages/WaypointHistory";
 
 function Navigation() {
   const { user, logout } = useAuth();
@@ -28,6 +29,7 @@ function Navigation() {
     { label: "Dashboard", href: "/dashboard" },
     { label: "Leave", href: "/leave" },
     { label: "Leave Balance", href: "/leave-balance" },
+    { label: "Waypoints", href: "/waypoint-history" },
     ...(user.role === "admin" || user.role === "supervisor"
       ? [
           { label: "Attendance", href: "/supervisor" },
@@ -130,6 +132,7 @@ function Router() {
         <Route path="/admin" component={AdminDashboard} />
         <Route path="/analytics" component={AnalyticsDashboard} />
         <Route path="/leave-balance" component={LeaveBalanceDashboard} />
+        <Route path="/waypoint-history" component={WaypointHistory} />
         <Route component={NotFound} />
       </Switch>
     </>
