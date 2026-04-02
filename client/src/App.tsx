@@ -20,6 +20,7 @@ import LeaveBalanceDashboard from "./pages/LeaveBalanceDashboard";
 import WaypointHistory from "./pages/WaypointHistory";
 import AdminDashboardExecutive from "./pages/AdminDashboardExecutive";
 
+
 function Navigation() {
   const { user, logout } = useAuth();
   const [location, navigate] = useLocation();
@@ -41,6 +42,7 @@ function Navigation() {
       { label: "Executive", href: "/executive" },
       { label: "Admin", href: "/admin" },
       { label: "Analytics", href: "/analytics" },
+
     ] : []),
   ];
 
@@ -136,7 +138,8 @@ function Router() {
         <Route path="/leave-balance" component={LeaveBalanceDashboard} />
         <Route path="/waypoint-history" component={WaypointHistory} />
         <Route path="/executive" component={AdminDashboardExecutive} />
-        <Route component={NotFound} />
+
+        <Route path="*" component={NotFound} />
       </Switch>
     </>
   );

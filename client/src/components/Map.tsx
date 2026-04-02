@@ -149,9 +149,18 @@ export function MapView({
   const map = useRef<google.maps.Map | null>(null);
 
   const init = usePersistFn(async () => {
+    // Only initialize if container exists and is visible
+    if (!mapContainer.current) {
+      return;
+    }
+    
+    // Check if container is actually in the DOM
+    if (!document.body.contains(mapContainer.current)) {
+      return;
+    }
+    
     await loadMapScript();
     if (!mapContainer.current) {
-      console.error("Map container not found");
       return;
     }
     map.current = new window.google.maps.Map(mapContainer.current, {
