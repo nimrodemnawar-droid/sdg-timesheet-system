@@ -288,6 +288,10 @@ export default function StaffDashboard() {
               <Navigation className="w-4 h-4 mr-2" />
               Waypoints
             </TabsTrigger>
+            <TabsTrigger value="leave" className="data-[state=active]:bg-purple-600 text-slate-300 data-[state=active]:text-white">
+              <AlertCircle className="w-4 h-4 mr-2" />
+              Request Leave
+            </TabsTrigger>
           </TabsList>
 
           {/* Check In/Out Tab */}
@@ -598,8 +602,96 @@ export default function StaffDashboard() {
               </Card>
             )}
           </TabsContent>
-        </Tabs>
-      </div>
+
+          {/* Leave Request Tab */}
+          <TabsContent value="leave" className="space-y-4">
+            <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-purple-400" />
+                  Request Leave
+                </CardTitle>
+                <CardDescription className="text-slate-400">Submit a leave request and select your leave type</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Leave Balance Summary */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
+                    <p className="text-slate-400 text-xs font-medium mb-1">Annual Leave</p>
+                    <p className="text-2xl font-bold text-blue-400">{leaveBalance?.remainingDays || 0}</p>
+                    <p className="text-xs text-slate-500 mt-1">days remaining</p>
+                  </div>
+                  <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
+                    <p className="text-slate-400 text-xs font-medium mb-1">Sick Leave</p>
+                    <p className="text-2xl font-bold text-green-400">5</p>
+                    <p className="text-xs text-slate-500 mt-1">days remaining</p>
+                  </div>
+                  <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
+                    <p className="text-slate-400 text-xs font-medium mb-1">Casual Leave</p>
+                    <p className="text-2xl font-bold text-yellow-400">3</p>
+                    <p className="text-xs text-slate-500 mt-1">days remaining</p>
+                  </div>
+                  <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
+                    <p className="text-slate-400 text-xs font-medium mb-1">Maternity Leave</p>
+                    <p className="text-2xl font-bold text-pink-400">90</p>
+                    <p className="text-xs text-slate-500 mt-1">days remaining</p>
+                  </div>
+                </div>
+
+                {/* Leave Request Form */}
+                <div className="space-y-4 pt-4 border-t border-slate-700">
+                  <div className="space-y-2">
+                    <Label htmlFor="leaveType" className="text-white font-medium">Select Leave Type *</Label>
+                    <Select>
+                      <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                        <SelectValue placeholder="Choose leave type" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-600">
+                        <SelectItem value="annual" className="text-white">Annual Leave</SelectItem>
+                        <SelectItem value="sick" className="text-white">Sick Leave</SelectItem>
+                        <SelectItem value="casual" className="text-white">Casual Leave</SelectItem>
+                        <SelectItem value="maternity" className="text-white">Maternity Leave</SelectItem>
+                        <SelectItem value="bereavement" className="text-white">Bereavement Leave</SelectItem>
+                        <SelectItem value="study" className="text-white">Study Leave</SelectItem>
+                        <SelectItem value="unpaid" className="text-white">Unpaid Leave</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="startDate" className="text-white font-medium">Start Date *</Label>
+                      <Input type="date" id="startDate" className="bg-slate-700 border-slate-600 text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="endDate" className="text-white font-medium">End Date *</Label>
+                      <Input type="date" id="endDate" className="bg-slate-700 border-slate-600 text-white" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="reason" className="text-white font-medium">Reason for Leave</Label>
+                    <Textarea 
+                      id="reason" 
+                      placeholder="Provide reason for your leave request..." 
+                      className="bg-slate-700 border-slate-600 text-white min-h-24" 
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <Button className="flex-1 bg-purple-600 hover:bg-purple-700 text-white">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Submit Leave Request
+                    </Button>
+                    <Button variant="outline" className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700">
+                      Clear
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>      </div>
     </div>
   );
 }
