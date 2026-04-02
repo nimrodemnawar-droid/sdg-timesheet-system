@@ -4,8 +4,9 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Users, TrendingUp, Clock, CheckCircle2, AlertCircle, BarChart3, Calendar, Zap, MapPin, Activity } from "lucide-react";
+import { Users, TrendingUp, Clock, CheckCircle2, AlertCircle, BarChart3, Calendar, Zap, MapPin, Activity, Download } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { generateSummaryReportCSV } from "@/lib/reportExport";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
@@ -198,9 +199,31 @@ export default function AdminDashboardExecutive() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <button className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">View All Staff</button>
-            <button className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium">Export Reports</button>
-            <button className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">View GPS Map</button>
+            <button className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
+              <Users className="w-4 h-4" />
+              View All Staff
+            </button>
+            <button 
+              onClick={() => {
+                generateSummaryReportCSV({
+                  "Total Staff": kpis.totalStaff,
+                  "Checked In Today": kpis.checkedInToday,
+                  "Attendance Rate": `${kpis.attendanceRate}%`,
+                  "On-Time Percentage": `${kpis.onTimePercentage}%`,
+                  "Pending Leave Requests": kpis.pendingLeaveCount,
+                  "Total Distance Tracked": `${kpis.totalDistance}km`,
+                  "Report Generated": new Date().toLocaleString(),
+                });
+              }}
+              className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Export Reports
+            </button>
+            <button className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
+              <MapPin className="w-4 h-4" />
+              View GPS Map
+            </button>
           </CardContent>
         </Card>
 

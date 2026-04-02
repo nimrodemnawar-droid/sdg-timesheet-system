@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { generateAttendanceReportCSV, generateLeaveReportCSV, generateOvertimeReportCSV, generateGPSActivityReportCSV } from "@/lib/reportExport";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -696,19 +697,43 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button className="bg-blue-600 hover:bg-blue-700 h-20 text-white border-0 flex flex-col items-center justify-center gap-2">
+                  <Button onClick={() => {
+                    const mockData = [
+                      { staffId: 1, name: "John Doe", date: new Date().toISOString().split('T')[0], checkInTime: "08:00", checkOutTime: "17:00", status: "Present", distance: 45.5 },
+                      { staffId: 2, name: "Jane Smith", date: new Date().toISOString().split('T')[0], checkInTime: "08:15", checkOutTime: "17:15", status: "Present", distance: 52.3 },
+                    ];
+                    generateAttendanceReportCSV(mockData);
+                  }} className="bg-blue-600 hover:bg-blue-700 h-20 text-white border-0 flex flex-col items-center justify-center gap-2">
                     <Download className="w-5 h-5" />
                     <span>Attendance Report</span>
                   </Button>
-                  <Button className="bg-purple-600 hover:bg-purple-700 h-20 text-white border-0 flex flex-col items-center justify-center gap-2">
+                  <Button onClick={() => {
+                    const mockData = [
+                      { staffId: 1, name: "John Doe", date: new Date().toISOString().split('T')[0], overtimeHours: 2, reason: "Project deadline" },
+                      { staffId: 3, name: "Bob Johnson", date: new Date().toISOString().split('T')[0], overtimeHours: 1.5, reason: "System maintenance" },
+                    ];
+                    generateOvertimeReportCSV(mockData);
+                  }} className="bg-purple-600 hover:bg-purple-700 h-20 text-white border-0 flex flex-col items-center justify-center gap-2">
                     <Download className="w-5 h-5" />
                     <span>Overtime Report</span>
                   </Button>
-                  <Button className="bg-green-600 hover:bg-green-700 h-20 text-white border-0 flex flex-col items-center justify-center gap-2">
+                  <Button onClick={() => {
+                    const mockData = [
+                      { staffId: 4, name: "Alice Brown", leaveType: "Annual", startDate: "2026-04-05", endDate: "2026-04-10", days: 5, status: "Approved" },
+                      { staffId: 5, name: "Charlie Davis", leaveType: "Sick", startDate: new Date().toISOString().split('T')[0], endDate: new Date().toISOString().split('T')[0], days: 1, status: "Pending" },
+                    ];
+                    generateLeaveReportCSV(mockData);
+                  }} className="bg-green-600 hover:bg-green-700 h-20 text-white border-0 flex flex-col items-center justify-center gap-2">
                     <Download className="w-5 h-5" />
                     <span>Leave Report</span>
                   </Button>
-                  <Button className="bg-amber-600 hover:bg-amber-700 h-20 text-white border-0 flex flex-col items-center justify-center gap-2">
+                  <Button onClick={() => {
+                    const mockData = [
+                      { staffId: 1, name: "John Doe", date: new Date().toISOString().split('T')[0], checkInLocation: "Office", checkOutLocation: "Office", totalDistance: 45.5, waypointCount: 8 },
+                      { staffId: 2, name: "Jane Smith", date: new Date().toISOString().split('T')[0], checkInLocation: "Office", checkOutLocation: "Office", totalDistance: 52.3, waypointCount: 12 },
+                    ];
+                    generateGPSActivityReportCSV(mockData);
+                  }} className="bg-amber-600 hover:bg-amber-700 h-20 text-white border-0 flex flex-col items-center justify-center gap-2">
                     <Download className="w-5 h-5" />
                     <span>GPS Activity Report</span>
                   </Button>
