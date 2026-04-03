@@ -101,7 +101,7 @@ export default function StaffDashboard() {
   const [isSubmittingLeave, setIsSubmittingLeave] = useState(false);
 
   const { data: todayAttendance, refetch: refetchAttendance } = trpc.attendance.getToday.useQuery();
-  const { data: leaveBalance } = trpc.leave.getBalance.useQuery({ leaveType: 'annual' });
+  const { data: allLeaveBalances } = trpc.leave.getAllBalances.useQuery({ year: new Date().getFullYear() });
   const { data: todayWaypoints, refetch: refetchWaypoints } = trpc.attendance.getWaypoints.useQuery(
     todayAttendance?.id ? { attendanceId: todayAttendance.id } : { attendanceId: 0 },
     { enabled: !!todayAttendance?.id }
@@ -263,7 +263,7 @@ export default function StaffDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-slate-400 text-sm mb-1 font-medium">Leave Balance</p>
-                  <p className="text-2xl font-bold text-white">{leaveBalance?.remainingDays || 0}</p>
+                  <p className="text-2xl font-bold text-white">{allLeaveBalances?.find(b => b.leaveType === 'annual')?.remainingDays || 0}</p>
                   <p className="text-xs text-slate-500 mt-1">Annual leave days</p>
                 </div>
                 <Clock className="w-10 h-10 text-green-400 opacity-80" />
@@ -636,26 +636,29 @@ export default function StaffDashboard() {
               <CardContent className="space-y-6">
                 {/* Leave Balance Summary */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
-                    <p className="text-slate-400 text-xs font-medium mb-1">Annual Leave</p>
-                    <p className="text-2xl font-bold text-blue-400">{leaveBalance?.remainingDays || 0}</p>
-                    <p className="text-xs text-slate-500 mt-1">days remaining</p>
-                  </div>
-                  <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
-                    <p className="text-slate-400 text-xs font-medium mb-1">Sick Leave</p>
-                    <p className="text-2xl font-bold text-green-400">5</p>
-                    <p className="text-xs text-slate-500 mt-1">days remaining</p>
-                  </div>
-                  <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
-                    <p className="text-slate-400 text-xs font-medium mb-1">Casual Leave</p>
-                    <p className="text-2xl font-bold text-yellow-400">3</p>
-                    <p className="text-xs text-slate-500 mt-1">days remaining</p>
-                  </div>
-                  <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
-                    <p className="text-slate-400 text-xs font-medium mb-1">Maternity Leave</p>
-                    <p className="text-2xl font-bold text-pink-400">90</p>
-                    <p className="text-xs text-slate-500 mt-1">days remaining</p>
-                  </div>
+                  {allLeaveBalances && allLeaveBalances.length > 0 ? (
+                    allLeaveBalances.map((balance) => {
+                      const leaveTypeLabels: Record<string, { label: string; color: string }> = {
+                        annual: { label: 'Annual Leave', color: 'text-blue-400' },
+                        sick: { label: 'Sick Leave', color: 'text-green-400' },
+                        unpaid: { label: 'Unpaid Leave', color: 'text-yellow-400' },
+                        maternity: { label: 'Maternity Leave', color: 'text-pink-400' },
+                        other: { label: 'Other Leave', color: 'text-purple-400' },
+                      };
+                      const typeInfo = leaveTypeLabels[balance.leaveType] || { label: balance.leaveType, color: 'text-slate-400' };
+                      return (
+                        <div key={balance.id} className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
+                          <p className="text-slate-400 text-xs font-medium mb-1">{typeInfo.label}</p>
+                          <p className={`text-2xl font-bold ${typeInfo.color}`}>{parseFloat(balance.remainingDays.toString())}</p>
+                          <p className="text-xs text-slate-500 mt-1">days remaining</p>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="col-span-2 md:col-span-4 bg-slate-700/50 rounded-lg p-4 border border-slate-600">
+                      <p className="text-slate-400 text-sm">Loading leave balances...</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Leave Request Form */}
@@ -673,6 +676,39 @@ export default function StaffDashboard() {
                         <SelectItem value="maternity" className="text-white">Maternity Leave</SelectItem>
                       </SelectContent>
                     </Select>
+                    {/* Show selected leave type balance */}
+                    {leaveFormData.leaveType && allLeaveBalances && (
+                      <div className="mt-3 p-3 bg-blue-900/30 border border-blue-500/50 rounded-lg">
+                        {(() => {
+                          const selectedBalance = allLeaveBalances.find(b => b.leaveType === leaveFormData.leaveType);
+                          if (selectedBalance) {
+                            const remaining = parseFloat(selectedBalance.remainingDays.toString());
+                            const allocated = parseFloat(selectedBalance.allocatedDays.toString());
+                            const used = parseFloat(selectedBalance.usedDays.toString());
+                            return (
+                              <div className="space-y-2">
+                                <p className="text-blue-300 text-sm font-medium">Leave Balance Details:</p>
+                                <div className="grid grid-cols-3 gap-2 text-xs">
+                                  <div>
+                                    <p className="text-slate-400">Allocated</p>
+                                    <p className="text-blue-400 font-bold text-lg">{allocated}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-slate-400">Used</p>
+                                    <p className="text-yellow-400 font-bold text-lg">{used}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-slate-400">Available</p>
+                                    <p className={`font-bold text-lg ${remaining > 0 ? 'text-green-400' : 'text-red-400'}`}>{remaining}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return <p className="text-slate-400 text-sm">No balance data available for this leave type</p>;
+                        })()}
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -685,6 +721,41 @@ export default function StaffDashboard() {
                       <Input type="date" id="endDate" value={leaveFormData.endDate} onChange={(e) => setLeaveFormData({ ...leaveFormData, endDate: e.target.value })} className="bg-slate-700 border-slate-600 text-white" />
                     </div>
                   </div>
+
+                  {/* Days Requested and Balance Validation */}
+                  {leaveFormData.startDate && leaveFormData.endDate && leaveFormData.leaveType && (() => {
+                    const startDate = new Date(leaveFormData.startDate);
+                    const endDate = new Date(leaveFormData.endDate);
+                    const daysRequested = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                    const selectedBalance = allLeaveBalances?.find(b => b.leaveType === leaveFormData.leaveType);
+                    const availableDays = selectedBalance ? parseFloat(selectedBalance.remainingDays.toString()) : 0;
+                    const isEnoughBalance = daysRequested <= availableDays && daysRequested > 0;
+                    
+                    return (
+                      <div className={`p-4 rounded-lg border-2 ${isEnoughBalance ? 'bg-green-900/20 border-green-500/50' : 'bg-red-900/20 border-red-500/50'}`}>
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                          <div>
+                            <p className="text-slate-400 text-xs font-medium mb-1">Days Requested</p>
+                            <p className={`text-2xl font-bold ${isEnoughBalance ? 'text-green-400' : 'text-yellow-400'}`}>{daysRequested}</p>
+                          </div>
+                          <div>
+                            <p className="text-slate-400 text-xs font-medium mb-1">Available Days</p>
+                            <p className="text-2xl font-bold text-blue-400">{availableDays}</p>
+                          </div>
+                          <div>
+                            <p className="text-slate-400 text-xs font-medium mb-1">After Request</p>
+                            <p className={`text-2xl font-bold ${isEnoughBalance ? 'text-green-400' : 'text-red-400'}`}>{Math.max(0, availableDays - daysRequested)}</p>
+                          </div>
+                        </div>
+                        {!isEnoughBalance && (
+                          <p className="text-red-300 text-sm mt-3 font-medium">⚠️ Insufficient leave balance! You need {daysRequested - availableDays} more days.</p>
+                        )}
+                        {isEnoughBalance && (
+                          <p className="text-green-300 text-sm mt-3 font-medium">✓ You have enough leave balance for this request.</p>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   <div className="space-y-2">
                     <Label htmlFor="reason" className="text-white font-medium">Reason for Leave</Label>
@@ -707,6 +778,14 @@ export default function StaffDashboard() {
                         const startDate = new Date(leaveFormData.startDate);
                         const endDate = new Date(leaveFormData.endDate);
                         const daysRequested = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                        
+                        // Validate balance
+                        const selectedBalance = allLeaveBalances?.find(b => b.leaveType === leaveFormData.leaveType);
+                        const availableDays = selectedBalance ? parseFloat(selectedBalance.remainingDays.toString()) : 0;
+                        if (daysRequested > availableDays) {
+                          toast.error(`Insufficient leave balance. You need ${daysRequested - availableDays} more days.`);
+                          return;
+                        }
                         
                         setIsSubmittingLeave(true);
                         try {
