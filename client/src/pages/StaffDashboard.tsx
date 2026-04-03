@@ -91,6 +91,15 @@ export default function StaffDashboard() {
   const [isAddingWaypoint, setIsAddingWaypoint] = useState(false);
   const [waypointNote, setWaypointNote] = useState("");
 
+  // Leave request form state
+  const [leaveFormData, setLeaveFormData] = useState({
+    leaveType: '',
+    startDate: '',
+    endDate: '',
+    reason: '',
+  });
+  const [isSubmittingLeave, setIsSubmittingLeave] = useState(false);
+
   const { data: todayAttendance, refetch: refetchAttendance } = trpc.attendance.getToday.useQuery();
   const { data: leaveBalance } = trpc.leave.getBalance.useQuery({ leaveType: 'annual' });
   const { data: todayWaypoints, refetch: refetchWaypoints } = trpc.attendance.getWaypoints.useQuery(
@@ -116,6 +125,17 @@ export default function StaffDashboard() {
     onSuccess: () => {
       // Invalidate waypoint queries
       utils.attendance.getWaypoints.invalidate();
+    },
+  });
+  const submitLeaveRequest = trpc.leave.createRequest.useMutation({
+    onSuccess: () => {
+      toast.success('Leave request submitted successfully!');
+      setLeaveFormData({ leaveType: '', startDate: '', endDate: '', reason: '' });
+      utils.leave.getMyRequests.invalidate();
+      utils.leave.getBalance.invalidate();
+    },
+    onError: (error) => {
+      toast.error(`Failed to submit leave request: ${error.message}`);
     },
   });
 
@@ -642,18 +662,15 @@ export default function StaffDashboard() {
                 <div className="space-y-4 pt-4 border-t border-slate-700">
                   <div className="space-y-2">
                     <Label htmlFor="leaveType" className="text-white font-medium">Select Leave Type *</Label>
-                    <Select>
+                    <Select value={leaveFormData.leaveType} onValueChange={(value) => setLeaveFormData({ ...leaveFormData, leaveType: value })}>
                       <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
                         <SelectValue placeholder="Choose leave type" />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-800 border-slate-600">
                         <SelectItem value="annual" className="text-white">Annual Leave</SelectItem>
                         <SelectItem value="sick" className="text-white">Sick Leave</SelectItem>
-                        <SelectItem value="casual" className="text-white">Casual Leave</SelectItem>
-                        <SelectItem value="maternity" className="text-white">Maternity Leave</SelectItem>
-                        <SelectItem value="bereavement" className="text-white">Bereavement Leave</SelectItem>
-                        <SelectItem value="study" className="text-white">Study Leave</SelectItem>
                         <SelectItem value="unpaid" className="text-white">Unpaid Leave</SelectItem>
+                        <SelectItem value="maternity" className="text-white">Maternity Leave</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -661,11 +678,11 @@ export default function StaffDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="startDate" className="text-white font-medium">Start Date *</Label>
-                      <Input type="date" id="startDate" className="bg-slate-700 border-slate-600 text-white" />
+                      <Input type="date" id="startDate" value={leaveFormData.startDate} onChange={(e) => setLeaveFormData({ ...leaveFormData, startDate: e.target.value })} className="bg-slate-700 border-slate-600 text-white" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="endDate" className="text-white font-medium">End Date *</Label>
-                      <Input type="date" id="endDate" className="bg-slate-700 border-slate-600 text-white" />
+                      <Input type="date" id="endDate" value={leaveFormData.endDate} onChange={(e) => setLeaveFormData({ ...leaveFormData, endDate: e.target.value })} className="bg-slate-700 border-slate-600 text-white" />
                     </div>
                   </div>
 
@@ -673,17 +690,57 @@ export default function StaffDashboard() {
                     <Label htmlFor="reason" className="text-white font-medium">Reason for Leave</Label>
                     <Textarea 
                       id="reason" 
+                      value={leaveFormData.reason}
+                      onChange={(e) => setLeaveFormData({ ...leaveFormData, reason: e.target.value })}
                       placeholder="Provide reason for your leave request..." 
                       className="bg-slate-700 border-slate-600 text-white min-h-24" 
                     />
                   </div>
 
                   <div className="flex gap-3 pt-4">
-                    <Button className="flex-1 bg-purple-600 hover:bg-purple-700 text-white">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Submit Leave Request
+                    <Button 
+                      onClick={async () => {
+                        if (!leaveFormData.leaveType || !leaveFormData.startDate || !leaveFormData.endDate) {
+                          toast.error('Please fill in all required fields');
+                          return;
+                        }
+                        const startDate = new Date(leaveFormData.startDate);
+                        const endDate = new Date(leaveFormData.endDate);
+                        const daysRequested = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                        
+                        setIsSubmittingLeave(true);
+                        try {
+                          await submitLeaveRequest.mutateAsync({
+                            leaveType: leaveFormData.leaveType as any,
+                            startDate,
+                            endDate,
+                            daysRequested: daysRequested.toString(),
+                            reason: leaveFormData.reason,
+                          });
+                        } finally {
+                          setIsSubmittingLeave(false);
+                        }
+                      }}
+                      disabled={isSubmittingLeave || submitLeaveRequest.isPending}
+                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
+                    >
+                      {isSubmittingLeave || submitLeaveRequest.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Submit Leave Request
+                        </>
+                      )}
                     </Button>
-                    <Button variant="outline" className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setLeaveFormData({ leaveType: '', startDate: '', endDate: '', reason: '' })}
+                      className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700"
+                    >
                       Clear
                     </Button>
                   </div>

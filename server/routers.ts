@@ -374,6 +374,14 @@ export const appRouter = router({
           ipAddress: ctx.req.ip,
         });
 
+        // Send notification to admin
+        const startDateStr = input.startDate.toLocaleDateString();
+        const endDateStr = input.endDate.toLocaleDateString();
+        await notifyOwner({
+          title: `New Leave Request from ${ctx.user.name}`,
+          content: `${ctx.user.name} has requested ${input.leaveType} leave from ${startDateStr} to ${endDateStr} (${input.daysRequested} days). Reason: ${input.reason || "Not provided"}. Please review and approve/decline in the Admin Dashboard.`,
+        }).catch((err) => console.error("Failed to send leave request notification:", err));
+
         return { success: true };
       }),
 
