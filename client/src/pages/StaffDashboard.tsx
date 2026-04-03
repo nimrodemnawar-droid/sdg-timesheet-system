@@ -9,10 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, MapPin, Clock, AlertCircle, CheckCircle2, FileUp, Activity, Briefcase, Target, Plus, Trash2, Navigation } from "lucide-react";
+import { Loader2, MapPin, Clock, AlertCircle, CheckCircle2, FileUp, Activity, Briefcase, Target, Plus, Trash2, Navigation, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { NotificationBanner } from "@/components/NotificationBanner";
 import { WaypointTracker } from "@/components/WaypointTracker";
+import { LeaveCalendar } from "@/components/LeaveCalendar";
 
 interface GPSCoordinates {
   latitude: number;
@@ -102,6 +103,7 @@ export default function StaffDashboard() {
 
   const { data: todayAttendance, refetch: refetchAttendance } = trpc.attendance.getToday.useQuery();
   const { data: allLeaveBalances } = trpc.leave.getAllBalances.useQuery({ year: new Date().getFullYear() });
+  const { data: myLeaveRequests, isLoading: isLoadingLeaveRequests } = trpc.leave.getMyRequests.useQuery();
   const { data: todayWaypoints, refetch: refetchWaypoints } = trpc.attendance.getWaypoints.useQuery(
     todayAttendance?.id ? { attendanceId: todayAttendance.id } : { attendanceId: 0 },
     { enabled: !!todayAttendance?.id }
@@ -132,6 +134,7 @@ export default function StaffDashboard() {
       toast.success('Leave request submitted successfully!');
       setLeaveFormData({ leaveType: '', startDate: '', endDate: '', reason: '' });
       utils.leave.getMyRequests.invalidate();
+      utils.leave.getAllBalances.invalidate();
       utils.leave.getBalance.invalidate();
     },
     onError: (error) => {
@@ -311,6 +314,10 @@ export default function StaffDashboard() {
             <TabsTrigger value="leave" className="data-[state=active]:bg-purple-600 text-slate-300 data-[state=active]:text-white">
               <AlertCircle className="w-4 h-4 mr-2" />
               Request Leave
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="data-[state=active]:bg-indigo-600 text-slate-300 data-[state=active]:text-white">
+              <Calendar className="w-4 h-4 mr-2" />
+              Leave Calendar
             </TabsTrigger>
           </TabsList>
 
@@ -827,7 +834,23 @@ export default function StaffDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>      </div>
+
+          {/* Leave Calendar Tab */}
+          <TabsContent value="calendar" className="space-y-4">
+            <LeaveCalendar 
+              leaveRequests={myLeaveRequests?.map((req) => ({
+                id: req.id,
+                startDate: new Date(req.startDate),
+                endDate: new Date(req.endDate),
+                leaveType: req.leaveType,
+                status: req.status as "approved" | "pending" | "rejected",
+                reason: req.reason || undefined,
+              })) || []}
+              isLoading={isLoadingLeaveRequests}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

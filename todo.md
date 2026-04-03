@@ -205,3 +205,17 @@
 - [x] Implement professional dark theme with gradient backgrounds
 - [x] Test all dashboards for presentation readiness
 - [x] All 156 tests passing - production ready
+
+
+## Phase 18: Leave History Calendar for Staff Dashboard
+- [x] Create interactive calendar component showing leave dates
+- [x] Display approved leave dates in calendar with color coding
+- [x] Show pending leave requests in calendar with different styling
+- [x] Highlight available windows for future leave planning
+- [x] Add month/year navigation controls
+- [x] Implement leave type color coding (Annual, Sick, Maternity, etc.)
+- [x] Add tooltip showing leave details on date hover
+- [x] Display leave balance summary for current month
+- [x] Integrate calendar into Staff Dashboard
+- [x] Add responsive design for mobile/tablet
+- [x] Write comprehensive tests for calendar functionality
