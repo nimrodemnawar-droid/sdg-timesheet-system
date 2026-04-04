@@ -234,3 +234,12 @@
 - [x] Update dashboard header to display "Africa for SDGs Timesheet"
 - [x] Update all pages with new branding
 - [x] Test dashboard appearance with new branding
+
+
+## Phase 21: Africa for SDGs Logo Integration
+- [x] Create or find Africa for SDGs logo
+- [x] Upload logo to CDN
+- [x] Integrate logo into navigation header
+- [x] Add logo to login page
+- [x] Test logo display on desktop and mobile
+- [x] Verify logo sizing and alignment

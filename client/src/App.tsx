@@ -50,7 +50,8 @@ function Navigation() {
     <nav className="bg-slate-900 border-b border-slate-700 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-4">
+            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663395360248/Y6QXkr6MF6bWis5GKruirk/africa-for-sdgs-logo-NWnzDLbseMeymGhj8b83a5.webp" alt="Africa for SDGs" className="h-10 w-10" />
             <h1 className="text-xl font-bold text-blue-400">Africa for SDGs Timesheet</h1>
             <div className="hidden md:flex gap-1">
               {navItems.map((item) => (
@@ -102,9 +103,12 @@ function Router() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-blue-900">
         <div className="text-center space-y-6 max-w-md">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold text-blue-300">Africa for SDGs Timesheet</h1>
-            <p className="text-slate-400">GPS-based workforce attendance and field tracking</p>
+          <div className="space-y-4">
+            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663395360248/Y6QXkr6MF6bWis5GKruirk/africa-for-sdgs-logo-NWnzDLbseMeymGhj8b83a5.webp" alt="Africa for SDGs" className="h-24 w-24 mx-auto" />
+            <div>
+              <h1 className="text-4xl font-bold text-blue-300">Africa for SDGs Timesheet</h1>
+              <p className="text-slate-400">GPS-based workforce attendance and field tracking</p>
+            </div>
           </div>
 
           <div className="space-y-4 pt-4">
