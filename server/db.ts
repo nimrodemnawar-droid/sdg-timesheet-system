@@ -494,6 +494,7 @@ export async function updateLeaveBalance(
       .update(leaveBalance)
       .set({
         usedDays: newUsedDays.toString() as any,
+        remainingDays: newRemainingDays.toString() as any,
       })
       .where(eq(leaveBalance.id, balance.id));
   }

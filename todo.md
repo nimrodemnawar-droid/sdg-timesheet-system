@@ -219,3 +219,12 @@
 - [x] Integrate calendar into Staff Dashboard
 - [x] Add responsive design for mobile/tablet
 - [x] Write comprehensive tests for calendar functionality
+
+## Phase 19: Leave Request System Verification and Fixes
+- [x] Fix updateLeaveBalance function to update remainingDays field
+- [x] Verify leave request creation and retrieval
+- [x] Verify leave balance calculations
+- [x] Verify leave request approval/rejection workflow
+- [x] Verify frontend validation for insufficient balance
+- [x] Create comprehensive end-to-end tests for leave request system
+- [x] All 168 tests passing - leave request system verified
