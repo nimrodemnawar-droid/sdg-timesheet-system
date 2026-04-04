@@ -243,3 +243,10 @@
 - [x] Add logo to login page
 - [x] Test logo display on desktop and mobile
 - [x] Verify logo sizing and alignment
+
+
+## Phase 22: Add 4 Missing Features from Report
+- [x] Add workplace selection UI to check-in form (backend ready)
+- [x] Add enhanced GPS status display (signal strength, accuracy)
+- [x] Add staff threshold highlighting in metrics dashboard
+- [x] Add weekly metrics export functionality

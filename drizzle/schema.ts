@@ -373,3 +373,4 @@ export const notificationHistory = mysqlTable("notificationHistory", {
 });
 export type NotificationHistory = typeof notificationHistory.$inferSelect;
 export type InsertNotificationHistory = typeof notificationHistory.$inferInsert;
+

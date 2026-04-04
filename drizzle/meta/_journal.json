@@ -43,6 +43,13 @@
       "when": 1774852493908,
       "tag": "0005_lively_sprite",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1775292247180,
+      "tag": "0006_old_fabian_cortez",
+      "breakpoints": true
     }
   ]
 }
