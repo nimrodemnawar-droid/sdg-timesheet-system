@@ -228,3 +228,9 @@
 - [x] Verify frontend validation for insufficient balance
 - [x] Create comprehensive end-to-end tests for leave request system
 - [x] All 168 tests passing - leave request system verified
+
+
+## Phase 20: Dashboard Branding Update
+- [x] Update dashboard header to display "Africa for SDGs Timesheet"
+- [x] Update all pages with new branding
+- [x] Test dashboard appearance with new branding

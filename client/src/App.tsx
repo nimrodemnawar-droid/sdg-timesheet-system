@@ -51,7 +51,7 @@ function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-8">
-            <h1 className="text-xl font-bold text-blue-400">SDG Timesheet</h1>
+            <h1 className="text-xl font-bold text-blue-400">Africa for SDGs Timesheet</h1>
             <div className="hidden md:flex gap-1">
               {navItems.map((item) => (
                 <button
@@ -103,7 +103,7 @@ function Router() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-blue-900">
         <div className="text-center space-y-6 max-w-md">
           <div className="space-y-2">
-            <h1 className="text-4xl font-bold text-blue-300">SDG Timesheet System</h1>
+            <h1 className="text-4xl font-bold text-blue-300">Africa for SDGs Timesheet</h1>
             <p className="text-slate-400">GPS-based workforce attendance and field tracking</p>
           </div>
 

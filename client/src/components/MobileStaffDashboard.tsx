@@ -21,7 +21,7 @@ export function MobileStaffDashboard() {
       {/* Mobile Header */}
       <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
         <div className="flex items-center justify-between px-4 py-3">
-          <h1 className="text-lg font-semibold">SDG Timesheet</h1>
+          <h1 className="text-lg font-semibold">Africa for SDGs Timesheet</h1>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="rounded-lg p-2 hover:bg-accent"
