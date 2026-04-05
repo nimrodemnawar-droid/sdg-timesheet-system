@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/mysql2";
-import { and, eq, gte, lte, desc, asc } from "drizzle-orm";
+import { and, eq, gte, lte, desc, asc, isNotNull } from "drizzle-orm";
 import {
   InsertUser,
   users,
@@ -979,4 +979,114 @@ export async function logOvertimeAlert(data: {
   });
 
   return true;
+}
+
+
+// ============ OVERTIME APPROVAL WORKFLOW ============
+
+export interface OvertimeRecord {
+  attendanceId: number;
+  staffId: number;
+  staffName: string;
+  overtimeHours: number;
+  checkInTime: Date;
+  checkOutTime: Date;
+  overtimeDate: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  approvalNotes?: string;
+  payoutMultiplier?: number;
+  payoutAmount?: number;
+}
+
+// Store overtime approvals in memory/audit log (using existing audit system)
+export async function recordOvertimeApproval(data: {
+  attendanceId: number;
+  staffId: number;
+  staffName: string;
+  overtimeHours: number;
+  status: "APPROVED" | "REJECTED";
+  approvedBy: number;
+  approvalNotes: string;
+  payoutMultiplier?: number;
+  payoutAmount?: number;
+}) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot record overtime approval: database not available");
+    return;
+  }
+
+  // Log approval in audit trail
+  await logAuditEvent({
+    userId: data.approvedBy,
+    action: `OVERTIME_${data.status}`,
+    entityType: "attendance",
+    entityId: data.attendanceId,
+    details: {
+      staffName: data.staffName,
+      overtimeHours: data.overtimeHours,
+      approvalNotes: data.approvalNotes,
+      payoutMultiplier: data.payoutMultiplier || 1.5,
+      payoutAmount: data.payoutAmount || 0,
+    },
+    ipAddress: "system",
+  });
+
+  return true;
+}
+
+export async function getPendingOvertimeRecords(): Promise<OvertimeRecord[]> {
+  // Query attendance records with overtime from the last 30 days
+  // This is a simplified version - in production, you'd query a dedicated overtime table
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    const records = await db
+      .select({
+        attendanceId: attendance.id,
+        staffId: attendance.userId,
+        staffName: users.name,
+        checkInTime: attendance.checkInTime,
+        checkOutTime: attendance.checkOutTime,
+      })
+      .from(attendance)
+      .innerJoin(users, eq(attendance.userId, users.id))
+      .where(
+        and(
+          gte(attendance.checkInTime, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)), // Last 30 days
+          isNotNull(attendance.checkOutTime)
+        )
+      )
+      .limit(100);
+
+    return records.map((r) => {
+      const checkIn = new Date(r.checkInTime);
+      const checkOut = new Date(r.checkOutTime!);
+      const hoursWorked = (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60);
+      const overtimeHours = Math.max(0, hoursWorked - 8);
+
+      return {
+        attendanceId: r.attendanceId,
+        staffId: r.staffId,
+        staffName: r.staffName || "Unknown",
+        overtimeHours: Math.round(overtimeHours * 100) / 100,
+        checkInTime: checkIn,
+        checkOutTime: checkOut,
+        overtimeDate: checkIn.toISOString().split("T")[0],
+        status: "PENDING",
+      };
+    });
+  } catch (error) {
+    console.error("[Database] Error fetching pending overtime records:", error);
+    return [];
+  }
+}
+
+export function calculatePayoutAmount(
+  overtimeHours: number,
+  hourlyRate: number,
+  multiplier: number = 1.5
+): number {
+  return Math.round(overtimeHours * hourlyRate * multiplier * 100) / 100;
 }

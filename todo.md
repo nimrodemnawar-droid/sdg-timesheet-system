@@ -268,3 +268,14 @@
 - [x] Add overtime alert notifications to admin dashboard
 - [x] Validate that check-in is done before timesheet submission
 - [x] Test all date and overtime logic
+
+
+## Phase 25: Overtime Approval Workflow
+- [x] Design overtime approval data model
+- [x] Add overtimeApprovals table to database schema
+- [x] Create backend procedures for overtime approval/rejection
+- [x] Build admin overtime management dashboard
+- [x] Add payroll calculation with overtime multipliers (1.5x, 2x)
+- [x] Implement staff notifications for approval status
+- [x] Add overtime history and audit trail
+- [x] Test complete overtime workflow
