@@ -939,3 +939,44 @@ export async function archiveNotification(notificationId: number) {
     .set({ archivedAt: new Date() })
     .where(eq(notificationHistory.id, notificationId));
 }
+
+
+// ============ OVERTIME MANAGEMENT ============
+
+export function calculateOvertimeHours(checkInTime: Date, checkOutTime: Date, standardHours: number = 8): number {
+  if (!checkInTime || !checkOutTime) return 0;
+  
+  const durationMs = checkOutTime.getTime() - checkInTime.getTime();
+  const durationHours = durationMs / (1000 * 60 * 60);
+  
+  // Overtime is any hours worked beyond the standard hours
+  const overtimeHours = Math.max(0, durationHours - standardHours);
+  
+  return Math.round(overtimeHours * 100) / 100; // Round to 2 decimal places
+}
+
+export async function logOvertimeAlert(data: {
+  userId: number;
+  attendanceId: number;
+  overtimeHours: number;
+  checkInTime: Date;
+  checkOutTime: Date;
+}) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot log overtime alert: database not available");
+    return;
+  }
+
+  // Log as audit event for tracking
+  await logAuditEvent({
+    userId: data.userId,
+    action: "OVERTIME_LOGGED",
+    entityType: "attendance",
+    entityId: data.attendanceId,
+    details: { overtimeHours: data.overtimeHours, checkInTime: data.checkInTime, checkOutTime: data.checkOutTime },
+    ipAddress: "system",
+  });
+
+  return true;
+}

@@ -258,3 +258,13 @@
 - [x] Update check-in logic to capture workplace selection
 - [x] Test workplace selection with check-in submission
 - [x] Test GPS status display with real GPS data
+
+
+## Phase 24: Fix Leave Request Dates and Timesheet Logic
+- [x] Fix leave request date validation and range checking
+- [x] Implement automatic date logic for timesheet (today only)
+- [x] Prevent editing of past day timesheets
+- [x] Implement automatic overtime calculation from check-in/out times
+- [x] Add overtime alert notifications to admin dashboard
+- [x] Validate that check-in is done before timesheet submission
+- [x] Test all date and overtime logic

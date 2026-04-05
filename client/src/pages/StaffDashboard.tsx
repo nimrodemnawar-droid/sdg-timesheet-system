@@ -494,13 +494,11 @@ export default function StaffDashboard() {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Date</Label>
-                    <Input
-                      type="date"
-                      value={timesheetData.date}
-                      onChange={(e) => setTimesheetData({ ...timesheetData, date: e.target.value })}
-                      className="bg-slate-700/50 border-slate-600 text-white"
-                    />
+                    <Label className="text-slate-300">Date (Today Only)</Label>
+                    <div className="bg-slate-700/50 border border-slate-600 rounded-md px-3 py-2 text-white">
+                      {new Date(timesheetData.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1">Timesheet can only be submitted for today. Past days cannot be edited.</p>
                   </div>
 
                   <div className="space-y-2">
@@ -612,9 +610,21 @@ export default function StaffDashboard() {
                   />
                 </div>
 
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-white border-0 text-base">
-                  <FileUp className="w-4 h-4 mr-2" />
-                  Submit Timesheet
+                <Button 
+                  disabled={isSubmittingTimesheet || !todayAttendance?.checkInTime}
+                  className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-white border-0 text-base disabled:opacity-50"
+                >
+                  {isSubmittingTimesheet ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <FileUp className="w-4 h-4 mr-2" />
+                      Submit Timesheet
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>

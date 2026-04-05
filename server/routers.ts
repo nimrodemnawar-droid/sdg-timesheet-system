@@ -122,16 +122,34 @@ export const appRouter = router({
           ipAddress: ctx.req.ip,
         });
 
+        // Calculate overtime and send notifications
+        const checkInTime = new Date(attendance.checkInTime);
+        const checkOutTime = new Date();
+        const hoursWorked = ((checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60 * 60)).toFixed(2);
+        const overtimeHours = db.calculateOvertimeHours(checkInTime, checkOutTime, 8);
+        
+        // Log overtime if any
+        if (overtimeHours > 0) {
+          await db.logOvertimeAlert({
+            userId: ctx.user.id,
+            attendanceId: input.attendanceId,
+            overtimeHours,
+            checkInTime,
+            checkOutTime,
+          });
+        }
+
         // Send notification to admin if enabled and not in quiet hours
         const prefs = await db.getNotificationPreferences(ctx.user.id);
         const isQuietHours = db.isWithinQuietHours(prefs);
         if (prefs?.enableCheckOutNotifications && !isQuietHours) {
-          const checkInTime = new Date(attendance.checkInTime);
-          const checkOutTime = new Date();
-          const hoursWorked = ((checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60 * 60)).toFixed(2);
+          const notificationContent = overtimeHours > 0
+            ? `${ctx.user.name} checked out at ${checkOutTime.toLocaleTimeString()}. Location: (${parseFloat(input.latitude).toFixed(4)}, ${parseFloat(input.longitude).toFixed(4)}). Accuracy: ${parseFloat(input.accuracy).toFixed(1)}m. Hours worked: ${hoursWorked}h. OVERTIME: ${overtimeHours}h. Distance: ${parseFloat(input.distanceTraveled).toFixed(2)}m`
+            : `${ctx.user.name} checked out at ${checkOutTime.toLocaleTimeString()}. Location: (${parseFloat(input.latitude).toFixed(4)}, ${parseFloat(input.longitude).toFixed(4)}). Accuracy: ${parseFloat(input.accuracy).toFixed(1)}m. Hours worked: ${hoursWorked}h. Distance: ${parseFloat(input.distanceTraveled).toFixed(2)}m`;
+          
           await notifyOwner({
-            title: `Staff Check-Out: ${ctx.user.name}`,
-            content: `${ctx.user.name} checked out at ${checkOutTime.toLocaleTimeString()}. Location: (${parseFloat(input.latitude).toFixed(4)}, ${parseFloat(input.longitude).toFixed(4)}). Accuracy: ${parseFloat(input.accuracy).toFixed(1)}m. Hours worked: ${hoursWorked}h. Distance: ${parseFloat(input.distanceTraveled).toFixed(2)}m`,
+            title: overtimeHours > 0 ? `OVERTIME ALERT: ${ctx.user.name}` : `Staff Check-Out: ${ctx.user.name}`,
+            content: notificationContent,
           }).catch((err) => console.error("Failed to send check-out notification:", err));
         }
 
