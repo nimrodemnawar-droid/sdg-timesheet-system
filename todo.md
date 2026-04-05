@@ -250,3 +250,11 @@
 - [x] Add enhanced GPS status display (signal strength, accuracy)
 - [x] Add staff threshold highlighting in metrics dashboard
 - [x] Add weekly metrics export functionality
+
+
+## Phase 23: Integrate New Components into Check-in Page
+- [x] Integrate WorkplaceSelector into check-in form
+- [x] Integrate GPSStatusIndicator into check-in form
+- [x] Update check-in logic to capture workplace selection
+- [x] Test workplace selection with check-in submission
+- [x] Test GPS status display with real GPS data

@@ -154,6 +154,7 @@ export async function createAttendance(data: {
   checkInLat: string;
   checkInLng: string;
   checkInAccuracy: string;
+  workModality?: string;
 }) {
   const db = await getDb();
   if (!db) return undefined;
@@ -164,6 +165,7 @@ export async function createAttendance(data: {
     checkInLat: data.checkInLat as any,
     checkInLng: data.checkInLng as any,
     checkInAccuracy: data.checkInAccuracy as any,
+    workModality: data.workModality as any,
   });
 
   return result;

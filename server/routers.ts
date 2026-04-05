@@ -54,6 +54,7 @@ export const appRouter = router({
           latitude: z.string(),
           longitude: z.string(),
           accuracy: z.string(),
+          workModality: z.enum(["nairobi_office", "homa_bay_office", "field", "remote"]).optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -62,6 +63,7 @@ export const appRouter = router({
           checkInLat: input.latitude,
           checkInLng: input.longitude,
           checkInAccuracy: input.accuracy,
+          workModality: input.workModality,
         });
 
         await db.logAuditEvent({

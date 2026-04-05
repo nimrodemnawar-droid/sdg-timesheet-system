@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { NotificationBanner } from "@/components/NotificationBanner";
 import { WaypointTracker } from "@/components/WaypointTracker";
 import { LeaveCalendar } from "@/components/LeaveCalendar";
+import { WorkplaceSelector } from "@/components/WorkplaceSelector";
+import { GPSStatusIndicator } from "@/components/GPSStatusIndicator";
 
 interface GPSCoordinates {
   latitude: number;
@@ -101,6 +103,9 @@ export default function StaffDashboard() {
   });
   const [isSubmittingLeave, setIsSubmittingLeave] = useState(false);
 
+  // Workplace selection state
+  const [selectedWorkplace, setSelectedWorkplace] = useState<string>("field");
+
   const { data: todayAttendance, refetch: refetchAttendance } = trpc.attendance.getToday.useQuery();
   const { data: allLeaveBalances } = trpc.leave.getAllBalances.useQuery({ year: new Date().getFullYear() });
   const { data: myLeaveRequests, isLoading: isLoadingLeaveRequests } = trpc.leave.getMyRequests.useQuery();
@@ -176,14 +181,20 @@ export default function StaffDashboard() {
       return;
     }
 
+    if (!selectedWorkplace) {
+      toast.error("Please select a workplace");
+      return;
+    }
+
     setIsCheckingIn(true);
     try {
       await checkInMutation.mutateAsync({
         latitude: gpsCoordinates.latitude.toString(),
         longitude: gpsCoordinates.longitude.toString(),
         accuracy: gpsCoordinates.accuracy.toString(),
+        workModality: selectedWorkplace as "nairobi_office" | "homa_bay_office" | "field" | "remote",
       });
-      toast.success("Checked in successfully");
+      toast.success(`Checked in successfully at ${selectedWorkplace}`);
       await refetchAttendance();
     } catch (error) {
       toast.error("Failed to check in");
@@ -332,6 +343,24 @@ export default function StaffDashboard() {
                 <CardDescription className="text-slate-400">Use GPS to check in and out of work</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Workplace Selection */}
+                <WorkplaceSelector
+                  value={selectedWorkplace}
+                  onChange={setSelectedWorkplace}
+                  disabled={isCheckedIn}
+                />
+
+                {/* GPS Status Indicator */}
+                {gpsCoordinates && (
+                  <GPSStatusIndicator
+                    accuracy={gpsCoordinates.accuracy}
+                    latitude={gpsCoordinates.latitude}
+                    longitude={gpsCoordinates.longitude}
+                    lastUpdated={new Date()}
+                    isSearching={gpsStatus === "acquiring"}
+                  />
+                )}
+
                 {/* GPS Status */}
                 {gpsError && (
                   <div className="p-4 bg-red-900/20 border border-red-500/50 rounded-lg flex gap-3">
