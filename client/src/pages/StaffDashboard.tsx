@@ -825,14 +825,7 @@ export default function StaffDashboard() {
                         const endDate = new Date(leaveFormData.endDate);
                         const daysRequested = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
                         
-                        // Validate balance
-                        const selectedBalance = allLeaveBalances?.find(b => b.leaveType === leaveFormData.leaveType);
-                        const availableDays = selectedBalance ? parseFloat(selectedBalance.remainingDays.toString()) : 0;
-                        if (daysRequested > availableDays) {
-                          toast.error(`Insufficient leave balance. You need ${daysRequested - availableDays} more days.`);
-                          return;
-                        }
-                        
+                        // No balance validation - allow any number of days
                         setIsSubmittingLeave(true);
                         try {
                           await submitLeaveRequest.mutateAsync({

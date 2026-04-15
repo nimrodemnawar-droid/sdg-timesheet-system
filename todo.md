@@ -301,3 +301,13 @@
 - [x] Implement download functionality with proper headers
 - [x] Add error handling and validation
 - [x] Test export generation with real data
+
+
+## Phase 28: Remove Leave Balance Validation
+- [x] Remove leave balance validation from staff leave request form
+- [x] Allow staff to submit any number of days regardless of balance
+- [x] Keep balance display for informational purposes
+- [x] Ensure admin can still see balance when reviewing requests
+- [x] Verify system tracks used days after approval
+- [x] Test leave submission with days exceeding balance
+- [x] Update backend validation logic
