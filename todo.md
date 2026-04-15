@@ -291,3 +291,13 @@
 - [x] Add date range filtering for exports
 - [x] Create backend procedures for timesheet data aggregation
 - [x] Test all export formats and options
+
+
+## Phase 27: Connect Export Manager to Backend API
+- [x] Create tRPC procedures for timesheet export (CSV, PDF, Excel)
+- [x] Implement PDF generation using reportlab or similar
+- [x] Add file storage integration for generated exports
+- [x] Wire TimesheetExportManager to backend API calls
+- [x] Implement download functionality with proper headers
+- [x] Add error handling and validation
+- [x] Test export generation with real data

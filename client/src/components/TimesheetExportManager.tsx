@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Download, FileText, Calendar, Users } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 interface TimesheetExportManagerProps {
   staffList?: Array<{ id: number; name: string }>;
@@ -30,6 +32,9 @@ export function TimesheetExportManager({
   const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
   const [isExporting, setIsExporting] = useState(false);
 
+  // Use tRPC mutation for export if onExport not provided
+  const exportMutation = trpc.export.timesheets.useMutation();
+
   const handleExport = async () => {
     if (!startDate || !endDate) {
       toast.error("Please select start and end dates");
@@ -48,12 +53,23 @@ export function TimesheetExportManager({
 
     setIsExporting(true);
     try {
-      const result = await onExport?.({
-        format: exportFormat,
-        staffId: staffSelection === "single" ? parseInt(selectedStaffId) : undefined,
-        startDate,
-        endDate,
-      });
+      // Use provided onExport callback or tRPC mutation
+      let result;
+      if (onExport) {
+        result = await onExport({
+          format: exportFormat,
+          staffId: staffSelection === "single" ? parseInt(selectedStaffId) : undefined,
+          startDate,
+          endDate,
+        });
+      } else {
+        result = await exportMutation.mutateAsync({
+          format: exportFormat,
+          staffId: staffSelection === "single" ? parseInt(selectedStaffId) : undefined,
+          startDate,
+          endDate,
+        });
+      }
 
       if (result?.success) {
         toast.success(`Timesheet exported as ${exportFormat.toUpperCase()}`);

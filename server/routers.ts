@@ -13,6 +13,10 @@ import {
 import { TRPCError } from "@trpc/server";
 import { analyticsRouter } from "./analyticsRouter";
 import { notifyOwner } from "./_core/notification";
+import { storagePut } from "./storage";
+import { generateCSVContent, generateExcelContent } from "./db";
+import { logAuditEvent } from "./db";
+import { getTimesheetDataForExport } from "./db";
 
 // Helper to ensure admin role
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -715,5 +719,96 @@ export const appRouter = router({
 
   // ============ ANALYTICS PROCEDURES ============
   analytics: analyticsRouter,
+
+  // ============ TIMESHEET EXPORT PROCEDURES ============
+  export: router({
+    timesheets: protectedProcedure
+      .input(
+        z.object({
+          format: z.enum(["csv", "pdf", "excel"]),
+          staffId: z.number().optional(),
+          startDate: z.string(),
+          endDate: z.string(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        try {
+          // Only admins can export timesheets
+          if (ctx.user.role !== "admin") {
+            throw new TRPCError({ code: "FORBIDDEN" });
+          }
+
+          const startDate = new Date(input.startDate);
+          const endDate = new Date(input.endDate);
+
+          // Fetch timesheet data
+          const timesheetData = await getTimesheetDataForExport({
+            staffId: input.staffId,
+            startDate,
+            endDate,
+          });
+
+          if (timesheetData.length === 0) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "No timesheet data found for the selected criteria",
+            });
+          }
+
+          let fileContent: string;
+          let mimeType: string;
+          let filename: string;
+
+          if (input.format === "csv") {
+            fileContent = generateCSVContent(timesheetData);
+            mimeType = "text/csv";
+            filename = `timesheet_${new Date().getTime()}.csv`;
+          } else if (input.format === "excel") {
+            fileContent = generateExcelContent(timesheetData);
+            mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            filename = `timesheet_${new Date().getTime()}.xlsx`;
+          } else {
+            // PDF format - use CSV format for now (can be converted to PDF by user)
+            fileContent = generateCSVContent(timesheetData);
+            mimeType = "text/csv";
+            filename = `timesheet_${new Date().getTime()}.pdf`;
+          }
+
+          // Store the file and generate a download URL
+          const { url } = await storagePut(
+            `exports/${ctx.user.id}/${filename}`,
+            Buffer.from(fileContent),
+            mimeType
+          );
+
+          // Log the export action
+          await logAuditEvent({
+            userId: ctx.user.id,
+            action: "EXPORT_TIMESHEET",
+            entityType: "TIMESHEET",
+            details: {
+              format: input.format,
+              staffId: input.staffId || "all",
+              startDate: input.startDate,
+              endDate: input.endDate,
+              recordCount: timesheetData.length,
+            },
+          });
+
+          return {
+            success: true,
+            url,
+            filename,
+            recordCount: timesheetData.length,
+          };
+        } catch (error) {
+          console.error("[Export] Error exporting timesheets:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to export timesheets",
+          });
+        }
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;
