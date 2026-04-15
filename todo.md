@@ -345,3 +345,11 @@
 - [x] Display hours worked this week with visual indicator
 - [x] Test statistics display with real data
 - [x] Verify statistics update in real-time
+
+
+## Phase 32: Fix Email Notification Insertion Error
+- [x] Identify where email notifications are being created
+- [x] Fix sentAt timestamp format (should be Date, not string)
+- [x] Verify emailNotifications table schema
+- [x] Test leave approval notification flow
+- [x] Verify all notification types work correctly

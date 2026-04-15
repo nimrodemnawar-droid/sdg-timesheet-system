@@ -563,13 +563,18 @@ export async function createEmailNotification(data: {
   const db = await getDb();
   if (!db) return;
 
-  await db.insert(emailNotifications).values({
-    userId: data.userId,
-    type: data.type,
-    subject: data.subject,
-    content: data.content,
-    sentAt: new Date(),
-  });
+  try {
+    await db.insert(emailNotifications).values({
+      userId: data.userId,
+      type: data.type,
+      subject: data.subject,
+      content: data.content || "",
+      sentAt: new Date(),
+    });
+  } catch (error) {
+    console.error("[Database] Error creating email notification:", error);
+    // Don't throw - email notifications are non-critical
+  }
 }
 
 // ============ DOCUMENTS ============
