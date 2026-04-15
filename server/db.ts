@@ -1355,3 +1355,99 @@ export async function getUserWithStaffNumber(userId: number) {
     return null;
   }
 }
+
+
+// ============ STATISTICS FUNCTIONS ============
+
+/**
+ * Get all leave balances for a user (all types for current year)
+ */
+export async function getAllLeaveBalances(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get leave balances: database not available");
+    return null;
+  }
+
+  try {
+    const currentYear = new Date().getFullYear();
+    const leaveTypes = ["annual", "sick", "casual", "maternity"];
+    const balances: Record<string, number> = {
+      annual: 0,
+      sick: 0,
+      casual: 0,
+      maternity: 0,
+    };
+
+    for (const leaveType of leaveTypes) {
+      const result = await db
+        .select({
+          remainingDays: leaveBalance.remainingDays,
+        })
+        .from(leaveBalance)
+        .where(
+          and(
+            eq(leaveBalance.userId, userId),
+            eq(leaveBalance.leaveType, leaveType as "annual" | "sick" | "maternity" | "unpaid" | "other"),
+            eq(leaveBalance.year, currentYear)
+          )
+        )
+        .limit(1);
+
+      if (result.length > 0 && result[0].remainingDays) {
+        balances[leaveType] = Number(result[0].remainingDays);
+      }
+    }
+
+    return balances;
+  } catch (error) {
+    console.error("[Database] Error fetching leave balances:", error);
+    return null;
+  }
+}
+
+/**
+ * Get total hours worked in a date range for a user
+ */
+export async function getHoursWorkedInRange(
+  userId: number,
+  startDate: Date,
+  endDate: Date
+): Promise<number> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get hours worked: database not available");
+    return 0;
+  }
+
+  try {
+    const records = await db
+      .select({
+        checkInTime: attendance.checkInTime,
+        checkOutTime: attendance.checkOutTime,
+      })
+      .from(attendance)
+      .where(
+        and(
+          eq(attendance.userId, userId),
+          gte(attendance.checkInTime, startDate),
+          lte(attendance.checkInTime, endDate)
+        )
+      );
+
+    let totalHours = 0;
+    for (const record of records) {
+      if (record.checkInTime && record.checkOutTime) {
+        const checkIn = new Date(record.checkInTime);
+        const checkOut = new Date(record.checkOutTime);
+        const hours = (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60);
+        totalHours += hours;
+      }
+    }
+
+    return Math.round(totalHours * 100) / 100;
+  } catch (error) {
+    console.error("[Database] Error calculating hours worked:", error);
+    return 0;
+  }
+}

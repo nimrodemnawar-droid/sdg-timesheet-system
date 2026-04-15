@@ -735,6 +735,43 @@ export const appRouter = router({
   // ============ ANALYTICS PROCEDURES ============
   analytics: analyticsRouter,
 
+  // ============ STATISTICS PROCEDURES ============
+  statistics: router({
+    getUserStats: protectedProcedure.query(async ({ ctx }) => {
+      try {
+        // Get leave balance
+        const leaveBalance = await db.getAllLeaveBalances(ctx.user.id);
+        
+        // Get hours worked this week
+        const now = new Date();
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay()); // Start of week (Sunday)
+        weekStart.setHours(0, 0, 0, 0);
+        
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6); // End of week (Saturday)
+        weekEnd.setHours(23, 59, 59, 999);
+        
+        const weeklyHours = await db.getHoursWorkedInRange(ctx.user.id, weekStart, weekEnd);
+        
+        return {
+          leaveBalance: leaveBalance || { annual: 0, sick: 0, casual: 0, maternity: 0 },
+          weeklyHours: weeklyHours || 0,
+          weekStart: weekStart.toISOString().split('T')[0],
+          weekEnd: weekEnd.toISOString().split('T')[0],
+        };
+      } catch (error) {
+        console.error('[Statistics] Error fetching user stats:', error);
+        return {
+          leaveBalance: { annual: 0, sick: 0, casual: 0, maternity: 0 },
+          weeklyHours: 0,
+          weekStart: new Date().toISOString().split('T')[0],
+          weekEnd: new Date().toISOString().split('T')[0],
+        };
+      }
+    }),
+  }),
+
   // ============ TIMESHEET EXPORT PROCEDURES ============
   export: router({
     timesheets: protectedProcedure

@@ -334,3 +334,14 @@
 - [x] Remove example page route from App.tsx
 - [x] Test dashboard loads without example content
 - [x] Verify all other pages still work
+
+
+## Phase 31: Add Statistics Section to Landing Page
+- [x] Create backend procedure to fetch user's leave balance
+- [x] Create backend procedure to fetch hours worked this week
+- [x] Add statistics cards to Home.tsx
+- [x] Wire statistics to backend API calls
+- [x] Display leave balance with visual indicator
+- [x] Display hours worked this week with visual indicator
+- [x] Test statistics display with real data
+- [x] Verify statistics update in real-time

@@ -1,10 +1,15 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Briefcase, LogOut } from "lucide-react";
+import { Briefcase, LogOut, Calendar, Clock } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
 export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
+  const { data: stats, isLoading: statsLoading } = trpc.statistics.getUserStats.useQuery(
+    undefined,
+    { enabled: isAuthenticated }
+  );
 
   if (loading) {
     return (
@@ -33,7 +38,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-blue-900 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <Briefcase className="w-8 h-8 text-blue-400" />
@@ -49,6 +54,70 @@ export default function Home() {
           </Button>
         </div>
 
+        {/* Statistics Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* Leave Balance Card */}
+          <div className="bg-gradient-to-br from-emerald-900/40 to-emerald-800/20 border border-emerald-700/50 rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Leave Balance</h3>
+              <Calendar className="w-6 h-6 text-emerald-400" />
+            </div>
+            {statsLoading ? (
+              <div className="text-slate-300">Loading...</div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-300">Annual:</span>
+                  <span className="text-xl font-bold text-emerald-400">{stats?.leaveBalance?.annual || 0} days</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-300">Sick:</span>
+                  <span className="text-xl font-bold text-blue-400">{stats?.leaveBalance?.sick || 0} days</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-300">Casual:</span>
+                  <span className="text-xl font-bold text-purple-400">{stats?.leaveBalance?.casual || 0} days</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-300">Maternity:</span>
+                  <span className="text-xl font-bold text-pink-400">{stats?.leaveBalance?.maternity || 0} days</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Hours Worked This Week Card */}
+          <div className="bg-gradient-to-br from-blue-900/40 to-blue-800/20 border border-blue-700/50 rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Hours This Week</h3>
+              <Clock className="w-6 h-6 text-blue-400" />
+            </div>
+            {statsLoading ? (
+              <div className="text-slate-300">Loading...</div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-300">Total Hours:</span>
+                  <span className="text-4xl font-bold text-blue-400">{stats?.weeklyHours || 0}</span>
+                </div>
+                <div className="text-sm text-slate-400 mt-4">
+                  <p>Week: {stats?.weekStart} to {stats?.weekEnd}</p>
+                </div>
+                <div className="w-full bg-slate-700 rounded-full h-2 mt-4">
+                  <div 
+                    className="bg-blue-500 h-2 rounded-full transition-all"
+                    style={{ width: `${Math.min((stats?.weeklyHours || 0) / 40 * 100, 100)}%` }}
+                  />
+                </div>
+                <p className="text-xs text-slate-400 mt-2">
+                  {Math.max(0, 40 - (stats?.weeklyHours || 0)).toFixed(1)} hours remaining to reach 40h target
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Navigation Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Link href="/dashboard">
             <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:border-blue-400 transition-all cursor-pointer h-full">
