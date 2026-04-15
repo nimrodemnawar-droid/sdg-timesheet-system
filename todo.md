@@ -311,3 +311,19 @@
 - [x] Verify system tracks used days after approval
 - [x] Test leave submission with days exceeding balance
 - [x] Update backend validation logic
+
+
+## Phase 29: Permanent Staff Numbering System (1-100)
+- [x] Add staffNumber field to users table (nullable, unique)
+- [x] Create backend logic to auto-assign numbers on first login
+- [x] Implement getNextAvailableStaffNumber() function
+- [x] Display staff number on Staff Dashboard header
+- [x] Display staff number on Check-in screen
+- [x] Display staff number on Check-out screen
+- [x] Display staff number in Admin Dashboard staff list
+- [x] Add staff number to attendance records
+- [x] Add staff number to timesheet exports (CSV, Excel)
+- [x] Add staff number to admin reports
+- [x] Test staff number assignment and persistence
+- [x] Verify staff number displays on all screens
+- [x] Test export includes staff numbers

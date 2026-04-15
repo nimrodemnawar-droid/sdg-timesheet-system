@@ -26,6 +26,7 @@ export const users = mysqlTable("users", {
   profilePhotoKey: text("profilePhotoKey"), // S3 file key for access control
   department: varchar("department", { length: 255 }),
   phoneNumber: varchar("phoneNumber", { length: 20 }),
+  staffNumber: int("staffNumber").unique(), // Permanent staff number (1-100) assigned on first login
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

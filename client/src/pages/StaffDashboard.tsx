@@ -247,6 +247,11 @@ export default function StaffDashboard() {
           <div className="flex items-center gap-3">
             <Briefcase className="w-8 h-8 text-blue-400" />
             <h1 className="text-4xl font-bold text-white">Staff Dashboard</h1>
+            {user?.staffNumber && (
+              <div className="ml-auto bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-2 rounded-lg">
+                <p className="text-white font-bold text-lg">Staff #{String(user.staffNumber).padStart(3, '0')}</p>
+              </div>
+            )}
           </div>
           <p className="text-slate-300">Welcome, {user?.name}. Track your time and activities.</p>
         </div>
@@ -339,6 +344,9 @@ export default function StaffDashboard() {
                 <CardTitle className="text-white flex items-center gap-2">
                   <MapPin className="w-5 h-5 text-blue-400" />
                   GPS Check In/Out
+                  {user?.staffNumber && (
+                    <span className="ml-auto bg-purple-600 px-3 py-1 rounded text-sm font-bold">Staff #{String(user.staffNumber).padStart(3, '0')}</span>
+                  )}
                 </CardTitle>
                 <CardDescription className="text-slate-400">Use GPS to check in and out of work</CardDescription>
               </CardHeader>

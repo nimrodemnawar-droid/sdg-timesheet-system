@@ -1096,6 +1096,7 @@ export function calculatePayoutAmount(
 
 export interface TimesheetExportData {
   date: string;
+  staffNumber?: number;
   staffName: string;
   checkInTime: string;
   checkOutTime: string;
@@ -1122,6 +1123,7 @@ export async function getTimesheetDataForExport(data: {
         id: attendance.id,
         userId: attendance.userId,
         userName: users.name,
+        staffNumber: users.staffNumber,
         checkInTime: attendance.checkInTime,
         checkOutTime: attendance.checkOutTime,
         location: attendance.workModality,
@@ -1151,6 +1153,7 @@ export async function getTimesheetDataForExport(data: {
 
       return {
         date: checkIn.toISOString().split("T")[0],
+        staffNumber: r.staffNumber || undefined,
         staffName: r.userName || "Unknown",
         checkInTime: checkIn.toLocaleTimeString(),
         checkOutTime: checkOut ? checkOut.toLocaleTimeString() : "Not checked out",
@@ -1167,8 +1170,9 @@ export async function getTimesheetDataForExport(data: {
 }
 
 export function generateCSVContent(data: TimesheetExportData[]): string {
-  const headers = ["Date", "Staff Name", "Check-in", "Check-out", "Hours Worked", "Overtime", "Location", "Remarks"];
+  const headers = ["Staff #", "Date", "Staff Name", "Check-in", "Check-out", "Hours Worked", "Overtime", "Location", "Remarks"];
   const rows = data.map((row) => [
+    row.staffNumber ? String(row.staffNumber).padStart(3, '0') : "-",
     row.date,
     row.staffName,
     row.checkInTime,
@@ -1206,6 +1210,7 @@ export function generateExcelContent(data: TimesheetExportData[]): string {
         <table>
           <thead>
             <tr>
+              <th>Staff #</th>
               <th>Date</th>
               <th>Staff Name</th>
               <th>Check-in</th>
@@ -1221,6 +1226,7 @@ export function generateExcelContent(data: TimesheetExportData[]): string {
               .map(
                 (row) => `
               <tr>
+                <td>${row.staffNumber ? String(row.staffNumber).padStart(3, '0') : '-'}</td>
                 <td>${row.date}</td>
                 <td>${row.staffName}</td>
                 <td>${row.checkInTime}</td>
@@ -1242,4 +1248,110 @@ export function generateExcelContent(data: TimesheetExportData[]): string {
     </html>
   `;
   return html;
+}
+
+
+// ============ STAFF NUMBERING SYSTEM ============
+
+/**
+ * Get the next available staff number (1-100)
+ * Returns the lowest available number or null if all 100 are taken
+ */
+export async function getNextAvailableStaffNumber(): Promise<number | null> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get next staff number: database not available");
+    return null;
+  }
+
+  try {
+    // Get all assigned staff numbers
+    const assignedNumbers = await db
+      .select({ staffNumber: users.staffNumber })
+      .from(users)
+      .where(isNotNull(users.staffNumber));
+
+    const assignedSet = new Set(assignedNumbers.map(u => u.staffNumber));
+
+    // Find the first available number from 1 to 100
+    for (let i = 1; i <= 100; i++) {
+      if (!assignedSet.has(i)) {
+        return i;
+      }
+    }
+
+    // All 100 numbers are taken
+    return null;
+  } catch (error) {
+    console.error("[Database] Error getting next staff number:", error);
+    return null;
+  }
+}
+
+/**
+ * Assign a staff number to a user if they don't have one
+ * Called on first login
+ */
+export async function assignStaffNumberIfNeeded(userId: number): Promise<number | null> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot assign staff number: database not available");
+    return null;
+  }
+
+  try {
+    // Check if user already has a staff number
+    const user = await db
+      .select({ staffNumber: users.staffNumber })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (user.length > 0 && user[0].staffNumber !== null) {
+      // User already has a number
+      return user[0].staffNumber;
+    }
+
+    // Get next available number
+    const nextNumber = await getNextAvailableStaffNumber();
+    if (nextNumber === null) {
+      console.warn("[Database] No available staff numbers (all 100 taken)");
+      return null;
+    }
+
+    // Assign the number
+    await db
+      .update(users)
+      .set({ staffNumber: nextNumber })
+      .where(eq(users.id, userId));
+
+    return nextNumber;
+  } catch (error) {
+    console.error("[Database] Error assigning staff number:", error);
+    return null;
+  }
+}
+
+/**
+ * Get user with staff number
+ */
+export async function getUserWithStaffNumber(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get user with staff number: database not available");
+    return null;
+  }
+
+  try {
+    const result = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    return result.length > 0 ? result[0] : null;
+  } catch (error) {
+    console.error("[Database] Error getting user with staff number:", error);
+    return null;
+  }
 }

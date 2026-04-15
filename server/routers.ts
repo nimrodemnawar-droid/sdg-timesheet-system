@@ -38,7 +38,22 @@ export const appRouter = router({
   system: systemRouter,
 
   auth: router({
-    me: publicProcedure.query((opts) => opts.ctx.user),
+    me: publicProcedure.query(async (opts) => {
+      // Assign staff number on first login if not already assigned
+      if (opts.ctx.user && opts.ctx.user.id) {
+        const userWithNumber = await db.getUserWithStaffNumber(opts.ctx.user.id);
+        if (userWithNumber && !userWithNumber.staffNumber) {
+          const assignedNumber = await db.assignStaffNumberIfNeeded(opts.ctx.user.id);
+          if (assignedNumber) {
+            return {
+              ...opts.ctx.user,
+              staffNumber: assignedNumber,
+            };
+          }
+        }
+      }
+      return opts.ctx.user;
+    }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
