@@ -34,6 +34,8 @@ import { toast } from "sonner";
 import { ExportDialog } from "@/components/ExportDialog";
 import { NotificationCenter, type Notification } from "@/components/NotificationCenter";
 import { NotificationPreferencesDialog } from "@/components/NotificationPreferencesDialog";
+import { OvertimeApprovalManager } from "@/components/OvertimeApprovalManager";
+import { TimesheetExportManager } from "@/components/TimesheetExportManager";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -288,6 +290,14 @@ export default function AdminDashboard() {
             <TabsTrigger value="reports" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
               <BarChart3 className="w-4 h-4 mr-2" />
               Reports
+            </TabsTrigger>
+            <TabsTrigger value="overtime" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+              <AlertCircle className="w-4 h-4 mr-2" />
+              Overtime
+            </TabsTrigger>
+            <TabsTrigger value="export" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+              <Download className="w-4 h-4 mr-2" />
+              Export
             </TabsTrigger>
           </TabsList>
 
@@ -740,6 +750,16 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Overtime Tab */}
+          <TabsContent value="overtime" className="space-y-4">
+            <OvertimeApprovalManager />
+          </TabsContent>
+
+          {/* Export Tab */}
+          <TabsContent value="export" className="space-y-4">
+            <TimesheetExportManager staffList={staffList?.map((s: any) => ({ id: s.id, name: s.name || "Unknown" })) || []} />
           </TabsContent>
         </Tabs>
       </div>

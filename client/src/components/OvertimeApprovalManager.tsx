@@ -23,28 +23,14 @@ interface OvertimeRecord {
 }
 
 interface OvertimeApprovalManagerProps {
-  records: OvertimeRecord[];
-  onApprove: (data: {
-    attendanceId: number;
-    staffId: number;
-    staffName: string;
-    overtimeHours: number;
-    approvalNotes?: string;
-    payoutMultiplier?: number;
-    hourlyRate?: number;
-  }) => Promise<{ success: boolean; payoutAmount?: number }>;
-  onReject: (data: {
-    attendanceId: number;
-    staffId: number;
-    staffName: string;
-    overtimeHours: number;
-    rejectionReason: string;
-  }) => Promise<{ success: boolean }>;
+  records?: OvertimeRecord[];
+  onApprove?: (data: any) => Promise<{ success: boolean; payoutAmount?: number }>;
+  onReject?: (data: any) => Promise<{ success: boolean }>;
   isLoading?: boolean;
 }
 
 export function OvertimeApprovalManager({
-  records,
+  records = [],
   onApprove,
   onReject,
   isLoading = false,
@@ -59,7 +45,7 @@ export function OvertimeApprovalManager({
   const pendingRecords = records.filter((r) => r.status === "PENDING");
 
   const handleApprove = async () => {
-    if (!selectedRecord) return;
+    if (!selectedRecord || !onApprove) return;
 
     setIsProcessing(true);
     try {
@@ -90,8 +76,8 @@ export function OvertimeApprovalManager({
   };
 
   const handleReject = async () => {
-    if (!selectedRecord || !rejectionReason.trim()) {
-      toast.error("Please provide a rejection reason");
+    if (!selectedRecord || !rejectionReason.trim() || !onReject) {
+      if (!rejectionReason.trim()) toast.error("Please provide a rejection reason");
       return;
     }
 

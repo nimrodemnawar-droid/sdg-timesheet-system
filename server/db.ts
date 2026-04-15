@@ -1090,3 +1090,156 @@ export function calculatePayoutAmount(
 ): number {
   return Math.round(overtimeHours * hourlyRate * multiplier * 100) / 100;
 }
+
+
+// ============ TIMESHEET EXPORT FUNCTIONS ============
+
+export interface TimesheetExportData {
+  date: string;
+  staffName: string;
+  checkInTime: string;
+  checkOutTime: string;
+  hoursWorked: number;
+  overtimeHours: number;
+  location: string;
+  remarks: string;
+}
+
+export async function getTimesheetDataForExport(data: {
+  staffId?: number;
+  startDate: Date;
+  endDate: Date;
+}): Promise<TimesheetExportData[]> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot fetch timesheet data: database not available");
+    return [];
+  }
+
+  try {
+    let query = db
+      .select({
+        id: attendance.id,
+        userId: attendance.userId,
+        userName: users.name,
+        checkInTime: attendance.checkInTime,
+        checkOutTime: attendance.checkOutTime,
+        location: attendance.workModality,
+        remarks: supervisorRemarks.encryptedRemark,
+      })
+      .from(attendance)
+      .innerJoin(users, eq(attendance.userId, users.id))
+      .leftJoin(supervisorRemarks, eq(attendance.id, supervisorRemarks.attendanceId))
+      .where(
+        and(
+          gte(attendance.checkInTime, data.startDate),
+          lte(attendance.checkInTime, data.endDate),
+          data.staffId ? eq(attendance.userId, data.staffId) : undefined
+        )
+      )
+      .orderBy(desc(attendance.checkInTime));
+
+    const records = await query;
+
+    return records.map((r) => {
+      const checkIn = new Date(r.checkInTime);
+      const checkOut = r.checkOutTime ? new Date(r.checkOutTime) : null;
+      const hoursWorked = checkOut
+        ? (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60)
+        : 0;
+      const overtimeHours = Math.max(0, hoursWorked - 8);
+
+      return {
+        date: checkIn.toISOString().split("T")[0],
+        staffName: r.userName || "Unknown",
+        checkInTime: checkIn.toLocaleTimeString(),
+        checkOutTime: checkOut ? checkOut.toLocaleTimeString() : "Not checked out",
+        hoursWorked: Math.round(hoursWorked * 100) / 100,
+        overtimeHours: Math.round(overtimeHours * 100) / 100,
+        location: r.location || "Not specified",
+        remarks: r.remarks || "No remarks",
+      };
+    });
+  } catch (error) {
+    console.error("[Database] Error fetching timesheet data:", error);
+    return [];
+  }
+}
+
+export function generateCSVContent(data: TimesheetExportData[]): string {
+  const headers = ["Date", "Staff Name", "Check-in", "Check-out", "Hours Worked", "Overtime", "Location", "Remarks"];
+  const rows = data.map((row) => [
+    row.date,
+    row.staffName,
+    row.checkInTime,
+    row.checkOutTime,
+    row.hoursWorked,
+    row.overtimeHours,
+    row.location,
+    `"${row.remarks.replace(/"/g, '""')}"`, // Escape quotes in remarks
+  ]);
+
+  const csvContent = [
+    headers.join(","),
+    ...rows.map((row) => row.join(",")),
+  ].join("\n");
+
+  return csvContent;
+}
+
+export function generateExcelContent(data: TimesheetExportData[]): string {
+  // Generate HTML that can be saved as Excel format
+  const html = `
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          table { border-collapse: collapse; width: 100%; }
+          th, td { border: 1px solid black; padding: 8px; text-align: left; }
+          th { background-color: #4472C4; color: white; font-weight: bold; }
+          tr:nth-child(even) { background-color: #f2f2f2; }
+        </style>
+      </head>
+      <body>
+        <h2>Timesheet Report</h2>
+        <p>Generated: ${new Date().toLocaleString()}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Staff Name</th>
+              <th>Check-in</th>
+              <th>Check-out</th>
+              <th>Hours Worked</th>
+              <th>Overtime</th>
+              <th>Location</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data
+              .map(
+                (row) => `
+              <tr>
+                <td>${row.date}</td>
+                <td>${row.staffName}</td>
+                <td>${row.checkInTime}</td>
+                <td>${row.checkOutTime}</td>
+                <td>${row.hoursWorked}</td>
+                <td>${row.overtimeHours}</td>
+                <td>${row.location}</td>
+                <td>${row.remarks}</td>
+              </tr>
+            `
+              )
+              .join("")}
+          </tbody>
+        </table>
+        <p style="margin-top: 20px; font-size: 12px; color: #666;">
+          Total Records: ${data.length} | Total Hours: ${data.reduce((sum, r) => sum + r.hoursWorked, 0).toFixed(2)} | Total Overtime: ${data.reduce((sum, r) => sum + r.overtimeHours, 0).toFixed(2)}
+        </p>
+      </body>
+    </html>
+  `;
+  return html;
+}

@@ -279,3 +279,15 @@
 - [x] Implement staff notifications for approval status
 - [x] Add overtime history and audit trail
 - [x] Test complete overtime workflow
+
+
+## Phase 26: Admin Dashboard Integrations
+- [x] Integrate OvertimeApprovalManager as new tab in Admin Dashboard
+- [x] Create timesheet export component with format selection
+- [x] Add PDF export functionality for timesheets
+- [x] Add CSV export functionality for timesheets
+- [x] Add Excel export functionality for timesheets
+- [x] Implement single staff or all staff export options
+- [x] Add date range filtering for exports
+- [x] Create backend procedures for timesheet data aggregation
+- [x] Test all export formats and options
