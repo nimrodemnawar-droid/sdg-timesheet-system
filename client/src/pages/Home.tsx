@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Briefcase, LogOut, Calendar, Clock } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { getLoginUrl } from "@/const";
 
 export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
@@ -26,7 +27,7 @@ export default function Home() {
           <h1 className="text-4xl font-bold text-white mb-4">Africa for SDGs Timesheet</h1>
           <p className="text-slate-300 mb-8 text-lg">Track your time and activities for sustainable development goals</p>
           <Button 
-            onClick={() => window.location.href = window.location.origin + '/api/oauth/login'}
+            onClick={() => window.location.href = getLoginUrl()}
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg"
           >
             Login
