@@ -353,3 +353,12 @@
 - [x] Verify emailNotifications table schema
 - [x] Test leave approval notification flow
 - [x] Verify all notification types work correctly
+
+
+## Phase 33: Fix Admin Dashboard Access Control
+- [x] Hide Admin Dashboard from staff users in navigation
+- [x] Show Admin Dashboard only to admin users
+- [x] Add backend protection to admin routes
+- [x] Prevent staff from accessing admin pages via URL
+- [x] Test role-based access control
+- [x] Verify staff cannot see admin features

@@ -87,6 +87,7 @@ function Navigation() {
 
 function Router() {
   const { user, loading } = useAuth();
+  const [, navigate] = useLocation();
 
   if (loading) {
     return (
@@ -135,13 +136,25 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/dashboard" component={StaffDashboard} />
         <Route path="/leave" component={LeaveRequest} />
-        <Route path="/supervisor" component={SupervisorDashboard} />
-        <Route path="/map" component={LiveGPSMap} />
-        <Route path="/admin" component={AdminDashboard} />
-        <Route path="/analytics" component={AnalyticsDashboard} />
         <Route path="/leave-balance" component={LeaveBalanceDashboard} />
         <Route path="/waypoint-history" component={WaypointHistory} />
-        <Route path="/executive" component={AdminDashboardExecutive} />
+        
+        {/* Supervisor/Admin routes */}
+        {(user.role === "admin" || user.role === "supervisor") && (
+          <>
+            <Route path="/supervisor" component={SupervisorDashboard} />
+            <Route path="/map" component={LiveGPSMap} />
+          </>
+        )}
+        
+        {/* Admin-only routes */}
+        {user.role === "admin" && (
+          <>
+            <Route path="/admin" component={AdminDashboard} />
+            <Route path="/analytics" component={AnalyticsDashboard} />
+            <Route path="/executive" component={AdminDashboardExecutive} />
+          </>
+        )}
 
         <Route path="*" component={NotFound} />
       </Switch>
