@@ -69,6 +69,29 @@ export default function StaffDashboard() {
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [isSubmittingTimesheet, setIsSubmittingTimesheet] = useState(false);
+  const submitTimesheetMutation = trpc.attendance.submitTimesheet.useMutation({
+    onSuccess: () => {
+      toast.success('Timesheet submitted successfully!');
+      setTimesheetData({
+        date: new Date().toISOString().split('T')[0],
+        workModality: 'field',
+        activityCategory: '',
+        sdgGoal: '',
+        program: '',
+        kpi: '',
+        amStartTime: '',
+        amEndTime: '',
+        pmStartTime: '',
+        pmEndTime: '',
+        taskDescription: '',
+        staffRemarks: '',
+        evidenceFile: null,
+      });
+    },
+    onError: (error) => {
+      toast.error(`Failed to submit timesheet: ${error.message}`);
+    },
+  });
   const [gpsStatus, setGpsStatus] = useState<"idle" | "acquiring" | "ready">("idle");
   const [activeTab, setActiveTab] = useState("check-in");
 
@@ -621,6 +644,18 @@ export default function StaffDashboard() {
                 <Button 
                   disabled={isSubmittingTimesheet || !todayAttendance?.checkInTime}
                   className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-white border-0 text-base disabled:opacity-50"
+                  onClick={async () => {
+                    if (!todayAttendance?.id) {
+                      toast.error('No attendance record found for today');
+                      return;
+                    }
+                    setIsSubmittingTimesheet(true);
+                    try {
+                      await submitTimesheetMutation.mutateAsync({ attendanceId: todayAttendance.id });
+                    } finally {
+                      setIsSubmittingTimesheet(false);
+                    }
+                  }}
                 >
                   {isSubmittingTimesheet ? (
                     <>

@@ -371,3 +371,11 @@
 - [x] Verify all required fields are being provided
 - [x] Test check-in and check-out functionality
 - [x] Verify dailyStaffNumber is properly assigned
+
+
+## Phase 35: Fix Timesheet Submit Button
+- [x] Find the timesheet submit button in Staff Dashboard
+- [x] Check if button has click handler attached
+- [x] Verify mutation is being called
+- [x] Test submit functionality
+- [x] Verify timesheet data is saved
