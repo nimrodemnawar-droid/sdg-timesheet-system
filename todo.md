@@ -379,3 +379,13 @@
 - [x] Verify mutation is being called
 - [x] Test submit functionality
 - [x] Verify timesheet data is saved
+
+
+## Phase 36: Session Management - Remember Me & Timeout Warnings
+- [x] Add Remember me checkbox to login page
+- [x] Implement session timeout tracking (15 min default)
+- [x] Add session timeout warning dialog (2 min before timeout)
+- [x] Implement auto-logout on timeout
+- [x] Store remember me preference in localStorage
+- [x] Test session timeout and warning flow
+- [x] Verify auto-logout works correctly
