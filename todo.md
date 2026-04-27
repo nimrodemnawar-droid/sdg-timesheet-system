@@ -362,3 +362,12 @@
 - [x] Prevent staff from accessing admin pages via URL
 - [x] Test role-based access control
 - [x] Verify staff cannot see admin features
+
+
+## Phase 34: Fix Attendance Check-In Error
+- [x] Identify the specific database field causing the insertion error
+- [x] Check attendance table schema for field constraints
+- [x] Fix the check-in mutation logic
+- [x] Verify all required fields are being provided
+- [x] Test check-in and check-out functionality
+- [x] Verify dailyStaffNumber is properly assigned

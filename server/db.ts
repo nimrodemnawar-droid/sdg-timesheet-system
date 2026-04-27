@@ -159,16 +159,31 @@ export async function createAttendance(data: {
   const db = await getDb();
   if (!db) return undefined;
 
-  const result = await db.insert(attendance).values({
-    userId: data.userId,
-    checkInTime: new Date(),
-    checkInLat: data.checkInLat as any,
-    checkInLng: data.checkInLng as any,
-    checkInAccuracy: data.checkInAccuracy as any,
-    workModality: data.workModality as any,
-  });
+  try {
+    // Convert string coordinates to numbers for decimal fields
+    const lat = parseFloat(data.checkInLat);
+    const lng = parseFloat(data.checkInLng);
+    const accuracy = parseFloat(data.checkInAccuracy);
 
-  return result;
+    // Validate coordinates are valid numbers
+    if (isNaN(lat) || isNaN(lng) || isNaN(accuracy)) {
+      throw new Error('Invalid coordinate values');
+    }
+
+    const result = await db.insert(attendance).values({
+      userId: data.userId,
+      checkInTime: new Date(),
+      checkInLat: lat as any,
+      checkInLng: lng as any,
+      checkInAccuracy: accuracy as any,
+      workModality: data.workModality as any,
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Error creating attendance record:', error);
+    throw error;
+  }
 }
 
 export async function completeAttendance(
@@ -199,19 +214,35 @@ export async function completeAttendance(
   );
   const overtimeMinutes = Math.max(0, durationMinutes - 480); // 8 hours = 480 minutes
 
-  await db
-    .update(attendance)
-    .set({
-      checkOutTime,
-      checkOutLat: data.checkOutLat as any,
-      checkOutLng: data.checkOutLng as any,
-      checkOutAccuracy: data.checkOutAccuracy as any,
-      distanceTraveled: data.distanceTraveled as any,
-      durationMinutes,
-      overtimeMinutes,
-      updatedAt: new Date(),
-    })
-    .where(eq(attendance.id, attendanceId));
+  try {
+    // Convert string coordinates to numbers for decimal fields
+    const checkOutLat = parseFloat(data.checkOutLat);
+    const checkOutLng = parseFloat(data.checkOutLng);
+    const checkOutAccuracy = parseFloat(data.checkOutAccuracy);
+    const distance = parseFloat(data.distanceTraveled);
+
+    // Validate coordinates are valid numbers
+    if (isNaN(checkOutLat) || isNaN(checkOutLng) || isNaN(checkOutAccuracy) || isNaN(distance)) {
+      throw new Error('Invalid coordinate or distance values');
+    }
+
+    await db
+      .update(attendance)
+      .set({
+        checkOutTime,
+        checkOutLat: checkOutLat as any,
+        checkOutLng: checkOutLng as any,
+        checkOutAccuracy: checkOutAccuracy as any,
+        distanceTraveled: distance as any,
+        durationMinutes,
+        overtimeMinutes,
+        updatedAt: new Date(),
+      })
+      .where(eq(attendance.id, attendanceId));
+  } catch (error) {
+    console.error('Error completing attendance record:', error);
+    throw error;
+  }
 }
 
 export async function getTodayAttendance(userId: number) {
