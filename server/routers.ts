@@ -11,6 +11,8 @@ import {
   getAccuracyQuality,
 } from "./encryption";
 import { TRPCError } from "@trpc/server";
+import { and, gte, lte, eq } from "drizzle-orm";
+import { attendance } from "../drizzle/schema";
 import { analyticsRouter } from "./analyticsRouter";
 import { notifyOwner } from "./_core/notification";
 import { storagePut } from "./storage";
@@ -329,6 +331,76 @@ export const appRouter = router({
         });
 
         return { success: true };
+      }),
+
+    // Admin: Get attendance report with filters
+    getReport: adminProcedure
+      .input(
+        z.object({
+          startDate: z.date(),
+          endDate: z.date(),
+          userId: z.number().optional(),
+        })
+      )
+      .query(async ({ input }) => {
+        const db_instance = await db.getDb();
+        if (!db_instance) return [];
+
+        try {
+          let query = db_instance
+            .select({
+              id: attendance.id,
+              userId: attendance.userId,
+              checkInTime: attendance.checkInTime,
+              checkOutTime: attendance.checkOutTime,
+              checkInLat: attendance.checkInLat,
+              checkInLng: attendance.checkInLng,
+              checkOutLat: attendance.checkOutLat,
+              checkOutLng: attendance.checkOutLng,
+              workModality: attendance.workModality,
+              distanceTraveled: attendance.distanceTraveled,
+            })
+            .from(attendance)
+            .where(
+              and(
+                gte(attendance.checkInTime, input.startDate),
+                lte(attendance.checkInTime, input.endDate),
+                input.userId ? eq(attendance.userId, input.userId) : undefined
+              )
+            );
+
+          const records = await query;
+          
+          // Get user names for each record
+          const enrichedRecords = await Promise.all(
+            records.map(async (record) => {
+              const user = await db.getUserById(record.userId);
+              const checkInTime = new Date(record.checkInTime);
+              const checkOutTime = record.checkOutTime ? new Date(record.checkOutTime) : null;
+              const hoursWorked = checkOutTime
+                ? ((checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60 * 60)).toFixed(2)
+                : '0';
+
+              return {
+                id: record.id,
+                staffId: record.userId,
+                name: user?.name || 'Unknown',
+                date: checkInTime.toISOString().split('T')[0],
+                checkInTime: checkInTime.toLocaleTimeString(),
+                checkOutTime: checkOutTime ? checkOutTime.toLocaleTimeString() : 'Not checked out',
+                status: checkOutTime ? 'Present' : 'Checked In',
+                distance: record.distanceTraveled ? parseFloat(record.distanceTraveled as any).toFixed(2) : '0',
+                hoursWorked,
+                workModality: record.workModality || 'N/A',
+              };
+            })
+          );
+
+          return enrichedRecords;
+        } catch (error) {
+          console.error('Error generating attendance report:', error);
+          return [];
+        }
       }),
   }),
 

@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Users,
@@ -662,42 +664,110 @@ export default function AdminDashboard() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <Clock className="w-5 h-5 text-blue-400" />
-                  Today's Attendance
+                  Attendance Report
                 </CardTitle>
-                <CardDescription className="text-slate-400">Real-time attendance tracking</CardDescription>
+                <CardDescription className="text-slate-400">View and export attendance records with filters</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                {/* Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-slate-700/30 rounded-lg">
+                  <div>
+                    <Label className="text-slate-300 text-sm mb-2 block">Start Date</Label>
+                    <Input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="bg-slate-600/50 border-slate-600 text-white"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-slate-300 text-sm mb-2 block">End Date</Label>
+                    <Input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="bg-slate-600/50 border-slate-600 text-white"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-slate-300 text-sm mb-2 block">Staff Member</Label>
+                    <Select value={searchTerm} onValueChange={setSearchTerm}>
+                      <SelectTrigger className="bg-slate-600/50 border-slate-600 text-white">
+                        <SelectValue placeholder="All Staff" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-700 border-slate-600">
+                        <SelectItem value="">All Staff</SelectItem>
+                        {staffList?.map((staff: any) => (
+                          <SelectItem key={staff.id} value={staff.id.toString()}>
+                            {staff.name || `Staff ${staff.id}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-end">
+                    <Button
+                      onClick={() => {
+                        // Generate report with real data
+                        if (attendanceRecords) {
+                          const reportData = [
+                            {
+                              staffId: attendanceRecords.userId || 1,
+                              name: `Staff ${attendanceRecords.userId}`,
+                              date: new Date(attendanceRecords.checkInTime).toISOString().split('T')[0],
+                              checkInTime: new Date(attendanceRecords.checkInTime).toLocaleTimeString(),
+                              checkOutTime: attendanceRecords.checkOutTime ? new Date(attendanceRecords.checkOutTime).toLocaleTimeString() : 'Not checked out',
+                              status: attendanceRecords.checkOutTime ? 'Present' : 'Checked In',
+                              distance: attendanceRecords.distanceTraveled ? parseFloat(attendanceRecords.distanceTraveled as any) / 1000 : 0,
+                            }
+                          ];
+                          generateAttendanceReportCSV(reportData);
+                        }
+                      }}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Export Report
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Attendance Table */}
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead className="border-b border-slate-600">
+                    <thead className="border-b border-slate-600 bg-slate-700/50">
                       <tr>
-                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Staff Name</th>
+                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Staff ID</th>
+                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Name</th>
+                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Date</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Check In</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Check Out</th>
-                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Duration</th>
-                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Waypoints</th>
+                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Hours Worked</th>
+                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Distance (km)</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {Array.isArray(attendanceRecords) && attendanceRecords.slice(0, 10).map((record: any) => (
-                        <tr key={record.id} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition">
-                          <td className="py-3 px-4 text-white">{record.staffName || "Unknown"}</td>
-                          <td className="py-3 px-4 text-slate-400">{new Date(record.checkInTime).toLocaleTimeString()}</td>
-                          <td className="py-3 px-4 text-slate-400">{record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString() : "-"}</td>
-                          <td className="py-3 px-4 text-slate-400">{record.durationMinutes ? `${Math.floor(record.durationMinutes / 60)}h ${record.durationMinutes % 60}m` : "-"}</td>
-                          <td className="py-3 px-4">
-                            <Badge className="bg-blue-600 hover:bg-blue-700">
-                              {record.waypointCount || 0} waypoints
-                            </Badge>
+                      {attendanceRecords && (
+                        <tr className="border-b border-slate-700/50 hover:bg-slate-700/30 transition">
+                          <td className="py-3 px-4 text-white">{attendanceRecords.userId}</td>
+                          <td className="py-3 px-4 text-white">Staff Member</td>
+                          <td className="py-3 px-4 text-slate-400">{new Date(attendanceRecords.checkInTime).toISOString().split('T')[0]}</td>
+                          <td className="py-3 px-4 text-slate-400">{new Date(attendanceRecords.checkInTime).toLocaleTimeString()}</td>
+                          <td className="py-3 px-4 text-slate-400">{attendanceRecords.checkOutTime ? new Date(attendanceRecords.checkOutTime).toLocaleTimeString() : 'Not checked out'}</td>
+                          <td className="py-3 px-4 text-slate-400">
+                            {attendanceRecords.checkOutTime
+                              ? ((new Date(attendanceRecords.checkOutTime).getTime() - new Date(attendanceRecords.checkInTime).getTime()) / (1000 * 60 * 60)).toFixed(2)
+                              : '-'} h
                           </td>
+                          <td className="py-3 px-4 text-slate-400">{attendanceRecords.distanceTraveled ? (parseFloat(attendanceRecords.distanceTraveled) / 1000).toFixed(2) : '0'}</td>
                           <td className="py-3 px-4">
-                            <Badge className={record.checkOutTime ? "bg-green-600" : "bg-blue-600"}>
-                              {record.checkOutTime ? "Checked Out" : "Checked In"}
+                            <Badge className={attendanceRecords.checkOutTime ? "bg-green-600" : "bg-blue-600"}>
+                              {attendanceRecords.checkOutTime ? 'Present' : 'Checked In'}
                             </Badge>
                           </td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>
