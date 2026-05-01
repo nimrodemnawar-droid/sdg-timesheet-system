@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { generateAttendanceReportCSV, generateLeaveReportCSV, generateOvertimeReportCSV, generateGPSActivityReportCSV } from "@/lib/reportExport";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -36,6 +36,7 @@ import { NotificationCenter, type Notification } from "@/components/Notification
 import { NotificationPreferencesDialog } from "@/components/NotificationPreferencesDialog";
 import { OvertimeApprovalManager } from "@/components/OvertimeApprovalManager";
 import { TimesheetExportManager } from "@/components/TimesheetExportManager";
+import { MapView } from "@/components/Map";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -50,6 +51,8 @@ export default function AdminDashboard() {
   const [lastAttendanceState, setLastAttendanceState] = useState<Map<number, boolean>>(new Map());
   const [leaveFilterStatus, setLeaveFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [leaveSearchTerm, setLeaveSearchTerm] = useState("");
+  const [showGpsMap, setShowGpsMap] = useState(false);
+  const mapRef = useRef<google.maps.Map | null>(null);
 
   // Queries with real-time polling for live updates
   const { data: stats, refetch: refetchStats } = trpc.attendance.getToday.useQuery(undefined, {
@@ -354,7 +357,10 @@ export default function AdminDashboard() {
                     <Download className="w-4 h-4" />
                     Export Attendance Report
                   </Button>
-                  <Button className="w-full bg-green-600 hover:bg-green-700 justify-start gap-2 text-white border-0">
+                  <Button 
+                    onClick={() => setShowGpsMap(true)}
+                    className="w-full bg-green-600 hover:bg-green-700 justify-start gap-2 text-white border-0"
+                  >
                     <MapPin className="w-4 h-4" />
                     View Live GPS Map
                   </Button>
@@ -762,6 +768,52 @@ export default function AdminDashboard() {
             <TimesheetExportManager staffList={staffList?.map((s: any) => ({ id: s.id, name: s.name || "Unknown" })) || []} />
           </TabsContent>
         </Tabs>
+
+        {/* GPS Map Modal */}
+        {showGpsMap && attendanceRecords && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-4xl bg-slate-800 border-slate-700">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <CardTitle className="text-white">Live Staff GPS Map</CardTitle>
+                <button
+                  onClick={() => setShowGpsMap(false)}
+                  className="text-slate-400 hover:text-white"
+                >
+                  X
+                </button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-slate-700 rounded-lg overflow-hidden" style={{ height: '500px' }}>
+                  <MapView
+                    initialCenter={{ lat: -1.2921, lng: 36.8219 }}
+                    initialZoom={10}
+                    onMapReady={(map) => {
+                      mapRef.current = map;
+                      if (attendanceRecords && window.google?.maps?.marker?.AdvancedMarkerElement) {
+                        if (attendanceRecords.checkInLat && attendanceRecords.checkInLng) {
+                          new window.google.maps.marker.AdvancedMarkerElement({
+                            map,
+                            position: { lat: parseFloat(attendanceRecords.checkInLat), lng: parseFloat(attendanceRecords.checkInLng) },
+                            title: 'Staff Location',
+                          });
+                        }
+                      }
+                    }}
+                  />
+                </div>
+                <div className="text-sm text-slate-400">
+                  <p>Showing today's staff check-in locations</p>
+                </div>
+                <Button
+                  onClick={() => setShowGpsMap(false)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Close
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );

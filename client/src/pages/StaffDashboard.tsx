@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { WaypointTracker } from "@/components/WaypointTracker";
 import { LeaveCalendar } from "@/components/LeaveCalendar";
 import { WorkplaceSelector } from "@/components/WorkplaceSelector";
 import { GPSStatusIndicator } from "@/components/GPSStatusIndicator";
+import { MapView } from "@/components/Map";
 
 interface GPSCoordinates {
   latitude: number;
@@ -94,6 +95,8 @@ export default function StaffDashboard() {
   });
   const [gpsStatus, setGpsStatus] = useState<"idle" | "acquiring" | "ready">("idle");
   const [activeTab, setActiveTab] = useState("check-in");
+  const [showGpsMap, setShowGpsMap] = useState(false);
+  const mapRef = useRef<google.maps.Map | null>(null);
 
   // Timesheet form state
   const [timesheetData, setTimesheetData] = useState({
@@ -436,6 +439,16 @@ export default function StaffDashboard() {
                       </>
                     )}
                   </Button>
+
+                  {gpsCoordinates && (
+                    <Button
+                      onClick={() => setShowGpsMap(true)}
+                      className="w-full bg-purple-600 hover:bg-purple-700 h-12 text-white border-0 text-base"
+                    >
+                      <MapPin className="w-4 h-4 mr-2" />
+                      View GPS Location on Map
+                    </Button>
+                  )}
 
                   <div className="grid grid-cols-2 gap-3">
                     <Button
@@ -925,6 +938,61 @@ export default function StaffDashboard() {
             />
           </TabsContent>
         </Tabs>
+
+        {/* GPS Map Modal */}
+        {showGpsMap && gpsCoordinates && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-2xl bg-slate-800 border-slate-700">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <CardTitle className="text-white">Your GPS Location</CardTitle>
+                <button
+                  onClick={() => setShowGpsMap(false)}
+                  className="text-slate-400 hover:text-white"
+                >
+                  X
+                </button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-slate-700 rounded-lg overflow-hidden" style={{ height: '400px' }}>
+                  <MapView
+                    initialCenter={{ lat: gpsCoordinates.latitude, lng: gpsCoordinates.longitude }}
+                    initialZoom={16}
+                    onMapReady={(map) => {
+                      mapRef.current = map;
+                      if (window.google?.maps?.marker?.AdvancedMarkerElement) {
+                        new window.google.maps.marker.AdvancedMarkerElement({
+                          map,
+                          position: { lat: gpsCoordinates.latitude, lng: gpsCoordinates.longitude },
+                          title: 'Your Location',
+                        });
+                      }
+                    }}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="bg-slate-700 p-3 rounded">
+                    <p className="text-slate-400">Latitude</p>
+                    <p className="text-white font-mono">{gpsCoordinates.latitude.toFixed(6)}</p>
+                  </div>
+                  <div className="bg-slate-700 p-3 rounded">
+                    <p className="text-slate-400">Longitude</p>
+                    <p className="text-white font-mono">{gpsCoordinates.longitude.toFixed(6)}</p>
+                  </div>
+                  <div className="bg-slate-700 p-3 rounded col-span-2">
+                    <p className="text-slate-400">Accuracy</p>
+                    <p className="text-white font-mono">{gpsCoordinates.accuracy.toFixed(2)} meters</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setShowGpsMap(false)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Close
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -389,3 +389,18 @@
 - [x] Store remember me preference in localStorage
 - [x] Test session timeout and warning flow
 - [x] Verify auto-logout works correctly
+
+
+## Phase 37: CRITICAL - Fix GPS/Maps & Real-Time Data Sync
+- [ ] Diagnose why GPS/Maps component is not responding
+- [ ] Check Google Maps API initialization and proxy authentication
+- [ ] Verify GPS coordinates are being captured correctly
+- [ ] Fix GPS coordinates display on staff dashboard
+- [ ] Implement real-time data sync from staff dashboard to admin reports
+- [ ] Ensure attendance records auto-save to database immediately on check-in/out
+- [ ] Ensure leave requests auto-save to database immediately on submission
+- [ ] Ensure timesheets auto-save to database immediately on submission
+- [ ] Verify admin dashboard auto-updates when staff submits data (no manual refresh)
+- [ ] Test GPS location tracking end-to-end
+- [ ] Test admin reports show latest staff data automatically
+- [ ] Verify database connectivity is working (resolve TiProxy error)
