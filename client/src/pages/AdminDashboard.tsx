@@ -302,6 +302,10 @@ export default function AdminDashboard() {
               <Download className="w-4 h-4 mr-2" />
               Export
             </TabsTrigger>
+            <TabsTrigger value="gpsmap" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+              <MapPin className="w-4 h-4 mr-2" />
+              GPS Map
+            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -766,6 +770,96 @@ export default function AdminDashboard() {
           {/* Export Tab */}
           <TabsContent value="export" className="space-y-4">
             <TimesheetExportManager staffList={staffList?.map((s: any) => ({ id: s.id, name: s.name || "Unknown" })) || []} />
+          </TabsContent>
+
+          {/* GPS Map Tab */}
+          <TabsContent value="gpsmap" className="space-y-4">
+            <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-green-400" />
+                  Real-Time Staff GPS Locations
+                </CardTitle>
+                <CardDescription className="text-slate-400">Live map showing all staff currently checked in</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-slate-700 rounded-lg overflow-hidden" style={{ height: '600px' }}>
+                  <MapView
+                    initialCenter={{ lat: -1.2921, lng: 36.8219 }}
+                    initialZoom={10}
+                    onMapReady={(map) => {
+                      mapRef.current = map;
+                      if (attendanceRecords && window.google?.maps?.marker?.AdvancedMarkerElement) {
+                        if (attendanceRecords.checkInLat && attendanceRecords.checkInLng) {
+                          const marker = new window.google.maps.marker.AdvancedMarkerElement({
+                            map,
+                            position: { lat: parseFloat(attendanceRecords.checkInLat), lng: parseFloat(attendanceRecords.checkInLng) },
+                            title: 'Staff Member',
+                          });
+                          const infoWindow = new window.google.maps.InfoWindow({
+                            content: `<div class="text-black p-2"><strong>Staff ID: ${attendanceRecords.userId}</strong><br/>Checked in at ${new Date(attendanceRecords.checkInTime).toLocaleTimeString()}</div>`,
+                          });
+                          marker.addListener('click', () => {
+                            infoWindow.open(map, marker);
+                          });
+                        }
+                      }
+                    }}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <Card className="bg-slate-700 border-slate-600">
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <p className="text-slate-400 text-sm">Staff Checked In</p>
+                        <p className="text-2xl font-bold text-green-400">1</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-slate-700 border-slate-600">
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <p className="text-slate-400 text-sm">Last Update</p>
+                        <p className="text-sm font-mono text-blue-400">{attendanceRecords?.checkInTime ? new Date(attendanceRecords.checkInTime).toLocaleTimeString() : 'N/A'}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-slate-700 border-slate-600">
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <p className="text-slate-400 text-sm">Accuracy</p>
+                        <p className="text-sm font-mono text-yellow-400">{attendanceRecords?.checkInAccuracy ? parseFloat(attendanceRecords.checkInAccuracy).toFixed(1) : 'N/A'}m</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+                <Card className="bg-slate-700 border-slate-600">
+                  <CardHeader>
+                    <CardTitle className="text-white text-sm">Staff Location Details</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Latitude:</span>
+                        <span className="text-white font-mono">{attendanceRecords?.checkInLat ? parseFloat(attendanceRecords.checkInLat).toFixed(6) : 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Longitude:</span>
+                        <span className="text-white font-mono">{attendanceRecords?.checkInLng ? parseFloat(attendanceRecords.checkInLng).toFixed(6) : 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Check-in Time:</span>
+                        <span className="text-white font-mono">{attendanceRecords?.checkInTime ? new Date(attendanceRecords.checkInTime).toLocaleString() : 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Work Modality:</span>
+                        <span className="text-white font-mono capitalize">{attendanceRecords?.workModality || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
 
