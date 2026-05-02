@@ -934,5 +934,120 @@ export const appRouter = router({
         }
       }),
   }),
+
+  // ============ REPORT SCHEDULING ============
+  reportScheduling: router({
+    // Create a new report schedule
+    create: adminProcedure
+      .input(
+        z.object({
+          reportType: z.enum(["attendance", "overtime", "leave", "gps_activity", "all"]),
+          frequency: z.enum(["daily", "weekly"]),
+          dayOfWeek: z.string().optional(),
+          timeOfDay: z.string(),
+          timezone: z.string().default("UTC"),
+          emailRecipients: z.array(z.string().email()),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const schedule = await db.createReportSchedule({
+          userId: ctx.user.id,
+          reportType: input.reportType,
+          frequency: input.frequency,
+          dayOfWeek: input.dayOfWeek,
+          timeOfDay: input.timeOfDay,
+          timezone: input.timezone,
+          emailRecipients: input.emailRecipients,
+          isActive: true,
+          nextScheduledAt: new Date(),
+        });
+
+        if (!schedule) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create report schedule",
+          });
+        }
+
+        await db.logAuditEvent({
+          userId: ctx.user.id,
+          action: "CREATE_REPORT_SCHEDULE",
+          entityType: "report_schedule",
+          entityId: schedule.id,
+          details: { reportType: input.reportType, frequency: input.frequency },
+        });
+
+        return schedule;
+      }),
+
+    // Get all schedules for current admin
+    getAll: adminProcedure.query(async ({ ctx }) => {
+      return await db.getReportSchedules(ctx.user.id);
+    }),
+
+    // Update a report schedule
+    update: adminProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          isActive: z.boolean().optional(),
+          timeOfDay: z.string().optional(),
+          emailRecipients: z.array(z.string().email()).optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const schedule = await db.updateReportSchedule(input.id, {
+          isActive: input.isActive,
+          timeOfDay: input.timeOfDay,
+          emailRecipients: input.emailRecipients,
+        });
+
+        if (!schedule) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Report schedule not found",
+          });
+        }
+
+        await db.logAuditEvent({
+          userId: ctx.user.id,
+          action: "UPDATE_REPORT_SCHEDULE",
+          entityType: "report_schedule",
+          entityId: input.id,
+        });
+
+        return schedule;
+      }),
+
+    // Delete a report schedule
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const success = await db.deleteReportSchedule(input.id);
+
+        if (!success) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Report schedule not found",
+          });
+        }
+
+        await db.logAuditEvent({
+          userId: ctx.user.id,
+          action: "DELETE_REPORT_SCHEDULE",
+          entityType: "report_schedule",
+          entityId: input.id,
+        });
+
+        return { success: true };
+      }),
+
+    // Get delivery history for a schedule
+    getDeliveryHistory: adminProcedure
+      .input(z.object({ scheduleId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getReportDeliveryHistory(input.scheduleId);
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

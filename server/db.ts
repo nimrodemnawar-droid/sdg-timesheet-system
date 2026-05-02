@@ -19,6 +19,11 @@ import {
   activityHeatmap,
   notificationPreferences,
   notificationHistory,
+  reportSchedules,
+  reportDeliveryHistory,
+  type ReportSchedule,
+  type InsertReportSchedule,
+  type InsertReportDeliveryHistory,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -1485,5 +1490,131 @@ export async function getHoursWorkedInRange(
   } catch (error) {
     console.error("[Database] Error calculating hours worked:", error);
     return 0;
+  }
+}
+
+
+// ============ REPORT SCHEDULING ============
+
+export async function createReportSchedule(
+  schedule: InsertReportSchedule
+): Promise<ReportSchedule | null> {
+  try {
+    const db = await getDb();
+    if (!db) return null;
+
+    const result = await db.insert(reportSchedules).values(schedule);
+    const id = result[0].insertId;
+    
+    return await db
+      .select()
+      .from(reportSchedules)
+      .where(eq(reportSchedules.id, id as number))
+      .then((rows) => rows[0] || null);
+  } catch (error) {
+    console.error("[Database] Error creating report schedule:", error);
+    return null;
+  }
+}
+
+export async function getReportSchedules(userId: number): Promise<ReportSchedule[]> {
+  try {
+    const db = await getDb();
+    if (!db) return [];
+
+    return await db
+      .select()
+      .from(reportSchedules)
+      .where(eq(reportSchedules.userId, userId));
+  } catch (error) {
+    console.error("[Database] Error fetching report schedules:", error);
+    return [];
+  }
+}
+
+export async function getActiveReportSchedules(): Promise<ReportSchedule[]> {
+  try {
+    const db = await getDb();
+    if (!db) return [];
+
+    return await db
+      .select()
+      .from(reportSchedules)
+      .where(eq(reportSchedules.isActive, true));
+  } catch (error) {
+    console.error("[Database] Error fetching active report schedules:", error);
+    return [];
+  }
+}
+
+export async function updateReportSchedule(
+  id: number,
+  updates: Partial<InsertReportSchedule>
+): Promise<ReportSchedule | null> {
+  try {
+    const db = await getDb();
+    if (!db) return null;
+
+    await db
+      .update(reportSchedules)
+      .set(updates)
+      .where(eq(reportSchedules.id, id));
+
+    return await db
+      .select()
+      .from(reportSchedules)
+      .where(eq(reportSchedules.id, id))
+      .then((rows) => rows[0] || null);
+  } catch (error) {
+    console.error("[Database] Error updating report schedule:", error);
+    return null;
+  }
+}
+
+export async function deleteReportSchedule(id: number): Promise<boolean> {
+  try {
+    const db = await getDb();
+    if (!db) return false;
+
+    await db.delete(reportSchedules).where(eq(reportSchedules.id, id));
+    return true;
+  } catch (error) {
+    console.error("[Database] Error deleting report schedule:", error);
+    return false;
+  }
+}
+
+export async function logReportDelivery(
+  delivery: InsertReportDeliveryHistory
+): Promise<boolean> {
+  try {
+    const db = await getDb();
+    if (!db) return false;
+
+    await db.insert(reportDeliveryHistory).values(delivery);
+    return true;
+  } catch (error) {
+    console.error("[Database] Error logging report delivery:", error);
+    return false;
+  }
+}
+
+export async function getReportDeliveryHistory(
+  scheduleId: number,
+  limit: number = 10
+): Promise<any[]> {
+  try {
+    const db = await getDb();
+    if (!db) return [];
+
+    return await db
+      .select()
+      .from(reportDeliveryHistory)
+      .where(eq(reportDeliveryHistory.scheduleId, scheduleId))
+      .orderBy(desc(reportDeliveryHistory.createdAt))
+      .limit(limit);
+  } catch (error) {
+    console.error("[Database] Error fetching report delivery history:", error);
+    return [];
   }
 }

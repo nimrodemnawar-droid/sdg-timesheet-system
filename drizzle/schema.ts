@@ -377,3 +377,47 @@ export type InsertNotificationHistory = typeof notificationHistory.$inferInsert;
 
 
 
+
+
+/**
+ * Report Schedule - Configuration for automated report generation and email delivery
+ */
+export const reportSchedules = mysqlTable("reportSchedules", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  reportType: mysqlEnum("reportType", ["attendance", "overtime", "leave", "gps_activity", "all"]).notNull(),
+  frequency: mysqlEnum("frequency", ["daily", "weekly"]).notNull(),
+  dayOfWeek: varchar("dayOfWeek", { length: 20 }), // For weekly: "monday", "tuesday", etc.
+  timeOfDay: varchar("timeOfDay", { length: 5 }).notNull(), // HH:MM format (24-hour)
+  timezone: varchar("timezone", { length: 50 }).default("UTC").notNull(),
+  emailRecipients: json("emailRecipients").$type<string[]>().notNull(), // Array of email addresses
+  isActive: boolean("isActive").default(true).notNull(),
+  lastSentAt: timestamp("lastSentAt"),
+  nextScheduledAt: timestamp("nextScheduledAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ReportSchedule = typeof reportSchedules.$inferSelect;
+export type InsertReportSchedule = typeof reportSchedules.$inferInsert;
+
+/**
+ * Report Delivery History - Log of all generated and sent reports
+ */
+export const reportDeliveryHistory = mysqlTable("reportDeliveryHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  scheduleId: int("scheduleId").notNull().references(() => reportSchedules.id, { onDelete: "cascade" }),
+  reportType: mysqlEnum("reportType", ["attendance", "overtime", "leave", "gps_activity", "all"]).notNull(),
+  generatedAt: timestamp("generatedAt").defaultNow().notNull(),
+  sentAt: timestamp("sentAt"),
+  recipientEmails: json("recipientEmails").$type<string[]>().notNull(),
+  deliveryStatus: mysqlEnum("deliveryStatus", ["PENDING", "SENT", "FAILED"]).default("PENDING").notNull(),
+  errorMessage: text("errorMessage"),
+  fileUrl: text("fileUrl"), // S3 URL to the generated report file
+  fileSize: int("fileSize"), // Size in bytes
+  recordCount: int("recordCount"), // Number of records in the report
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ReportDeliveryHistory = typeof reportDeliveryHistory.$inferSelect;
+export type InsertReportDeliveryHistory = typeof reportDeliveryHistory.$inferInsert;
