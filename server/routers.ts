@@ -970,11 +970,15 @@ export const appRouter = router({
             endDate,
           });
 
+          // If no data, return empty export with headers only
           if (timesheetData.length === 0) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: "No timesheet data found for the selected criteria",
-            });
+            const emptyHeaders = "Staff ID,Name,Date,Check In,Check Out,Hours Worked,Distance (km),Status\n";
+            const { url } = await storagePut(
+              `exports/timesheet-empty-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.csv`,
+              emptyHeaders,
+              "text/csv"
+            );
+            return { url, message: "Empty timesheet export (no data for selected criteria)" };
           }
 
           let fileContent: string;
