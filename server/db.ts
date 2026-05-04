@@ -1751,3 +1751,49 @@ export async function getAllStaffCheckedInToday() {
     return { checkedInCount: 0, staffList: [] };
   }
 }
+
+
+// ============ KPI MANAGEMENT ============
+
+export async function getActiveKPIs() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+  
+  try {
+    const activeKpis = await db
+      .select({
+        id: kpis.id,
+        name: kpis.name,
+        description: kpis.description,
+        targetValue: kpis.targetValue,
+        unit: kpis.unit,
+        sdgGoalId: kpis.sdgGoalId,
+      })
+      .from(kpis)
+      .where(eq(kpis.isActive, true))
+      .orderBy(asc(kpis.name));
+    
+    return activeKpis;
+  } catch (error) {
+    console.error('[Database] Error fetching active KPIs:', error);
+    throw error;
+  }
+}
+
+export async function getKPIById(kpiId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+  
+  try {
+    const kpi = await db
+      .select()
+      .from(kpis)
+      .where(eq(kpis.id, kpiId))
+      .limit(1);
+    
+    return kpi[0] || null;
+  } catch (error) {
+    console.error('[Database] Error fetching KPI by ID:', error);
+    throw error;
+  }
+}

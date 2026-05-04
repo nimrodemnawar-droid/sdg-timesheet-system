@@ -765,6 +765,7 @@ export default function AdminDashboard() {
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Check Out</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Hours Worked</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Distance (km)</th>
+                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Linked Output / KPI</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Status</th>
                       </tr>
                     </thead>
@@ -782,6 +783,9 @@ export default function AdminDashboard() {
                               : '-'} h
                           </td>
                           <td className="py-3 px-4 text-slate-400">{attendanceRecords.distanceTraveled ? (parseFloat(attendanceRecords.distanceTraveled) / 1000).toFixed(2) : '0'}</td>
+                          <td className="py-3 px-4 text-slate-400">
+                            {attendanceRecords.kpiId ? `KPI #${attendanceRecords.kpiId}` : '-'}
+                          </td>
                           <td className="py-3 px-4">
                             <Badge className={attendanceRecords.checkOutTime ? "bg-green-600" : "bg-blue-600"}>
                               {attendanceRecords.checkOutTime ? 'Present' : 'Checked In'}

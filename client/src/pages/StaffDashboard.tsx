@@ -135,6 +135,7 @@ export default function StaffDashboard() {
   const { data: todayAttendance, refetch: refetchAttendance } = trpc.attendance.getToday.useQuery();
   const { data: allLeaveBalances } = trpc.leave.getAllBalances.useQuery({ year: new Date().getFullYear() });
   const { data: myLeaveRequests, isLoading: isLoadingLeaveRequests } = trpc.leave.getMyRequests.useQuery();
+  const { data: kpiList, isLoading: isLoadingKPIs } = trpc.kpi.getKPIs.useQuery();
   const { data: todayWaypoints, refetch: refetchWaypoints } = trpc.attendance.getWaypoints.useQuery(
     todayAttendance?.id ? { attendanceId: todayAttendance.id } : { attendanceId: 0 },
     { enabled: !!todayAttendance?.id }
@@ -591,6 +592,32 @@ export default function StaffDashboard() {
                             {goal.title}
                           </SelectItem>
                         ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-slate-300 flex items-center gap-2">
+                      <Target className="w-4 h-4" />
+                      Linked Output / KPI
+                    </Label>
+                    <Select value={timesheetData.kpi} onValueChange={(value) => setTimesheetData({ ...timesheetData, kpi: value })}>
+                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
+                        <SelectValue placeholder="Select a KPI (optional)" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-700 max-h-60">
+                        <SelectItem value="" className="text-slate-400">None</SelectItem>
+                        {isLoadingKPIs ? (
+                          <div className="p-2 text-slate-400 text-sm">Loading KPIs...</div>
+                        ) : kpiList && kpiList.length > 0 ? (
+                          kpiList.map((kpi) => (
+                            <SelectItem key={kpi.id} value={kpi.id.toString()} className="text-white">
+                              {kpi.name} {kpi.unit ? `(${kpi.unit})` : ''}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="p-2 text-slate-400 text-sm">No KPIs available</div>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>

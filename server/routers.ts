@@ -1151,5 +1151,44 @@ export const appRouter = router({
         return await db.getReportDeliveryHistory(input.scheduleId);
       }),
   }),
+
+  // KPI Management Router
+  kpi: router({
+    // Get all active KPIs for dropdown
+    getKPIs: protectedProcedure.query(async () => {
+      try {
+        const kpis = await db.getActiveKPIs();
+        return kpis;
+      } catch (error) {
+        console.error('[tRPC] Error fetching KPIs:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch KPIs',
+        });
+      }
+    }),
+
+    // Get KPI by ID
+    getKPIById: protectedProcedure
+      .input(z.object({ kpiId: z.number() }))
+      .query(async ({ input }) => {
+        try {
+          const kpi = await db.getKPIById(input.kpiId);
+          if (!kpi) {
+            throw new TRPCError({
+              code: 'NOT_FOUND',
+              message: 'KPI not found',
+            });
+          }
+          return kpi;
+        } catch (error) {
+          console.error('[tRPC] Error fetching KPI:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to fetch KPI',
+          });
+        }
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

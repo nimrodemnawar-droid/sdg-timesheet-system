@@ -455,3 +455,15 @@
 - [x] Test admin dashboard on mobile devices
 - [x] Verify all forms work on mobile keyboards
 - [x] Test on iPhone, Android, and tablet devices
+
+
+## Phase 41: Linked Output/KPI and Waypoint-Triggered Timesheet
+
+- [x] Add Linked Output/KPI field to timesheet schema (already exists in attendance table)
+- [x] Add Linked Output/KPI input to staff timesheet form (KPI dropdown with tRPC query)
+- [ ] Implement waypoint-triggered timesheet creation
+- [x] Ensure all staff timesheet data is captured on admin side (KPI field now visible)
+- [x] Add Linked Output/KPI column to admin timesheet view (added to attendance table)
+- [ ] Test data accuracy from staff to admin dashboard
+- [ ] Verify waypoint triggers create timesheets correctly
+- [ ] Ensure all fields are displayed in admin reports
