@@ -184,7 +184,17 @@ export const appRouter = router({
 
     // Admin: Get all staff checked in today
     getTodayAllStaff: adminProcedure.query(async () => {
-      return await db.getAllStaffCheckedInToday();
+      try {
+        const result = await db.getAllStaffCheckedInToday();
+        console.log('[Attendance] getTodayAllStaff result:', result);
+        return result;
+      } catch (error) {
+        console.error('[Attendance] Error in getTodayAllStaff:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch staff checked in today',
+        });
+      }
     }),
 
     // Staff: Get attendance history
