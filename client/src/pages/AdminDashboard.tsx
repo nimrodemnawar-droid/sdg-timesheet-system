@@ -199,14 +199,14 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-2 sm:p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Shield className="w-8 h-8 text-blue-400" />
-              <h1 className="text-4xl font-bold text-white">Admin Dashboard</h1>
+              <h1 className="text-2xl md:text-4xl font-bold text-white">Admin Dashboard</h1>
             </div>
             <div className="flex items-center gap-2">
               <NotificationPreferencesDialog />
@@ -754,8 +754,8 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Attendance Table */}
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                <div className="overflow-x-auto -mx-4 md:mx-0">
+                  <table className="w-full text-xs md:text-sm">
                     <thead className="border-b border-slate-600 bg-slate-700/50">
                       <tr>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Staff ID</th>

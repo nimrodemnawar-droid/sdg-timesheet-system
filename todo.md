@@ -436,3 +436,22 @@
 - [ ] Test export accuracy with real staff data
 - [ ] Test check-in today tab displays correctly
 - [ ] Verify dashboard layout on different screen sizes
+
+
+## Phase 40: Mobile Optimization for Staff & Admin Dashboards
+
+- [x] Audit Staff Dashboard mobile responsiveness
+- [x] Audit Admin Dashboard mobile responsiveness
+- [x] Fix Staff Dashboard buttons and controls for mobile
+- [x] Fix Staff Dashboard navigation for mobile
+- [x] Fix Staff Dashboard forms for mobile input
+- [x] Fix Admin Dashboard tabs layout for mobile
+- [x] Fix Admin Dashboard tables for mobile viewing
+- [x] Fix Admin Dashboard maps for mobile
+- [x] Optimize touch targets for mobile (minimum 44x44px)
+- [x] Test GPS check-in on mobile devices
+- [x] Test map viewing on mobile devices
+- [x] Test report export on mobile devices
+- [x] Test admin dashboard on mobile devices
+- [x] Verify all forms work on mobile keyboards
+- [x] Test on iPhone, Android, and tablet devices

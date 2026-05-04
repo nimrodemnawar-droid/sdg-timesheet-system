@@ -260,8 +260,8 @@ export default function StaffDashboard() {
 
   const isCheckedIn = todayAttendance?.checkInTime && !todayAttendance?.checkOutTime;
 
-   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-blue-900 p-4 md:p-8">
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-2 sm:p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Notification Banner */}
         <div className="mb-6">
@@ -270,12 +270,14 @@ export default function StaffDashboard() {
 
         {/* Header */}
         <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <Briefcase className="w-8 h-8 text-blue-400" />
-            <h1 className="text-4xl font-bold text-white">Staff Dashboard</h1>
+          <div className="flex flex-col md:flex-row md:items-center gap-3">
+            <div className="flex items-center gap-3">
+              <Briefcase className="w-8 h-8 text-blue-400" />
+              <h1 className="text-2xl md:text-4xl font-bold text-white">Staff Dashboard</h1>
+            </div>
             {user?.staffNumber && (
-              <div className="ml-auto bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-2 rounded-lg">
-                <p className="text-white font-bold text-lg">Staff #{String(user.staffNumber).padStart(3, '0')}</p>
+              <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-2 rounded-lg md:ml-auto w-fit">
+                <p className="text-white font-bold text-sm md:text-lg">Staff #{String(user.staffNumber).padStart(3, '0')}</p>
               </div>
             )}
           </div>
