@@ -1688,3 +1688,66 @@ export async function deleteUser(userId: number): Promise<boolean> {
     return false;
   }
 }
+
+
+export async function getAllStaffCheckedInToday() {
+  try {
+    const db = await getDb();
+    if (!db) return { checkedInCount: 0, staffList: [] };
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Get all attendance records for today
+    const todayRecords = await db
+      .select()
+      .from(attendance)
+      .where(
+        and(
+          gte(attendance.checkInTime, today),
+          lte(attendance.checkInTime, tomorrow)
+        )
+      )
+      .orderBy(desc(attendance.checkInTime));
+
+    // Get unique user IDs
+    const userIdSet = new Set(todayRecords.map(r => r.userId));
+    const userIds = Array.from(userIdSet);
+
+    // Get user details
+    const staffDetails = await db
+      .select()
+      .from(users);
+
+    // Enrich attendance data with user info
+    const staffList = userIds.map(userId => {
+      const userInfo = staffDetails.find(u => u.id === userId);
+      // Only include staff members, not admins
+      if (userInfo?.role === 'admin' || userInfo?.role === 'supervisor') return null;
+      
+      const userRecords = todayRecords.filter(r => r.userId === userId);
+      const latestRecord = userRecords[0];
+
+      return {
+        userId,
+        name: userInfo?.name || `Staff ${userId}`,
+        checkInTime: latestRecord?.checkInTime,
+        checkOutTime: latestRecord?.checkOutTime,
+        status: latestRecord?.checkOutTime ? 'Checked Out' : 'Checked In',
+        workModality: latestRecord?.workModality || 'On-site',
+        checkInLat: latestRecord?.checkInLat,
+        checkInLng: latestRecord?.checkInLng,
+      };
+    }).filter(item => item !== null);
+
+    return {
+      checkedInCount: staffList.length,
+      staffList,
+    };
+  } catch (error) {
+    console.error('[Database] Error getting staff checked in today:', error);
+    return { checkedInCount: 0, staffList: [] };
+  }
+}

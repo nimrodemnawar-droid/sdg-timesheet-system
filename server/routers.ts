@@ -182,6 +182,11 @@ export const appRouter = router({
       return await db.getTodayAttendance(ctx.user.id);
     }),
 
+    // Admin: Get all staff checked in today
+    getTodayAllStaff: adminProcedure.query(async () => {
+      return await db.getAllStaffCheckedInToday();
+    }),
+
     // Staff: Get attendance history
     getHistory: protectedProcedure
       .input(

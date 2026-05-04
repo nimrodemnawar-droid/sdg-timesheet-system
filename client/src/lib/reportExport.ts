@@ -11,6 +11,14 @@ export interface AttendanceRecord {
   checkOutTime: string;
   status: string;
   distance?: number;
+  hoursWorked?: string | number;
+  workModality?: string;
+  checkInLat?: string;
+  checkInLng?: string;
+  checkOutLat?: string;
+  checkOutLng?: string;
+  checkInAccuracy?: string;
+  checkOutAccuracy?: string;
 }
 
 export interface LeaveRecord {
@@ -39,6 +47,12 @@ export interface GPSActivityRecord {
   checkOutLocation: string;
   totalDistance: number;
   waypointCount: number;
+  checkInLat?: string;
+  checkInLng?: string;
+  checkOutLat?: string;
+  checkOutLng?: string;
+  checkInAccuracy?: string;
+  checkOutAccuracy?: string;
 }
 
 /**
@@ -74,14 +88,38 @@ export function downloadCSV(filename: string, content: string): void {
  * Generate Attendance Report CSV
  */
 export function generateAttendanceReportCSV(records: AttendanceRecord[]): void {
-  const headers = ["Staff ID", "Name", "Date", "Check-In Time", "Check-Out Time", "Status", "Distance (km)"];
+  const headers = [
+    "Staff ID", 
+    "Name", 
+    "Date", 
+    "Check-In Time", 
+    "Check-Out Time", 
+    "Hours Worked",
+    "Status", 
+    "Work Modality",
+    "Check-In Lat",
+    "Check-In Lng",
+    "Check-In Accuracy",
+    "Check-Out Lat",
+    "Check-Out Lng",
+    "Check-Out Accuracy",
+    "Distance (km)"
+  ];
   const rows = records.map(r => [
     r.staffId,
     r.name,
     r.date,
     r.checkInTime,
     r.checkOutTime,
+    r.hoursWorked || 0,
     r.status,
+    r.workModality || 'N/A',
+    r.checkInLat || 'N/A',
+    r.checkInLng || 'N/A',
+    r.checkInAccuracy || 'N/A',
+    r.checkOutLat || 'N/A',
+    r.checkOutLng || 'N/A',
+    r.checkOutAccuracy || 'N/A',
     r.distance || 0
   ]);
   
@@ -129,13 +167,33 @@ export function generateOvertimeReportCSV(records: OvertimeRecord[]): void {
  * Generate GPS Activity Report CSV
  */
 export function generateGPSActivityReportCSV(records: GPSActivityRecord[]): void {
-  const headers = ["Staff ID", "Name", "Date", "Check-In Location", "Check-Out Location", "Total Distance (km)", "Waypoints"];
+  const headers = [
+    "Staff ID", 
+    "Name", 
+    "Date", 
+    "Check-In Location", 
+    "Check-Out Location", 
+    "Check-In Lat",
+    "Check-In Lng",
+    "Check-In Accuracy",
+    "Check-Out Lat",
+    "Check-Out Lng",
+    "Check-Out Accuracy",
+    "Total Distance (km)", 
+    "Waypoints"
+  ];
   const rows = records.map(r => [
     r.staffId,
     r.name,
     r.date,
     r.checkInLocation,
     r.checkOutLocation,
+    r.checkInLat || 'N/A',
+    r.checkInLng || 'N/A',
+    r.checkInAccuracy || 'N/A',
+    r.checkOutLat || 'N/A',
+    r.checkOutLng || 'N/A',
+    r.checkOutAccuracy || 'N/A',
     r.totalDistance,
     r.waypointCount
   ]);

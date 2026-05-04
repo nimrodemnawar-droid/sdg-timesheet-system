@@ -419,3 +419,20 @@
 - [ ] Test creating new admin users
 - [ ] Test editing admin users
 - [ ] Test deleting admin users
+
+
+## Phase 39: Critical Fixes - Export Data & Dashboard Issues
+
+- [x] Fix export data to include accurate check-in/out times
+- [x] Add GPS coordinates (latitude, longitude, accuracy) to all exports
+- [x] Update CSV export format to include GPS data
+- [ ] Update Excel export format to include GPS data
+- [ ] Update PDF export format to include GPS data
+- [x] Fix Check-in Today tab to show real-time data
+- [x] Debug attendance query for check-in today display
+- [x] Fix dashboard tab layout to wrap properly
+- [x] Make dashboard options responsive on mobile/tablet
+- [x] Ensure all tabs fit properly without overflow
+- [ ] Test export accuracy with real staff data
+- [ ] Test check-in today tab displays correctly
+- [ ] Verify dashboard layout on different screen sizes

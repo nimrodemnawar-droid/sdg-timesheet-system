@@ -59,7 +59,7 @@ export default function AdminDashboard() {
   const mapRef = useRef<google.maps.Map | null>(null);
 
   // Queries with real-time polling for live updates
-  const { data: stats, refetch: refetchStats } = trpc.attendance.getToday.useQuery(undefined, {
+  const { data: stats, refetch: refetchStats } = trpc.attendance.getTodayAllStaff.useQuery(undefined, {
     refetchInterval: 1000,
   }) as any;
   const { data: leaveRequests, refetch: refetchRequests } = trpc.leave.getPending.useQuery(undefined, {
@@ -277,7 +277,7 @@ export default function AdminDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="bg-slate-800/50 border border-slate-700 backdrop-blur-sm">
+          <TabsList className="bg-slate-800/50 border border-slate-700 backdrop-blur-sm flex flex-wrap gap-2 h-auto p-2">
             <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
               <Activity className="w-4 h-4 mr-2" />
               Overview
@@ -718,16 +718,27 @@ export default function AdminDashboard() {
                   <div className="flex items-end">
                     <Button
                       onClick={() => {
-                        // Generate report with real data
                         if (attendanceRecords) {
+                          const checkInDate = new Date(attendanceRecords.checkInTime);
+                          const checkOutDate = attendanceRecords.checkOutTime ? new Date(attendanceRecords.checkOutTime) : null;
+                          const hoursWorked = checkOutDate ? ((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60)).toFixed(2) : 0;
+                          
                           const reportData = [
                             {
                               staffId: attendanceRecords.userId || 1,
                               name: `Staff ${attendanceRecords.userId}`,
-                              date: new Date(attendanceRecords.checkInTime).toISOString().split('T')[0],
-                              checkInTime: new Date(attendanceRecords.checkInTime).toLocaleTimeString(),
-                              checkOutTime: attendanceRecords.checkOutTime ? new Date(attendanceRecords.checkOutTime).toLocaleTimeString() : 'Not checked out',
-                              status: attendanceRecords.checkOutTime ? 'Present' : 'Checked In',
+                              date: checkInDate.toISOString().split('T')[0],
+                              checkInTime: checkInDate.toLocaleTimeString(),
+                              checkOutTime: checkOutDate ? checkOutDate.toLocaleTimeString() : 'Not checked out',
+                              hoursWorked: hoursWorked,
+                              status: checkOutDate ? 'Present' : 'Checked In',
+                              workModality: attendanceRecords.workModality || 'On-site',
+                              checkInLat: attendanceRecords.checkInLat || 'N/A',
+                              checkInLng: attendanceRecords.checkInLng || 'N/A',
+                              checkInAccuracy: attendanceRecords.checkInAccuracy || 'N/A',
+                              checkOutLat: attendanceRecords.checkOutLat || 'N/A',
+                              checkOutLng: attendanceRecords.checkOutLng || 'N/A',
+                              checkOutAccuracy: attendanceRecords.checkOutAccuracy || 'N/A',
                               distance: attendanceRecords.distanceTraveled ? parseFloat(attendanceRecords.distanceTraveled as any) / 1000 : 0,
                             }
                           ];
