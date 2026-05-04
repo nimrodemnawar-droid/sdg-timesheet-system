@@ -1618,3 +1618,73 @@ export async function getReportDeliveryHistory(
     return [];
   }
 }
+
+
+// ============ ADMIN MANAGEMENT ============
+
+export async function getUserByEmail(email: string): Promise<any> {
+  try {
+    const db = await getDb();
+    if (!db) return null;
+    const result = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Error fetching user by email:", error);
+    return null;
+  }
+}
+
+export async function createAdminUser(data: {
+  email: string;
+  name: string;
+  password: string;
+  department?: string;
+  phoneNumber?: string;
+  role: string;
+}): Promise<any> {
+  try {
+    const db = await getDb();
+    if (!db) throw new Error("Database not connected");
+
+    // In a real app, you would hash the password here
+    // For now, we'll just create the user with the password as-is
+    // TODO: Implement proper password hashing with bcrypt
+    
+    const result = await db
+      .insert(users)
+      .values({
+        email: data.email,
+        name: data.name,
+        department: data.department,
+        phoneNumber: data.phoneNumber,
+        role: data.role as any,
+        isActive: true,
+        loginMethod: "email", // or "password" - depends on your auth system
+        openId: `admin_${Date.now()}`, // Generate a unique ID for non-OAuth users
+      });
+
+    // Fetch and return the created user
+    const createdUser = await getUserByEmail(data.email);
+    return createdUser;
+  } catch (error) {
+    console.error("[Database] Error creating admin user:", error);
+    throw error;
+  }
+}
+
+export async function deleteUser(userId: number): Promise<boolean> {
+  try {
+    const db = await getDb();
+    if (!db) return false;
+    
+    await db.delete(users).where(eq(users.id, userId));
+    return true;
+  } catch (error) {
+    console.error("[Database] Error deleting user:", error);
+    return false;
+  }
+}

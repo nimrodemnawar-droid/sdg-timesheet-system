@@ -40,6 +40,7 @@ import { OvertimeApprovalManager } from "@/components/OvertimeApprovalManager";
 import { TimesheetExportManager } from "@/components/TimesheetExportManager";
 import { MapView } from "@/components/Map";
 import { ReportSchedulingManager } from "@/components/ReportSchedulingManager";
+import { AdminManagement } from "@/components/AdminManagement";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -312,6 +313,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="scheduling" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
               <Calendar className="w-4 h-4 mr-2" />
               Report Scheduling
+            </TabsTrigger>
+            <TabsTrigger value="admin-management" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+              <Shield className="w-4 h-4 mr-2" />
+              Admin Management
             </TabsTrigger>
           </TabsList>
 
@@ -989,6 +994,11 @@ export default function AdminDashboard() {
           {/* Report Scheduling Tab */}
           <TabsContent value="scheduling" className="space-y-4">
             <ReportSchedulingManager />
+          </TabsContent>
+
+          {/* Admin Management Tab */}
+          <TabsContent value="admin-management" className="space-y-4">
+            <AdminManagement />
           </TabsContent>
         </Tabs>
 

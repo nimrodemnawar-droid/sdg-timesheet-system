@@ -709,6 +709,89 @@ export const appRouter = router({
 
         return { success: true };
       }),
+
+    // Admin: Get all admins
+    getAllAdmins: adminProcedure.query(async () => {
+      return await db.getAllUsers().then(users => users.filter(u => u.role === 'admin'));
+    }),
+
+    // Admin: Create new admin user
+    createAdmin: adminProcedure
+      .input(
+        z.object({
+          email: z.string().email(),
+          name: z.string(),
+          password: z.string().min(8),
+          department: z.string().optional(),
+          phoneNumber: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        try {
+          // Check if email already exists
+          const existingUser = await db.getUserByEmail(input.email);
+          if (existingUser) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'Email already exists',
+            });
+          }
+
+          // Create new admin user
+          const newAdmin = await db.createAdminUser({
+            email: input.email,
+            name: input.name,
+            password: input.password,
+            department: input.department,
+            phoneNumber: input.phoneNumber,
+            role: 'admin',
+          });
+
+          await db.logAuditEvent({
+            userId: ctx.user.id,
+            action: 'CREATE_ADMIN',
+            entityType: 'user',
+            entityId: newAdmin.id,
+            details: { email: input.email, name: input.name },
+            ipAddress: ctx.req.ip,
+          });
+
+          return { success: true, adminId: newAdmin.id };
+        } catch (error) {
+          console.error('[Admin Management] Error creating admin:', error);
+          throw error;
+        }
+      }),
+
+    // Admin: Delete admin user
+    deleteAdmin: adminProcedure
+      .input(z.object({ adminId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          // Prevent deleting self
+          if (input.adminId === ctx.user.id) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'Cannot delete your own admin account',
+            });
+          }
+
+          await db.deleteUser(input.adminId);
+
+          await db.logAuditEvent({
+            userId: ctx.user.id,
+            action: 'DELETE_ADMIN',
+            entityType: 'user',
+            entityId: input.adminId,
+            ipAddress: ctx.req.ip,
+          });
+
+          return { success: true };
+        } catch (error) {
+          console.error('[Admin Management] Error deleting admin:', error);
+          throw error;
+        }
+      }),
   }),
 
   // ============ DOCUMENT PROCEDURES ============
