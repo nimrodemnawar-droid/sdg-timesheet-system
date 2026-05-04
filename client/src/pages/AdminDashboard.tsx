@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { generateAttendanceReportCSV, generateLeaveReportCSV, generateOvertimeReportCSV, generateGPSActivityReportCSV } from "@/lib/reportExport";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
   const pendingRequests = leaveRequests?.filter((req: any) => req.status === "pending") || [];
 
   // Track attendance changes and create notifications
-  React.useEffect(() => {
+  useEffect(() => {
     if (!Array.isArray(attendanceRecords)) return;
 
     const currentState = new Map<number, boolean>();
