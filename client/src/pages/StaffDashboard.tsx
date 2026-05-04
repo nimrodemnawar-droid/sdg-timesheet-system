@@ -79,7 +79,7 @@ export default function StaffDashboard() {
         activityCategory: '',
         sdgGoal: '',
         program: '',
-        kpi: '',
+        kpi: 'none',
         amStartTime: '',
         amEndTime: '',
         pmStartTime: '',
@@ -109,7 +109,7 @@ export default function StaffDashboard() {
     activityCategory: "Program Implementation",
     sdgGoal: "1",
     program: "",
-    kpi: "",
+    kpi: "none",
     taskDescription: "",
     staffRemarks: "",
     evidenceFile: null as File | null,
@@ -606,7 +606,7 @@ export default function StaffDashboard() {
                         <SelectValue placeholder="Select a KPI (optional)" />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-800 border-slate-700 max-h-60">
-                        <SelectItem value="" className="text-slate-400">None</SelectItem>
+                        <SelectItem value="none" className="text-slate-400">None</SelectItem>
                         {isLoadingKPIs ? (
                           <div className="p-2 text-slate-400 text-sm">Loading KPIs...</div>
                         ) : kpiList && kpiList.length > 0 ? (
