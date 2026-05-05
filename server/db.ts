@@ -1843,6 +1843,14 @@ export async function getCompleteTimesheetData(options?: {
         durationMinutes: attendance.durationMinutes,
         kpiName: kpis.name,
         kpiUnit: kpis.unit,
+        amStartTime: attendance.amStartTime,
+        amEndTime: attendance.amEndTime,
+        pmStartTime: attendance.pmStartTime,
+        pmEndTime: attendance.pmEndTime,
+        program: attendance.program,
+        evidenceUploadKey: attendance.evidenceUploadKey,
+        isSubmitted: attendance.isSubmitted,
+        submittedAt: attendance.submittedAt,
       })
       .from(attendance)
       .innerJoin(users, eq(attendance.userId, users.id))
@@ -1893,7 +1901,14 @@ export async function getCompleteTimesheetData(options?: {
         staffRemarks: r.staffRemarks || "N/A",
         hoursWorked: hoursWorked.toFixed(2),
         distanceTraveled: r.distanceTraveled ? `${parseFloat(r.distanceTraveled).toFixed(2)}m` : "N/A",
-        program: "",
+        amStartTime: r.amStartTime ? new Date(r.amStartTime).toLocaleTimeString("en-US", { hour12: true }) : "N/A",
+        amEndTime: r.amEndTime ? new Date(r.amEndTime).toLocaleTimeString("en-US", { hour12: true }) : "N/A",
+        pmStartTime: r.pmStartTime ? new Date(r.pmStartTime).toLocaleTimeString("en-US", { hour12: true }) : "N/A",
+        pmEndTime: r.pmEndTime ? new Date(r.pmEndTime).toLocaleTimeString("en-US", { hour12: true }) : "N/A",
+        program: r.program || "N/A",
+        evidenceUploadKey: r.evidenceUploadKey || "N/A",
+        isSubmitted: r.isSubmitted || false,
+        submittedAt: r.submittedAt ? new Date(r.submittedAt).toLocaleString("en-US") : "N/A",
       };
     });
   } catch (error) {

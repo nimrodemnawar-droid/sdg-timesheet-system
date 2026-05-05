@@ -59,10 +59,18 @@ export function TimesheetViewTab() {
       "Activity Category",
       "SDG Goal",
       "KPI",
+      "AM Start Time",
+      "AM End Time",
+      "PM Start Time",
+      "PM End Time",
       "Task Description",
       "Staff Remarks",
+      "Program/Department",
       "Hours Worked",
       "Distance Traveled",
+      "Submission Status",
+      "Submitted At",
+      "Evidence File",
     ];
 
     const rows = filteredData.map((record) => [
@@ -80,10 +88,18 @@ export function TimesheetViewTab() {
       record.activityCategory,
       record.sdgGoal,
       record.kpi,
+      record.amStartTime,
+      record.amEndTime,
+      record.pmStartTime,
+      record.pmEndTime,
       record.taskDescription,
       record.staffRemarks,
+      record.program,
       record.hoursWorked,
       record.distanceTraveled,
+      record.isSubmitted ? "Submitted" : "Draft",
+      record.submittedAt,
+      record.evidenceUploadKey !== "N/A" ? "Uploaded" : "None",
     ]);
 
     const csvContent = [
@@ -389,6 +405,54 @@ export function TimesheetViewTab() {
                     <div>
                       <label className="text-slate-400 text-sm">Staff Remarks</label>
                       <p className="text-white text-sm bg-slate-800 rounded p-2">{record.staffRemarks}</p>
+                    </div>
+                  </div>
+
+                  {/* Session Times */}
+                  <div className="border-t border-slate-600 pt-4 space-y-4">
+                    <h4 className="text-white font-semibold">Session Times</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-slate-400 text-sm">AM Start Time</label>
+                        <p className="text-white">{record.amStartTime}</p>
+                      </div>
+                      <div>
+                        <label className="text-slate-400 text-sm">AM End Time</label>
+                        <p className="text-white">{record.amEndTime}</p>
+                      </div>
+                      <div>
+                        <label className="text-slate-400 text-sm">PM Start Time</label>
+                        <p className="text-white">{record.pmStartTime}</p>
+                      </div>
+                      <div>
+                        <label className="text-slate-400 text-sm">PM End Time</label>
+                        <p className="text-white">{record.pmEndTime}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Additional Information */}
+                  <div className="border-t border-slate-600 pt-4 space-y-4">
+                    <h4 className="text-white font-semibold">Additional Information</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-slate-400 text-sm">Program/Department</label>
+                        <p className="text-white">{record.program}</p>
+                      </div>
+                      <div>
+                        <label className="text-slate-400 text-sm">Submission Status</label>
+                        <Badge className={record.isSubmitted ? "bg-green-600" : "bg-gray-600"}>
+                          {record.isSubmitted ? "Submitted" : "Draft"}
+                        </Badge>
+                      </div>
+                      <div>
+                        <label className="text-slate-400 text-sm">Submitted At</label>
+                        <p className="text-white text-sm">{record.submittedAt}</p>
+                      </div>
+                      <div>
+                        <label className="text-slate-400 text-sm">Evidence File</label>
+                        <p className="text-white text-sm">{record.evidenceUploadKey !== "N/A" ? "✓ Uploaded" : "No file"}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
