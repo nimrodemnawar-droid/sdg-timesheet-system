@@ -480,3 +480,17 @@
 - [x] Display all submitted data: activity, SDG goals, KPI, task descriptions, remarks
 - [x] Add detailed record view with two-column layout
 - [x] Integrate TimesheetViewTab into Admin Dashboard
+
+
+## CRITICAL BUGS FIXED
+
+- [x] Reports tab showing only one person's data instead of all staff - FIXED: Updated to map over all attendanceRecords
+- [x] GPS Maps showing only one person's data instead of all staff - FIXED: Updated GPS Activity Report to show all staff
+- [x] Timesheet capturing wrong check-in/check-out times - FIXED: Times now saved from form submission
+- [x] Timesheet capturing wrong activity categories - FIXED: Activity category ID now saved from form
+- [x] Timesheet capturing wrong SDG goals - FIXED: SDG goal ID now saved from form
+- [x] Timesheet capturing wrong task descriptions - FIXED: Task description now saved from form
+- [x] Timesheet capturing wrong staff remarks - FIXED: Staff remarks now saved from form
+- [x] Timesheet calculating wrong work hours - FIXED: Duration calculated from check-in/out times
+- [x] Timesheet capturing wrong distance traveled - FIXED: Distance now captured from GPS data
+- [x] Ensure timesheet shows exact data that staff entered on previous days - FIXED: All data persisted to database

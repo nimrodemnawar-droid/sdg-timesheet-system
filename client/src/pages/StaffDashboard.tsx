@@ -693,7 +693,20 @@ export default function StaffDashboard() {
                     }
                     setIsSubmittingTimesheet(true);
                     try {
-                      await submitTimesheetMutation.mutateAsync({ attendanceId: todayAttendance.id });
+                      await submitTimesheetMutation.mutateAsync({
+                        attendanceId: todayAttendance.id,
+                        workModality: timesheetData.workModality,
+                        activityCategoryId: timesheetData.activityCategory ? parseInt(timesheetData.activityCategory) : undefined,
+                        sdgGoalId: timesheetData.sdgGoal ? parseInt(timesheetData.sdgGoal) : undefined,
+                        kpiId: timesheetData.kpi && timesheetData.kpi !== 'none' ? parseInt(timesheetData.kpi) : undefined,
+                        taskDescription: timesheetData.taskDescription,
+                        staffRemarks: timesheetData.staffRemarks,
+                        amStartTime: timesheetData.amStartTime,
+                        amEndTime: timesheetData.amEndTime,
+                        pmStartTime: timesheetData.pmStartTime,
+                        pmEndTime: timesheetData.pmEndTime,
+                        program: timesheetData.program,
+                      });
                     } finally {
                       setIsSubmittingTimesheet(false);
                     }

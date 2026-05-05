@@ -818,18 +818,16 @@ export default function AdminDashboard() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Button onClick={() => {
-                    if (attendanceRecords) {
-                      const reportData = [
-                        {
-                          staffId: attendanceRecords.userId || 1,
-                          name: `Staff ${attendanceRecords.userId}`,
-                          date: new Date(attendanceRecords.checkInTime).toISOString().split('T')[0],
-                          checkInTime: new Date(attendanceRecords.checkInTime).toLocaleTimeString(),
-                          checkOutTime: attendanceRecords.checkOutTime ? new Date(attendanceRecords.checkOutTime).toLocaleTimeString() : 'Not checked out',
-                          status: attendanceRecords.checkOutTime ? 'Present' : 'Checked In',
-                          distance: attendanceRecords.distanceTraveled ? parseFloat(attendanceRecords.distanceTraveled as any) / 1000 : 0,
-                        }
-                      ];
+                    if (Array.isArray(attendanceRecords) && attendanceRecords.length > 0) {
+                      const reportData = attendanceRecords.map((record: any) => ({
+                        staffId: record.userId || 1,
+                        name: record.userName || `Staff ${record.userId}`,
+                        date: new Date(record.checkInTime).toISOString().split('T')[0],
+                        checkInTime: new Date(record.checkInTime).toLocaleTimeString(),
+                        checkOutTime: record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString() : 'Not checked out',
+                        status: record.checkOutTime ? 'Present' : 'Checked In',
+                        distance: record.distanceTraveled ? parseFloat(record.distanceTraveled as any) / 1000 : 0,
+                      }));
                       generateAttendanceReportCSV(reportData);
                     } else {
                       toast.error('No attendance data available to export');
@@ -839,28 +837,31 @@ export default function AdminDashboard() {
                     <span>Attendance Report</span>
                   </Button>
                   <Button onClick={() => {
-                    if (attendanceRecords?.checkOutTime) {
-                      const checkInTime = new Date(attendanceRecords.checkInTime);
-                      const checkOutTime = new Date(attendanceRecords.checkOutTime);
-                      const hoursWorked = (checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60 * 60);
-                      const overtimeHours = hoursWorked > 8 ? hoursWorked - 8 : 0;
-                      
-                      if (overtimeHours > 0) {
-                        const reportData = [
-                          {
-                            staffId: attendanceRecords.userId || 1,
-                            name: `Staff ${attendanceRecords.userId}`,
-                            date: new Date(attendanceRecords.checkInTime).toISOString().split('T')[0],
+                    if (Array.isArray(attendanceRecords) && attendanceRecords.length > 0) {
+                      const reportData = attendanceRecords
+                        .filter((record: any) => record.checkOutTime)
+                        .map((record: any) => {
+                          const checkInTime = new Date(record.checkInTime);
+                          const checkOutTime = new Date(record.checkOutTime);
+                          const hoursWorked = (checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60 * 60);
+                          const overtimeHours = hoursWorked > 8 ? hoursWorked - 8 : 0;
+                          return {
+                            staffId: record.userId || 1,
+                            name: record.userName || `Staff ${record.userId}`,
+                            date: new Date(record.checkInTime).toISOString().split('T')[0],
                             overtimeHours: parseFloat(overtimeHours.toFixed(2)),
                             reason: 'Work extension',
-                          }
-                        ];
+                          };
+                        })
+                        .filter((r: any) => r.overtimeHours > 0);
+                      
+                      if (reportData.length > 0) {
                         generateOvertimeReportCSV(reportData);
                       } else {
                         toast.info('No overtime recorded for this period');
                       }
                     } else {
-                      toast.error('Staff must check out first to generate overtime report');
+                      toast.error('No attendance data available to export');
                     }
                   }} className="bg-purple-600 hover:bg-purple-700 h-20 text-white border-0 flex flex-col items-center justify-center gap-2">
                     <Download className="w-5 h-5" />
@@ -886,18 +887,16 @@ export default function AdminDashboard() {
                     <span>Leave Report</span>
                   </Button>
                   <Button onClick={() => {
-                    if (attendanceRecords) {
-                      const reportData = [
-                        {
-                          staffId: attendanceRecords.userId || 1,
-                          name: `Staff ${attendanceRecords.userId}`,
-                          date: new Date(attendanceRecords.checkInTime).toISOString().split('T')[0],
-                          checkInLocation: attendanceRecords.workModality || 'Office',
-                          checkOutLocation: attendanceRecords.workModality || 'Office',
-                          totalDistance: attendanceRecords.distanceTraveled ? parseFloat(attendanceRecords.distanceTraveled as any) / 1000 : 0,
-                          waypointCount: 0,
-                        }
-                      ];
+                    if (Array.isArray(attendanceRecords) && attendanceRecords.length > 0) {
+                      const reportData = attendanceRecords.map((record: any) => ({
+                        staffId: record.userId || 1,
+                        name: record.userName || `Staff ${record.userId}`,
+                        date: new Date(record.checkInTime).toISOString().split('T')[0],
+                        checkInLocation: record.checkInAddress || record.workModality || 'Office',
+                        checkOutLocation: record.checkOutAddress || record.workModality || 'Office',
+                        totalDistance: record.distanceTraveled ? parseFloat(record.distanceTraveled as any) / 1000 : 0,
+                        waypointCount: 0,
+                      }));
                       generateGPSActivityReportCSV(reportData);
                     } else {
                       toast.error('No GPS activity data available to export');

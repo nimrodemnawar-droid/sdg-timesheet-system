@@ -215,7 +215,20 @@ export const appRouter = router({
 
     // Staff: Submit timesheet
     submitTimesheet: protectedProcedure
-      .input(z.object({ attendanceId: z.number() }))
+      .input(z.object({
+        attendanceId: z.number(),
+        workModality: z.string().optional(),
+        activityCategoryId: z.number().optional(),
+        sdgGoalId: z.number().optional(),
+        kpiId: z.number().optional(),
+        taskDescription: z.string().optional(),
+        staffRemarks: z.string().optional(),
+        amStartTime: z.string().optional(),
+        amEndTime: z.string().optional(),
+        pmStartTime: z.string().optional(),
+        pmEndTime: z.string().optional(),
+        program: z.string().optional(),
+      }))
       .mutation(async ({ ctx, input }) => {
         const attendance = await db.getAttendanceById(input.attendanceId);
         if (!attendance) {
@@ -225,6 +238,21 @@ export const appRouter = router({
         if (attendance.userId !== ctx.user.id) {
           throw new TRPCError({ code: "FORBIDDEN" });
         }
+
+        // Update attendance with timesheet data
+        await db.updateAttendanceWithTimesheetData(input.attendanceId, {
+          workModality: input.workModality,
+          activityCategoryId: input.activityCategoryId,
+          sdgGoalId: input.sdgGoalId,
+          kpiId: input.kpiId,
+          taskDescription: input.taskDescription,
+          staffRemarks: input.staffRemarks,
+          amStartTime: input.amStartTime,
+          amEndTime: input.amEndTime,
+          pmStartTime: input.pmStartTime,
+          pmEndTime: input.pmEndTime,
+          program: input.program,
+        });
 
         await db.submitTimesheet(input.attendanceId);
 

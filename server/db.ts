@@ -1894,3 +1894,57 @@ export async function getCompleteTimesheetData(options?: {
     return [];
   }
 }
+
+
+// ============ UPDATE ATTENDANCE WITH TIMESHEET DATA ============
+
+export async function updateAttendanceWithTimesheetData(
+  attendanceId: number,
+  data: {
+    workModality?: string;
+    activityCategoryId?: number;
+    sdgGoalId?: number;
+    kpiId?: number;
+    taskDescription?: string;
+    staffRemarks?: string;
+    amStartTime?: string;
+    amEndTime?: string;
+    pmStartTime?: string;
+    pmEndTime?: string;
+    program?: string;
+  }
+) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot update attendance: database not available");
+    return;
+  }
+
+  try {
+    const updateData: any = {};
+
+    if (data.workModality) updateData.workModality = data.workModality;
+    if (data.activityCategoryId) updateData.activityCategoryId = data.activityCategoryId;
+    if (data.sdgGoalId) updateData.sdgGoalId = data.sdgGoalId;
+    if (data.kpiId) updateData.kpiId = data.kpiId;
+    if (data.taskDescription) updateData.taskDescription = data.taskDescription;
+    if (data.staffRemarks) updateData.staffRemarks = data.staffRemarks;
+    if (data.amStartTime) updateData.amStartTime = new Date(data.amStartTime);
+    if (data.amEndTime) updateData.amEndTime = new Date(data.amEndTime);
+    if (data.pmStartTime) updateData.pmStartTime = new Date(data.pmStartTime);
+    if (data.pmEndTime) updateData.pmEndTime = new Date(data.pmEndTime);
+    if (data.program) updateData.program = data.program;
+
+    updateData.updatedAt = new Date();
+
+    await db
+      .update(attendance)
+      .set(updateData)
+      .where(eq(attendance.id, attendanceId));
+
+    console.log("[Database] Updated attendance with timesheet data:", attendanceId);
+  } catch (error) {
+    console.error("[Database] Error updating attendance with timesheet data:", error);
+    throw error;
+  }
+}
