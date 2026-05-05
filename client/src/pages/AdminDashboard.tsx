@@ -69,7 +69,7 @@ export default function AdminDashboard() {
   const { data: staffList, refetch: refetchStaffList } = trpc.users.getAll.useQuery(undefined, {
     refetchInterval: 2000,
   });
-  const { data: attendanceRecords, refetch: refetchAttendance } = trpc.attendance.getToday.useQuery(undefined, {
+  const { data: attendanceRecords, refetch: refetchAttendance } = trpc.attendance.getTodayAllStaff.useQuery(undefined, {
     refetchInterval: 1000,
   });
   const { data: analyticsMetrics, refetch: refetchAnalytics } = trpc.analytics.metrics.useQuery({
@@ -723,31 +723,29 @@ export default function AdminDashboard() {
                   <div className="flex items-end">
                     <Button
                       onClick={() => {
-                        if (attendanceRecords) {
-                          const checkInDate = new Date(attendanceRecords.checkInTime);
-                          const checkOutDate = attendanceRecords.checkOutTime ? new Date(attendanceRecords.checkOutTime) : null;
-                          const hoursWorked = checkOutDate ? ((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60)).toFixed(2) : 0;
-                          
-                          const reportData = [
-                            {
-                              staffId: attendanceRecords.userId || 1,
-                              name: `Staff ${attendanceRecords.userId}`,
+                        if (Array.isArray(attendanceRecords) && attendanceRecords.length > 0) {
+                          const reportData = attendanceRecords.map((record: any) => {
+                            const checkInDate = new Date(record.checkInTime);
+                            const checkOutDate = record.checkOutTime ? new Date(record.checkOutTime) : null;
+                            const hoursWorked = checkOutDate ? ((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60)).toFixed(2) : 0;
+                            return {
+                              staffId: record.staffNumber || record.userId || 1,
+                              name: record.userName || `Staff ${record.userId}`,
                               date: checkInDate.toISOString().split('T')[0],
                               checkInTime: checkInDate.toLocaleTimeString(),
                               checkOutTime: checkOutDate ? checkOutDate.toLocaleTimeString() : 'Not checked out',
                               hoursWorked: hoursWorked,
                               status: checkOutDate ? 'Present' : 'Checked In',
-                              workModality: attendanceRecords.workModality || 'On-site',
-                              checkInLat: attendanceRecords.checkInLat || 'N/A',
-                              checkInLng: attendanceRecords.checkInLng || 'N/A',
-                              checkInAccuracy: attendanceRecords.checkInAccuracy || 'N/A',
-                              checkOutLat: attendanceRecords.checkOutLat || 'N/A',
-                              checkOutLng: attendanceRecords.checkOutLng || 'N/A',
-                              checkOutAccuracy: attendanceRecords.checkOutAccuracy || 'N/A',
-                              distance: attendanceRecords.distanceTraveled ? parseFloat(attendanceRecords.distanceTraveled as any) / 1000 : 0,
-                            }
-                          ];
+                              workModality: record.workModality || 'On-site',
+                              checkInLat: record.checkInLat || 'N/A',
+                              checkInLng: record.checkInLng || 'N/A',
+                              checkInAccuracy: record.checkInAccuracy || 'N/A',
+                              distance: record.distanceTraveled ? parseFloat(record.distanceTraveled as any) / 1000 : 0,
+                            };
+                          });
                           generateAttendanceReportCSV(reportData);
+                        } else {
+                          toast.error('No attendance data available');
                         }
                       }}
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0"
@@ -775,26 +773,34 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {attendanceRecords && (
-                        <tr className="border-b border-slate-700/50 hover:bg-slate-700/30 transition">
-                          <td className="py-3 px-4 text-white">{attendanceRecords.userId}</td>
-                          <td className="py-3 px-4 text-white">Staff Member</td>
-                          <td className="py-3 px-4 text-slate-400">{new Date(attendanceRecords.checkInTime).toISOString().split('T')[0]}</td>
-                          <td className="py-3 px-4 text-slate-400">{new Date(attendanceRecords.checkInTime).toLocaleTimeString()}</td>
-                          <td className="py-3 px-4 text-slate-400">{attendanceRecords.checkOutTime ? new Date(attendanceRecords.checkOutTime).toLocaleTimeString() : 'Not checked out'}</td>
-                          <td className="py-3 px-4 text-slate-400">
-                            {attendanceRecords.checkOutTime
-                              ? ((new Date(attendanceRecords.checkOutTime).getTime() - new Date(attendanceRecords.checkInTime).getTime()) / (1000 * 60 * 60)).toFixed(2)
-                              : '-'} h
-                          </td>
-                          <td className="py-3 px-4 text-slate-400">{attendanceRecords.distanceTraveled ? (parseFloat(attendanceRecords.distanceTraveled) / 1000).toFixed(2) : '0'}</td>
-                          <td className="py-3 px-4 text-slate-400">
-                            {attendanceRecords.kpiId ? `KPI #${attendanceRecords.kpiId}` : '-'}
-                          </td>
-                          <td className="py-3 px-4">
-                            <Badge className={attendanceRecords.checkOutTime ? "bg-green-600" : "bg-blue-600"}>
-                              {attendanceRecords.checkOutTime ? 'Present' : 'Checked In'}
-                            </Badge>
+                      {Array.isArray(attendanceRecords) && attendanceRecords.length > 0 ? (
+                        attendanceRecords.map((record: any) => (
+                          <tr key={record.userId} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition">
+                            <td className="py-3 px-4 text-white">{record.staffNumber || record.userId}</td>
+                            <td className="py-3 px-4 text-white">{record.userName || `Staff ${record.userId}`}</td>
+                            <td className="py-3 px-4 text-slate-400">{new Date(record.checkInTime).toISOString().split('T')[0]}</td>
+                            <td className="py-3 px-4 text-slate-400">{new Date(record.checkInTime).toLocaleTimeString()}</td>
+                            <td className="py-3 px-4 text-slate-400">{record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString() : 'Not checked out'}</td>
+                            <td className="py-3 px-4 text-slate-400">
+                              {record.checkOutTime
+                                ? ((new Date(record.checkOutTime).getTime() - new Date(record.checkInTime).getTime()) / (1000 * 60 * 60)).toFixed(2)
+                                : '-'} h
+                            </td>
+                            <td className="py-3 px-4 text-slate-400">{record.distanceTraveled ? (parseFloat(record.distanceTraveled) / 1000).toFixed(2) : '0'}</td>
+                            <td className="py-3 px-4 text-slate-400">
+                              {record.kpiName ? record.kpiName : '-'}
+                            </td>
+                            <td className="py-3 px-4">
+                              <Badge className={record.checkOutTime ? "bg-green-600" : "bg-blue-600"}>
+                                {record.checkOutTime ? 'Present' : 'Checked In'}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={9} className="py-4 px-4 text-center text-slate-400">
+                            No staff checked in today
                           </td>
                         </tr>
                       )}
@@ -937,20 +943,22 @@ export default function AdminDashboard() {
                     initialZoom={10}
                     onMapReady={(map) => {
                       mapRef.current = map;
-                      if (attendanceRecords && window.google?.maps?.marker?.AdvancedMarkerElement) {
-                        if (attendanceRecords.checkInLat && attendanceRecords.checkInLng) {
-                          const marker = new window.google.maps.marker.AdvancedMarkerElement({
-                            map,
-                            position: { lat: parseFloat(attendanceRecords.checkInLat), lng: parseFloat(attendanceRecords.checkInLng) },
-                            title: 'Staff Member',
-                          });
-                          const infoWindow = new window.google.maps.InfoWindow({
-                            content: `<div class="text-black p-2"><strong>Staff ID: ${attendanceRecords.userId}</strong><br/>Checked in at ${new Date(attendanceRecords.checkInTime).toLocaleTimeString()}</div>`,
-                          });
-                          marker.addListener('click', () => {
-                            infoWindow.open(map, marker);
-                          });
-                        }
+                      if (Array.isArray(attendanceRecords) && window.google?.maps?.marker?.AdvancedMarkerElement) {
+                        attendanceRecords.forEach((record: any) => {
+                          if (record.checkInLat && record.checkInLng) {
+                            const marker = new window.google.maps.marker.AdvancedMarkerElement({
+                              map,
+                              position: { lat: parseFloat(record.checkInLat), lng: parseFloat(record.checkInLng) },
+                              title: record.userName || `Staff ${record.userId}`,
+                            });
+                            const infoWindow = new window.google.maps.InfoWindow({
+                              content: `<div class="text-black p-2"><strong>${record.userName || `Staff ${record.userId}`}</strong><br/>Checked in at ${new Date(record.checkInTime).toLocaleTimeString()}</div>`,
+                            });
+                            marker.addListener('click', () => {
+                              infoWindow.open(map, marker);
+                            });
+                          }
+                        });
                       }
                     }}
                   />
@@ -960,7 +968,7 @@ export default function AdminDashboard() {
                     <CardContent className="pt-6">
                       <div className="text-center">
                         <p className="text-slate-400 text-sm">Staff Checked In</p>
-                        <p className="text-2xl font-bold text-green-400">1</p>
+                        <p className="text-2xl font-bold text-green-400">{Array.isArray(attendanceRecords) ? attendanceRecords.length : 0}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -968,7 +976,7 @@ export default function AdminDashboard() {
                     <CardContent className="pt-6">
                       <div className="text-center">
                         <p className="text-slate-400 text-sm">Last Update</p>
-                        <p className="text-sm font-mono text-blue-400">{attendanceRecords?.checkInTime ? new Date(attendanceRecords.checkInTime).toLocaleTimeString() : 'N/A'}</p>
+                        <p className="text-sm font-mono text-blue-400">{Array.isArray(attendanceRecords) && attendanceRecords.length > 0 ? new Date(attendanceRecords[0].checkInTime).toLocaleTimeString() : 'N/A'}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -976,7 +984,7 @@ export default function AdminDashboard() {
                     <CardContent className="pt-6">
                       <div className="text-center">
                         <p className="text-slate-400 text-sm">Accuracy</p>
-                        <p className="text-sm font-mono text-yellow-400">{attendanceRecords?.checkInAccuracy ? parseFloat(attendanceRecords.checkInAccuracy).toFixed(1) : 'N/A'}m</p>
+                        <p className="text-sm font-mono text-yellow-400">{Array.isArray(attendanceRecords) && attendanceRecords.length > 0 && attendanceRecords[0].checkInAccuracy ? parseFloat(attendanceRecords[0].checkInAccuracy).toFixed(1) : 'N/A'}m</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -989,19 +997,19 @@ export default function AdminDashboard() {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-slate-400">Latitude:</span>
-                        <span className="text-white font-mono">{attendanceRecords?.checkInLat ? parseFloat(attendanceRecords.checkInLat).toFixed(6) : 'N/A'}</span>
+                        <span className="text-white font-mono">{Array.isArray(attendanceRecords) && attendanceRecords.length > 0 && attendanceRecords[0].checkInLat ? parseFloat(attendanceRecords[0].checkInLat).toFixed(6) : 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-400">Longitude:</span>
-                        <span className="text-white font-mono">{attendanceRecords?.checkInLng ? parseFloat(attendanceRecords.checkInLng).toFixed(6) : 'N/A'}</span>
+                        <span className="text-white font-mono">{Array.isArray(attendanceRecords) && attendanceRecords.length > 0 && attendanceRecords[0].checkInLng ? parseFloat(attendanceRecords[0].checkInLng).toFixed(6) : 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-400">Check-in Time:</span>
-                        <span className="text-white font-mono">{attendanceRecords?.checkInTime ? new Date(attendanceRecords.checkInTime).toLocaleString() : 'N/A'}</span>
+                        <span className="text-white font-mono">{Array.isArray(attendanceRecords) && attendanceRecords.length > 0 && attendanceRecords[0].checkInTime ? new Date(attendanceRecords[0].checkInTime).toLocaleString() : 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Work Modality:</span>
-                        <span className="text-white font-mono capitalize">{attendanceRecords?.workModality || 'N/A'}</span>
+                        <span className="text-slate-400">Total Staff Checked In:</span>
+                        <span className="text-white font-mono">{Array.isArray(attendanceRecords) ? attendanceRecords.length : 0}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -1045,14 +1053,104 @@ export default function AdminDashboard() {
                     initialZoom={10}
                     onMapReady={(map) => {
                       mapRef.current = map;
-                      if (attendanceRecords && window.google?.maps?.marker?.AdvancedMarkerElement) {
-                        if (attendanceRecords.checkInLat && attendanceRecords.checkInLng) {
-                          new window.google.maps.marker.AdvancedMarkerElement({
-                            map,
-                            position: { lat: parseFloat(attendanceRecords.checkInLat), lng: parseFloat(attendanceRecords.checkInLng) },
-                            title: 'Staff Location',
-                          });
-                        }
+                      if (Array.isArray(attendanceRecords) && window.google?.maps?.marker?.AdvancedMarkerElement) {
+                        attendanceRecords.forEach((record: any) => {
+                          if (record.checkInLat && record.checkInLng) {
+                            new window.google.maps.marker.AdvancedMarkerElement({
+                              map,
+                              position: { lat: parseFloat(record.checkInLat), lng: parseFloat(record.checkInLng) },
+                              title: `${record.userName || `Staff ${record.userId}`}`,
+                            });
+                          }
+                        });
+                      }
+                      if (Array.isArray(attendanceRecords) && window.google?.maps?.marker?.AdvancedMarkerElement) {
+                        attendanceRecords.forEach((record: any) => {
+                          if (record.checkInLat && record.checkInLng) {
+                            new window.google.maps.marker.AdvancedMarkerElement({
+                              map,
+                              position: { lat: parseFloat(record.checkInLat), lng: parseFloat(record.checkInLng) },
+                              title: `${record.userName || `Staff ${record.userId}`}`,
+                            });
+                          }
+                        });
+                      }
+                      if (Array.isArray(attendanceRecords) && window.google?.maps?.marker?.AdvancedMarkerElement) {
+                        attendanceRecords.forEach((record: any) => {
+                          if (record.checkInLat && record.checkInLng) {
+                            new window.google.maps.marker.AdvancedMarkerElement({
+                              map,
+                              position: { lat: parseFloat(record.checkInLat), lng: parseFloat(record.checkInLng) },
+                              title: `${record.userName || `Staff ${record.userId}`}`,
+                            });
+                          }
+                        });
+                      }
+                      if (Array.isArray(attendanceRecords) && window.google?.maps?.marker?.AdvancedMarkerElement) {
+                        attendanceRecords.forEach((record: any) => {
+                          if (record.checkInLat && record.checkInLng) {
+                            new window.google.maps.marker.AdvancedMarkerElement({
+                              map,
+                              position: { lat: parseFloat(record.checkInLat), lng: parseFloat(record.checkInLng) },
+                              title: `${record.userName || `Staff ${record.userId}`}`,
+                            });
+                          }
+                        });
+                      }
+                      if (Array.isArray(attendanceRecords) && window.google?.maps?.marker?.AdvancedMarkerElement) {
+                        attendanceRecords.forEach((record: any) => {
+                          if (record.checkInLat && record.checkInLng) {
+                            new window.google.maps.marker.AdvancedMarkerElement({
+                              map,
+                              position: { lat: parseFloat(record.checkInLat), lng: parseFloat(record.checkInLng) },
+                              title: `${record.userName || `Staff ${record.userId}`}`,
+                            });
+                          }
+                        });
+                      }
+                      if (Array.isArray(attendanceRecords) && window.google?.maps?.marker?.AdvancedMarkerElement) {
+                        attendanceRecords.forEach((record: any) => {
+                          if (record.checkInLat && record.checkInLng) {
+                            new window.google.maps.marker.AdvancedMarkerElement({
+                              map,
+                              position: { lat: parseFloat(record.checkInLat), lng: parseFloat(record.checkInLng) },
+                              title: `${record.userName || `Staff ${record.userId}`}`,
+                            });
+                          }
+                        });
+                      }
+                      if (Array.isArray(attendanceRecords) && window.google?.maps?.marker?.AdvancedMarkerElement) {
+                        attendanceRecords.forEach((record: any) => {
+                          if (record.checkInLat && record.checkInLng) {
+                            new window.google.maps.marker.AdvancedMarkerElement({
+                              map,
+                              position: { lat: parseFloat(record.checkInLat), lng: parseFloat(record.checkInLng) },
+                              title: `${record.userName || `Staff ${record.userId}`}`,
+                            });
+                          }
+                        });
+                      }
+                      if (Array.isArray(attendanceRecords) && window.google?.maps?.marker?.AdvancedMarkerElement) {
+                        attendanceRecords.forEach((record: any) => {
+                          if (record.checkInLat && record.checkInLng) {
+                            new window.google.maps.marker.AdvancedMarkerElement({
+                              map,
+                              position: { lat: parseFloat(record.checkInLat), lng: parseFloat(record.checkInLng) },
+                              title: `${record.userName || `Staff ${record.userId}`}`,
+                            });
+                          }
+                        });
+                      }
+                      if (Array.isArray(attendanceRecords) && window.google?.maps?.marker?.AdvancedMarkerElement) {
+                        attendanceRecords.forEach((record: any) => {
+                          if (record.checkInLat && record.checkInLng) {
+                            new window.google.maps.marker.AdvancedMarkerElement({
+                              map,
+                              position: { lat: parseFloat(record.checkInLat), lng: parseFloat(record.checkInLng) },
+                              title: `${record.userName || `Staff ${record.userId}`}`,
+                            });
+                          }
+                        });
                       }
                     }}
                   />
