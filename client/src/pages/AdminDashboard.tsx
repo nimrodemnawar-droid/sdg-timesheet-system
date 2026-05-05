@@ -41,6 +41,7 @@ import { TimesheetExportManager } from "@/components/TimesheetExportManager";
 import { MapView } from "@/components/Map";
 import { ReportSchedulingManager } from "@/components/ReportSchedulingManager";
 import { AdminManagement } from "@/components/AdminManagement";
+import { TimesheetViewTab } from "@/components/TimesheetViewTab";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -313,6 +314,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="scheduling" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
               <Calendar className="w-4 h-4 mr-2" />
               Report Scheduling
+            </TabsTrigger>
+            <TabsTrigger value="timesheet" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+              <FileText className="w-4 h-4 mr-2" />
+              Timesheet
             </TabsTrigger>
             <TabsTrigger value="admin-management" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
               <Shield className="w-4 h-4 mr-2" />
@@ -1012,6 +1017,10 @@ export default function AdminDashboard() {
           </TabsContent>
 
           {/* Admin Management Tab */}
+          <TabsContent value="timesheet" className="space-y-4">
+            <TimesheetViewTab />
+          </TabsContent>
+
           <TabsContent value="admin-management" className="space-y-4">
             <AdminManagement />
           </TabsContent>

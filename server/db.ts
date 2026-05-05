@@ -1797,3 +1797,100 @@ export async function getKPIById(kpiId: number) {
     throw error;
   }
 }
+
+
+// ============ COMPLETE TIMESHEET DATA ============
+
+export async function getCompleteTimesheetData(options?: {
+  startDate?: Date;
+  endDate?: Date;
+  staffId?: number;
+}) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot fetch complete timesheet data: database not available");
+    return [];
+  }
+
+  try {
+    const startDate = options?.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const endDate = options?.endDate || new Date();
+
+    let query = db
+      .select({
+        id: attendance.id,
+        userId: attendance.userId,
+        userName: users.name,
+        userEmail: users.email,
+        staffNumber: users.staffNumber,
+        checkInTime: attendance.checkInTime,
+        checkOutTime: attendance.checkOutTime,
+        checkInLat: attendance.checkInLat,
+        checkInLng: attendance.checkInLng,
+        checkOutLat: attendance.checkOutLat,
+        checkOutLng: attendance.checkOutLng,
+        checkInAddress: attendance.checkInAddress,
+        checkOutAddress: attendance.checkOutAddress,
+        workModality: attendance.workModality,
+        activityCategoryId: attendance.activityCategoryId,
+        sdgGoalId: attendance.sdgGoalId,
+        kpiId: attendance.kpiId,
+        taskDescription: attendance.taskDescription,
+        staffRemarks: attendance.staffRemarks,
+        distanceTraveled: attendance.distanceTraveled,
+        durationMinutes: attendance.durationMinutes,
+        kpiName: kpis.name,
+        kpiUnit: kpis.unit,
+      })
+      .from(attendance)
+      .innerJoin(users, eq(attendance.userId, users.id))
+      .leftJoin(kpis, eq(attendance.kpiId, kpis.id))
+      .where(
+        and(
+          gte(attendance.checkInTime, startDate),
+          lte(attendance.checkInTime, endDate),
+          options?.staffId ? eq(attendance.userId, options.staffId) : undefined
+        )
+      )
+      .orderBy(desc(attendance.checkInTime));
+
+    const records = await query;
+
+    return records.map((r) => {
+      const checkIn = new Date(r.checkInTime);
+      const checkOut = r.checkOutTime ? new Date(r.checkOutTime) : null;
+      const hoursWorked = checkOut
+        ? (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60)
+        : 0;
+
+      return {
+        id: r.id,
+        staffNumber: r.staffNumber || "N/A",
+        staffName: r.userName || "Unknown",
+        staffEmail: r.userEmail || "N/A",
+        date: checkIn.toISOString().split("T")[0],
+        checkInTime: checkIn.toLocaleTimeString("en-US", { hour12: true }),
+        checkOutTime: checkOut ? checkOut.toLocaleTimeString("en-US", { hour12: true }) : "Not checked out",
+        checkInCoordinates: r.checkInLat && r.checkInLng 
+          ? `${parseFloat(r.checkInLat).toFixed(6)}, ${parseFloat(r.checkInLng).toFixed(6)}`
+          : "N/A",
+        checkInAddress: r.checkInAddress || "N/A",
+        checkOutCoordinates: r.checkOutLat && r.checkOutLng 
+          ? `${parseFloat(r.checkOutLat).toFixed(6)}, ${parseFloat(r.checkOutLng).toFixed(6)}`
+          : "N/A",
+        checkOutAddress: r.checkOutAddress || "N/A",
+        workModality: r.workModality || "N/A",
+        activityCategoryId: r.activityCategoryId || "N/A",
+        sdgGoalId: r.sdgGoalId || "N/A",
+        kpi: r.kpiName ? `${r.kpiName}${r.kpiUnit ? ` (${r.kpiUnit})` : ""}` : "None",
+        taskDescription: r.taskDescription || "N/A",
+        staffRemarks: r.staffRemarks || "N/A",
+        hoursWorked: hoursWorked.toFixed(2),
+        distanceTraveled: r.distanceTraveled ? `${parseFloat(r.distanceTraveled).toFixed(2)}m` : "N/A",
+      };
+    });
+  } catch (error) {
+    console.error("[Database] Error fetching complete timesheet data:", error);
+    return [];
+  }
+}

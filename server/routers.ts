@@ -1190,5 +1190,27 @@ export const appRouter = router({
         }
       }),
   }),
+
+  timesheet: router({
+    // Get complete timesheet data with all details
+    getComplete: adminProcedure
+      .input(z.object({
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+        staffId: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        try {
+          const data = await db.getCompleteTimesheetData(input);
+          return data;
+        } catch (error) {
+          console.error('[tRPC] Error fetching complete timesheet data:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to fetch timesheet data',
+          });
+        }
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;
