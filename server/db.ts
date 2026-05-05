@@ -1833,7 +1833,9 @@ export async function getCompleteTimesheetData(options?: {
         checkOutAddress: attendance.checkOutAddress,
         workModality: attendance.workModality,
         activityCategoryId: attendance.activityCategoryId,
+        activityCategoryName: activityCategories.name,
         sdgGoalId: attendance.sdgGoalId,
+        sdgGoalTitle: sdgGoals.title,
         kpiId: attendance.kpiId,
         taskDescription: attendance.taskDescription,
         staffRemarks: attendance.staffRemarks,
@@ -1845,6 +1847,8 @@ export async function getCompleteTimesheetData(options?: {
       .from(attendance)
       .innerJoin(users, eq(attendance.userId, users.id))
       .leftJoin(kpis, eq(attendance.kpiId, kpis.id))
+      .leftJoin(activityCategories, eq(attendance.activityCategoryId, activityCategories.id))
+      .leftJoin(sdgGoals, eq(attendance.sdgGoalId, sdgGoals.id))
       .where(
         and(
           gte(attendance.checkInTime, startDate),
@@ -1881,12 +1885,15 @@ export async function getCompleteTimesheetData(options?: {
         checkOutAddress: r.checkOutAddress || "N/A",
         workModality: r.workModality || "N/A",
         activityCategoryId: r.activityCategoryId || "N/A",
+        activityCategory: r.activityCategoryName || "N/A",
         sdgGoalId: r.sdgGoalId || "N/A",
+        sdgGoal: r.sdgGoalTitle || "N/A",
         kpi: r.kpiName ? `${r.kpiName}${r.kpiUnit ? ` (${r.kpiUnit})` : ""}` : "None",
         taskDescription: r.taskDescription || "N/A",
         staffRemarks: r.staffRemarks || "N/A",
         hoursWorked: hoursWorked.toFixed(2),
         distanceTraveled: r.distanceTraveled ? `${parseFloat(r.distanceTraveled).toFixed(2)}m` : "N/A",
+        program: "",
       };
     });
   } catch (error) {

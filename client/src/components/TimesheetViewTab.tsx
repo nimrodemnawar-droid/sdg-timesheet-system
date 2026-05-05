@@ -56,8 +56,8 @@ export function TimesheetViewTab() {
       "Check-out Location (Lat, Lng)",
       "Check-out Address",
       "Work Modality",
-      "Activity Category ID",
-      "SDG Goal ID",
+      "Activity Category",
+      "SDG Goal",
       "KPI",
       "Task Description",
       "Staff Remarks",
@@ -77,8 +77,8 @@ export function TimesheetViewTab() {
       record.checkOutCoordinates,
       record.checkOutAddress,
       record.workModality,
-      record.activityCategoryId,
-      record.sdgGoalId,
+      record.activityCategory,
+      record.sdgGoal,
       record.kpi,
       record.taskDescription,
       record.staffRemarks,
@@ -271,7 +271,7 @@ export function TimesheetViewTab() {
                       </td>
                       <td className="py-3 px-4">
                         <Badge variant="outline" className="text-slate-300 border-slate-600">
-                          {record.activityCategoryId || "N/A"}
+                          {record.activityCategory || "N/A"}
                         </Badge>
                       </td>
                       <td className="py-3 px-4 text-slate-300 text-xs">{record.kpi}</td>
@@ -369,11 +369,13 @@ export function TimesheetViewTab() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="text-slate-400 text-sm">Activity Category</label>
-                        <p className="text-white">{record.activityCategoryId}</p>
+                        <p className="text-white font-medium">{record.activityCategory}</p>
+                        <p className="text-slate-500 text-xs">ID: {record.activityCategoryId}</p>
                       </div>
                       <div>
                         <label className="text-slate-400 text-sm">SDG Goal</label>
-                        <p className="text-white">{record.sdgGoalId}</p>
+                        <p className="text-white font-medium">{record.sdgGoal}</p>
+                        <p className="text-slate-500 text-xs">ID: {record.sdgGoalId}</p>
                       </div>
                       <div>
                         <label className="text-slate-400 text-sm">Linked Output / KPI</label>
