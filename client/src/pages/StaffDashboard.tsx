@@ -46,7 +46,12 @@ const ACTIVITY_CATEGORIES = [
   "Digital Transformation",
 ];
 
-const WORK_MODALITIES = ["Nairobi Office", "Homa Bay Office", "Field", "Remote"];
+const WORK_MODALITIES = [
+  { label: "Nairobi Office", value: "nairobi_office" },
+  { label: "Homa Bay Office", value: "homa_bay_office" },
+  { label: "Field", value: "field" },
+  { label: "Remote", value: "remote" },
+];
 
 const SDG_GOALS = Array.from({ length: 17 }, (_, i) => ({
   id: i + 1,
@@ -110,7 +115,7 @@ export default function StaffDashboard() {
     amEndTime: "",
     pmStartTime: "",
     pmEndTime: "",
-    workModality: "Field",
+    workModality: "field",
     activityCategory: activityCategoriesData[0]?.id?.toString() || "",
     sdgGoal: sdgGoalsData[0]?.id?.toString() || "1",
     program: "",
@@ -561,8 +566,8 @@ export default function StaffDashboard() {
                       </SelectTrigger>
                       <SelectContent className="bg-slate-800 border-slate-700">
                         {WORK_MODALITIES.map((modality) => (
-                          <SelectItem key={modality} value={modality} className="text-white">
-                            {modality}
+                          <SelectItem key={modality.value} value={modality.value} className="text-white">
+                            {modality.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
