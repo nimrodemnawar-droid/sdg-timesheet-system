@@ -1955,14 +1955,44 @@ export async function updateAttendanceWithTimesheetData(
     if (data.activityCategoryId) updateData.activityCategoryId = data.activityCategoryId;
     if (data.sdgGoalId) updateData.sdgGoalId = data.sdgGoalId;
     if (data.kpiId) updateData.kpiId = data.kpiId;
-    if (data.taskDescription) updateData.taskDescription = data.taskDescription;
-    if (data.staffRemarks) updateData.staffRemarks = data.staffRemarks;
-    if (data.amStartTime) updateData.amStartTime = new Date(data.amStartTime);
-    if (data.amEndTime) updateData.amEndTime = new Date(data.amEndTime);
-    if (data.pmStartTime) updateData.pmStartTime = new Date(data.pmStartTime);
-    if (data.pmEndTime) updateData.pmEndTime = new Date(data.pmEndTime);
-    if (data.program) updateData.program = data.program;
+    if (data.taskDescription !== undefined) updateData.taskDescription = data.taskDescription || null;
+    if (data.staffRemarks !== undefined) updateData.staffRemarks = data.staffRemarks || null;
+    
+    // Handle time fields - convert time strings to proper Date objects
+    if (data.amStartTime) {
+      const today = new Date();
+      const [hours, minutes] = data.amStartTime.split(':');
+      const amStart = new Date(today);
+      amStart.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      updateData.amStartTime = amStart;
+    }
+    if (data.amEndTime) {
+      const today = new Date();
+      const [hours, minutes] = data.amEndTime.split(':');
+      const amEnd = new Date(today);
+      amEnd.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      updateData.amEndTime = amEnd;
+    }
+    if (data.pmStartTime) {
+      const today = new Date();
+      const [hours, minutes] = data.pmStartTime.split(':');
+      const pmStart = new Date(today);
+      pmStart.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      updateData.pmStartTime = pmStart;
+    }
+    if (data.pmEndTime) {
+      const today = new Date();
+      const [hours, minutes] = data.pmEndTime.split(':');
+      const pmEnd = new Date(today);
+      pmEnd.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      updateData.pmEndTime = pmEnd;
+    }
+    
+    if (data.program !== undefined) updateData.program = data.program || null;
 
+    // Mark as submitted and set submission timestamp
+    updateData.isSubmitted = true;
+    updateData.submittedAt = new Date();
     updateData.updatedAt = new Date();
 
     await db
