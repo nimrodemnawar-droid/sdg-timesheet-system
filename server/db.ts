@@ -2000,9 +2000,51 @@ export async function updateAttendanceWithTimesheetData(
       .set(updateData)
       .where(eq(attendance.id, attendanceId));
 
-    console.log("[Database] Updated attendance with timesheet data:", attendanceId);
+    console.log("[Database] Updated attendance with timesheet data:", attendanceId, "with data:", updateData);
   } catch (error) {
     console.error("[Database] Error updating attendance with timesheet data:", error);
     throw error;
+  }
+}
+
+
+// ============ FETCH ACTIVITY CATEGORIES AND SDG GOALS ============
+
+export async function getActivityCategories() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  try {
+    const categories = await db.select().from(activityCategories).orderBy(asc(activityCategories.name));
+    return categories;
+  } catch (error) {
+    console.error("[Database] Error fetching activity categories:", error);
+    return [];
+  }
+}
+
+export async function getSDGGoals() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  try {
+    const goals = await db.select().from(sdgGoals).orderBy(asc(sdgGoals.title));
+    return goals;
+  } catch (error) {
+    console.error("[Database] Error fetching SDG goals:", error);
+    return [];
+  }
+}
+
+export async function getKPIs() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  try {
+    const kpiList = await db.select().from(kpis).orderBy(asc(kpis.name));
+    return kpiList;
+  } catch (error) {
+    console.error("[Database] Error fetching KPIs:", error);
+    return [];
   }
 }

@@ -230,6 +230,8 @@ export const appRouter = router({
         program: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        console.log("[submitTimesheet] Received input:", JSON.stringify(input, null, 2));
+        
         const attendance = await db.getAttendanceById(input.attendanceId);
         if (!attendance) {
           throw new TRPCError({ code: "NOT_FOUND" });
@@ -238,6 +240,20 @@ export const appRouter = router({
         if (attendance.userId !== ctx.user.id) {
           throw new TRPCError({ code: "FORBIDDEN" });
         }
+
+        console.log("[submitTimesheet] Updating attendance with data:", {
+          workModality: input.workModality,
+          activityCategoryId: input.activityCategoryId,
+          sdgGoalId: input.sdgGoalId,
+          kpiId: input.kpiId,
+          taskDescription: input.taskDescription,
+          staffRemarks: input.staffRemarks,
+          amStartTime: input.amStartTime,
+          amEndTime: input.amEndTime,
+          pmStartTime: input.pmStartTime,
+          pmEndTime: input.pmEndTime,
+          program: input.program,
+        });
 
         // Update attendance with timesheet data
         await db.updateAttendanceWithTimesheetData(input.attendanceId, {
@@ -1239,6 +1255,21 @@ export const appRouter = router({
           });
         }
       }),
+
+    // Get all activity categories
+    getActivityCategories: publicProcedure.query(async () => {
+      return await db.getActivityCategories();
+    }),
+
+    // Get all SDG goals
+    getSDGGoals: publicProcedure.query(async () => {
+      return await db.getSDGGoals();
+    }),
+
+    // Get all KPIs
+    getKPIs: publicProcedure.query(async () => {
+      return await db.getKPIs();
+    }),
   }),
 });
 export type AppRouter = typeof appRouter;

@@ -99,6 +99,11 @@ export default function StaffDashboard() {
   const mapRef = useRef<google.maps.Map | null>(null);
 
   // Timesheet form state
+  // Fetch activity categories, SDG goals, and KPIs
+  const { data: activityCategoriesData = [] } = trpc.system.getActivityCategories.useQuery();
+  const { data: sdgGoalsData = [] } = trpc.system.getSDGGoals.useQuery();
+  const { data: kpisData = [] } = trpc.system.getKPIs.useQuery();
+
   const [timesheetData, setTimesheetData] = useState({
     date: new Date().toISOString().split("T")[0],
     amStartTime: "",
@@ -106,8 +111,8 @@ export default function StaffDashboard() {
     pmStartTime: "",
     pmEndTime: "",
     workModality: "Field",
-    activityCategory: "Program Implementation",
-    sdgGoal: "1",
+    activityCategory: activityCategoriesData[0]?.id?.toString() || "",
+    sdgGoal: sdgGoalsData[0]?.id?.toString() || "1",
     program: "",
     kpi: "none",
     taskDescription: "",
@@ -571,9 +576,9 @@ export default function StaffDashboard() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-800 border-slate-700 max-h-60">
-                        {ACTIVITY_CATEGORIES.map((category) => (
-                          <SelectItem key={category} value={category} className="text-white">
-                            {category}
+                        {activityCategoriesData.map((category) => (
+                          <SelectItem key={category.id} value={category.id.toString()} className="text-white">
+                            {category.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -693,7 +698,7 @@ export default function StaffDashboard() {
                     }
                     setIsSubmittingTimesheet(true);
                     try {
-                      await submitTimesheetMutation.mutateAsync({
+                      const submitData = {
                         attendanceId: todayAttendance.id,
                         workModality: timesheetData.workModality,
                         activityCategoryId: timesheetData.activityCategory ? parseInt(timesheetData.activityCategory) : undefined,
@@ -706,7 +711,9 @@ export default function StaffDashboard() {
                         pmStartTime: timesheetData.pmStartTime,
                         pmEndTime: timesheetData.pmEndTime,
                         program: timesheetData.program,
-                      });
+                      };
+                      console.log('[StaffDashboard] Submitting timesheet with data:', submitData);
+                      await submitTimesheetMutation.mutateAsync(submitData);
                     } finally {
                       setIsSubmittingTimesheet(false);
                     }
