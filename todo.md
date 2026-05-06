@@ -505,3 +505,15 @@
 - [x] Print functionality enabled for full report
 - [x] CSV export enabled for Director presentation
 - [x] Data accuracy verified - matches exactly what staff submitted
+
+
+## COMPREHENSIVE AUDIT - ALL FEATURES
+
+- [ ] Audit getTodayAllStaff backend - verify it returns correct data for all staff
+- [ ] Audit Attendance tab - verify it shows all staff check-ins correctly
+- [ ] Audit Check-in Today display - verify real-time status
+- [ ] Audit Timesheet tab - verify all submitted data displays correctly
+- [ ] Audit Reports tab - verify all reports work with array data
+- [ ] Fix any data type mismatches between backend and frontend
+- [ ] Ensure correct time formatting (local timezone)
+- [ ] Verify GPS coordinates display correctly

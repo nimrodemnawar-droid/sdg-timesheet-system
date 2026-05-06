@@ -1693,7 +1693,7 @@ export async function deleteUser(userId: number): Promise<boolean> {
 export async function getAllStaffCheckedInToday() {
   try {
     const db = await getDb();
-    if (!db) return { checkedInCount: 0, staffList: [] };
+    if (!db) return [];
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -1721,34 +1721,40 @@ export async function getAllStaffCheckedInToday() {
       .select()
       .from(users);
 
-    // Enrich attendance data with user info
+    // Enrich attendance data with user info - include ALL users who checked in
     const staffList = userIds.map(userId => {
       const userInfo = staffDetails.find(u => u.id === userId);
-      // Only include staff members, not admins
-      if (userInfo?.role === 'admin' || userInfo?.role === 'supervisor') return null;
       
       const userRecords = todayRecords.filter(r => r.userId === userId);
       const latestRecord = userRecords[0];
 
       return {
         userId,
-        name: userInfo?.name || `Staff ${userId}`,
+        userName: userInfo?.name || `Staff ${userId}`,
+        staffNumber: userInfo?.staffNumber || userId,
         checkInTime: latestRecord?.checkInTime,
         checkOutTime: latestRecord?.checkOutTime,
         status: latestRecord?.checkOutTime ? 'Checked Out' : 'Checked In',
         workModality: latestRecord?.workModality || 'On-site',
-        checkInLat: latestRecord?.checkInLat,
-        checkInLng: latestRecord?.checkInLng,
+        checkInLat: latestRecord?.checkInLat || null,
+        checkInLng: latestRecord?.checkInLng || null,
+        checkInAccuracy: latestRecord?.checkInAccuracy || null,
+        checkOutLat: latestRecord?.checkOutLat || null,
+        checkOutLng: latestRecord?.checkOutLng || null,
+        distanceTraveled: latestRecord?.distanceTraveled || null,
+        kpiId: latestRecord?.kpiId || null,
+        activityCategoryId: latestRecord?.activityCategoryId || null,
+        sdgGoalId: latestRecord?.sdgGoalId || null,
+        taskDescription: latestRecord?.taskDescription || null,
+        staffRemarks: latestRecord?.staffRemarks || null,
       };
     }).filter(item => item !== null);
 
-    return {
-      checkedInCount: staffList.length,
-      staffList,
-    };
+    // Return array directly so frontend can use Array.isArray()
+    return staffList;
   } catch (error) {
     console.error('[Database] Error getting staff checked in today:', error);
-    return { checkedInCount: 0, staffList: [] };
+    return [];
   }
 }
 
