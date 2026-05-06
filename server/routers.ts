@@ -1255,21 +1255,6 @@ export const appRouter = router({
           });
         }
       }),
-
-    // Get all activity categories
-    getActivityCategories: publicProcedure.query(async () => {
-      return await db.getActivityCategories();
-    }),
-
-    // Get all SDG goals
-    getSDGGoals: publicProcedure.query(async () => {
-      return await db.getSDGGoals();
-    }),
-
-    // Get all KPIs
-    getKPIs: publicProcedure.query(async () => {
-      return await db.getKPIs();
-    }),
   }),
 });
 export type AppRouter = typeof appRouter;
