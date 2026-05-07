@@ -105,9 +105,9 @@ export default function StaffDashboard() {
 
   // Timesheet form state
   // Fetch activity categories, SDG goals, and KPIs
-  const { data: activityCategoriesData = [] } = trpc.system.getActivityCategories.useQuery();
-  const { data: sdgGoalsData = [] } = trpc.system.getSDGGoals.useQuery();
-  const { data: kpisData = [] } = trpc.system.getKPIs.useQuery();
+  const { data: activityCategoriesData } = trpc.system.getActivityCategories.useQuery();
+  const { data: sdgGoalsData } = trpc.system.getSDGGoals.useQuery();
+  const { data: kpisData } = trpc.system.getKPIs.useQuery();
 
   const [timesheetData, setTimesheetData] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -116,8 +116,8 @@ export default function StaffDashboard() {
     pmStartTime: "",
     pmEndTime: "",
     workModality: "field",
-    activityCategory: activityCategoriesData[0]?.id?.toString() || "",
-    sdgGoal: sdgGoalsData[0]?.id?.toString() || "1",
+    activityCategory: activityCategoriesData && activityCategoriesData.length > 0 ? activityCategoriesData[0].id.toString() : "",
+    sdgGoal: sdgGoalsData && sdgGoalsData.length > 0 ? sdgGoalsData[0].id.toString() : "1",
     program: "",
     kpi: "none",
     taskDescription: "",
