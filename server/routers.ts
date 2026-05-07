@@ -345,6 +345,9 @@ Report generated at: ${new Date().toISOString()}`;
           }
         });
         
+        // Get leave balance data
+        const leaveBalanceData = await db.getAllLeaveBalances(ctx.user.id);
+        
         return {
           todayCheckedIn: todayAttendance ? true : false,
           todayHours: Math.round(todayHours * 100) / 100,
@@ -352,7 +355,7 @@ Report generated at: ${new Date().toISOString()}`;
           weekDaysWorked: weekAttendance?.length || 0,
           weekStart: startOfWeek.toISOString().split('T')[0],
           weekEnd: endOfWeek.toISOString().split('T')[0],
-          leaveBalance: {
+          leaveBalance: leaveBalanceData || {
             annual: 0,
             sick: 0,
             casual: 0,
