@@ -319,6 +319,71 @@ Report generated at: ${new Date().toISOString()}`;
       }
     }),
   }),
-});
 
+  kpi: router({
+    getKPIs: protectedProcedure.query(async () => {
+      try {
+        return await db.getActiveKPIs();
+      } catch (error) {
+        console.error('[tRPC] Error fetching KPIs:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch KPIs',
+        });
+      }
+    }),
+  }),
+
+  leave: router({
+    getMyRequests: protectedProcedure.query(async ({ ctx }) => {
+      try {
+        return await db.getUserLeaveRequests(ctx.user.id);
+      } catch (error) {
+        console.error('[tRPC] Error fetching leave requests:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch leave requests',
+        });
+      }
+    }),
+
+    getAllBalances: adminProcedure.query(async () => {
+      try {
+        const users = await db.getAllUsers();
+        const currentYear = new Date().getFullYear();
+        const balances = await Promise.all(
+          users.map(async (user) => ({
+            userId: user.id,
+            userName: user.name,
+            annual: await db.getLeaveBalance(user.id, 'annual', currentYear),
+            sick: await db.getLeaveBalance(user.id, 'sick', currentYear),
+            maternity: await db.getLeaveBalance(user.id, 'maternity', currentYear),
+            unpaid: await db.getLeaveBalance(user.id, 'unpaid', currentYear),
+          }))
+        );
+        return balances;
+      } catch (error) {
+        console.error('[tRPC] Error fetching leave balances:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch leave balances',
+        });
+      }
+    }),
+  }),
+
+  notificationPreferences: router({
+    getHistory: protectedProcedure.query(async ({ ctx }) => {
+      try {
+        return [];
+      } catch (error) {
+        console.error('[tRPC] Error fetching notification history:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch notification history',
+        });
+      }
+    }),
+  }),
+});
 export type AppRouter = typeof appRouter;
