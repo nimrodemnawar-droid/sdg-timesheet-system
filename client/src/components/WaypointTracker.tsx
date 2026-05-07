@@ -57,6 +57,7 @@ export function WaypointTracker({ attendanceId, isCheckedIn, isCheckedOut }: Way
 
   // Mutations
   const addWaypointMutation = trpc.attendance.addWaypoint.useMutation();
+  const trpcUtils = trpc.useUtils();
 
   // Update waypoints when data changes
   useEffect(() => {
@@ -112,12 +113,11 @@ export function WaypointTracker({ attendanceId, isCheckedIn, isCheckedOut }: Way
           toast.dismiss("location-acquiring");
 
           // Invalidate cache for real-time updates
-          await trpc.useUtils().attendance.getWaypoints.invalidate({ attendanceId });
+          await trpcUtils.attendance.getWaypoints.invalidate({ attendanceId });
         } catch (error) {
           toast.dismiss("location-acquiring");
           toast.error("Failed to save waypoint");
           console.error(error);
-        } finally {
           setIsCapturing(false);
         }
       } catch (locationError) {
