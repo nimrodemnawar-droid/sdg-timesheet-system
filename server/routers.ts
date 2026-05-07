@@ -450,6 +450,19 @@ Report generated at: ${new Date().toISOString()}`;
         });
       }
     }),
+
+    getAllAdmins: adminProcedure.query(async () => {
+      try {
+        const users = await db.getAllUsers();
+        return users.filter(user => user.role === 'admin');
+      } catch (error) {
+        console.error('[tRPC] Error fetching admin users:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch admin users',
+        });
+      }
+    }),
   }),
 
   notificationPreferences: router({
