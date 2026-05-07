@@ -581,7 +581,7 @@ export default function StaffDashboard() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-800 border-slate-700 max-h-60">
-                        {activityCategoriesData.map((category) => (
+                        {activityCategoriesData && activityCategoriesData.map((category) => (
                           <SelectItem key={category.id} value={category.id.toString()} className="text-white">
                             {category.name}
                           </SelectItem>
@@ -597,7 +597,7 @@ export default function StaffDashboard() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-800 border-slate-700 max-h-60">
-                        {SDG_GOALS.map((goal) => (
+                        {SDG_GOALS && SDG_GOALS.map((goal) => (
                           <SelectItem key={goal.id} value={goal.id.toString()} className="text-white">
                             {goal.title}
                           </SelectItem>
@@ -620,7 +620,7 @@ export default function StaffDashboard() {
                         {isLoadingKPIs ? (
                           <div className="p-2 text-slate-400 text-sm">Loading KPIs...</div>
                         ) : kpiList && kpiList.length > 0 ? (
-                          kpiList.map((kpi) => (
+                          kpiList && kpiList.map((kpi) => (
                             <SelectItem key={kpi.id} value={kpi.id.toString()} className="text-white">
                               {kpi.name} {kpi.unit ? `(${kpi.unit})` : ''}
                             </SelectItem>
@@ -792,7 +792,7 @@ export default function StaffDashboard() {
               <CardContent className="space-y-6">
                 {/* Leave Balance Summary */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {allLeaveBalances && allLeaveBalances.length > 0 ? (
+                  {allLeaveBalances && Array.isArray(allLeaveBalances) && allLeaveBalances.length > 0 ? (
                     allLeaveBalances.map((balance) => {
                       const leaveTypeLabels: Record<string, { label: string; color: string }> = {
                         annual: { label: 'Annual Leave', color: 'text-blue-400' },
