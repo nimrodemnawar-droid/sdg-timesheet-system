@@ -276,7 +276,14 @@ export function TimesheetViewTab() {
                           <p className="text-slate-400 text-xs">#{record.staffNumber}</p>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-slate-300">{record.date}</td>
+                      <td className="py-3 px-4 text-slate-300">
+                        <div className="flex flex-col">
+                          <span>{record.date}</span>
+                          {record.previousDate && record.date !== record.previousDate && (
+                            <span className="text-xs text-slate-500 mt-1">↓ Gap</span>
+                          )}
+                        </div>
+                      </td>
                       <td className="py-3 px-4 text-slate-300">{record.checkInTime}</td>
                       <td className="py-3 px-4 text-slate-300">{record.checkOutTime}</td>
                       <td className="py-3 px-4">
@@ -351,7 +358,7 @@ export function TimesheetViewTab() {
                       <div>
                         <label className="text-slate-400 text-sm">Work Modality</label>
                         <Badge variant="outline" className="text-slate-300 border-slate-600">
-                          {record.workModality}
+                          {record.workModality ? record.workModality.replace(/_/g, ' ').toUpperCase() : 'N/A'}
                         </Badge>
                       </div>
                     </div>

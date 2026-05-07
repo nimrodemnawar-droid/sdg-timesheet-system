@@ -113,7 +113,7 @@ export function generateAttendanceReportCSV(records: AttendanceRecord[]): void {
     r.checkOutTime,
     r.hoursWorked || 0,
     r.status,
-    r.workModality || 'N/A',
+    r.workModality ? r.workModality.replace(/_/g, ' ').toUpperCase() : 'N/A',
     r.checkInLat || 'N/A',
     r.checkInLng || 'N/A',
     r.checkInAccuracy || 'N/A',
