@@ -267,6 +267,49 @@ Report generated at: ${new Date().toISOString()}`;
           });
         }
       }),
+
+    getWaypoints: protectedProcedure
+      .input(z.object({ attendanceId: z.number() }))
+      .query(async ({ input, ctx }) => {
+        try {
+          return await db.getWaypoints(input.attendanceId);
+        } catch (error) {
+          console.error('[tRPC] Error fetching waypoints:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to fetch waypoints',
+          });
+        }
+      }),
+
+    addWaypoint: protectedProcedure
+      .input(
+        z.object({
+          attendanceId: z.number(),
+          latitude: z.number(),
+          longitude: z.number(),
+          accuracy: z.number(),
+          cumulativeDistance: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        try {
+          return await db.addWaypoint({
+            attendanceId: input.attendanceId,
+            userId: ctx.user.id,
+            latitude: input.latitude.toString(),
+            longitude: input.longitude.toString(),
+            accuracy: input.accuracy.toString(),
+            cumulativeDistance: input.cumulativeDistance || '0',
+          });
+        } catch (error) {
+          console.error('[tRPC] Error adding waypoint:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to add waypoint',
+          });
+        }
+      }),
   }),
 
   statistics: router({
