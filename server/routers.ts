@@ -480,5 +480,19 @@ Report generated at: ${new Date().toISOString()}`;
       }
     }),
   }),
+
+  reportScheduling: router({
+    getAll: adminProcedure.query(async () => {
+      try {
+        return [];
+      } catch (error) {
+        console.error('[tRPC] Error fetching report schedules:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch report schedules',
+        });
+      }
+    }),
+  }),
 });
 export type AppRouter = typeof appRouter;
