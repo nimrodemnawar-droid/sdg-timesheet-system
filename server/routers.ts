@@ -494,5 +494,37 @@ Report generated at: ${new Date().toISOString()}`;
       }
     }),
   }),
+
+  export: router({
+    timesheets: adminProcedure
+      .input(z.object({ format: z.enum(['csv', 'excel']).optional() }))
+      .mutation(async ({ input }) => {
+        try {
+          const format = input.format || 'csv';
+          const data = await db.getCompleteTimesheetData();
+          
+          const transformedData = data.map((item: any) => ({
+            ...item,
+            overtimeHours: 0,
+            location: item.checkInAddress || '',
+            remarks: '',
+          }));
+          
+          if (format === 'excel') {
+            const content = await generateExcelContent(transformedData);
+            return { content, filename: `timesheets_${new Date().toISOString()}.xlsx` };
+          } else {
+            const content = generateCSVContent(transformedData);
+            return { content, filename: `timesheets_${new Date().toISOString()}.csv` };
+          }
+        } catch (error) {
+          console.error('[tRPC] Error exporting timesheets:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to export timesheets',
+          });
+        }
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;
