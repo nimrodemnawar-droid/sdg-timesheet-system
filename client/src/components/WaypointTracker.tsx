@@ -102,9 +102,9 @@ export function WaypointTracker({ attendanceId, isCheckedIn, isCheckedOut }: Way
           try {
             await addWaypointMutation.mutateAsync({
               attendanceId,
-              latitude: latitude.toString(),
-              longitude: longitude.toString(),
-              accuracy: accuracy.toString(),
+              latitude,
+              longitude,
+              accuracy,
             });
 
             toast.success("Waypoint captured successfully");
