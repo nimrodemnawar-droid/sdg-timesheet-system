@@ -226,10 +226,10 @@ export default function StaffDashboard() {
     setIsCheckingIn(true);
     try {
       await checkInMutation.mutateAsync({
-        latitude: gpsCoordinates.latitude.toString(),
-        longitude: gpsCoordinates.longitude.toString(),
-        accuracy: gpsCoordinates.accuracy.toString(),
-        workModality: selectedWorkplace as "nairobi_office" | "homa_bay_office" | "field" | "remote",
+        latitude: gpsCoordinates.latitude,
+        longitude: gpsCoordinates.longitude,
+        accuracy: gpsCoordinates.accuracy,
+        timestamp: new Date().toISOString(),
       });
       toast.success(`Checked in successfully at ${selectedWorkplace}`);
       await refetchAttendance();
@@ -255,10 +255,10 @@ export default function StaffDashboard() {
     try {
       await checkOutMutation.mutateAsync({
         attendanceId: todayAttendance.id,
-        latitude: gpsCoordinates.latitude.toString(),
-        longitude: gpsCoordinates.longitude.toString(),
-        accuracy: gpsCoordinates.accuracy.toString(),
-        distanceTraveled: '0',
+        latitude: gpsCoordinates.latitude,
+        longitude: gpsCoordinates.longitude,
+        accuracy: gpsCoordinates.accuracy,
+        timestamp: new Date().toISOString(),
       });
       toast.success("Checked out successfully");
       await refetchAttendance();
