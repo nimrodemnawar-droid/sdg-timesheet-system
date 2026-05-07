@@ -191,6 +191,67 @@ export async function createAttendance(data: {
   }
 }
 
+export async function checkIn(
+  userId: number,
+  data: {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+    timestamp: Date;
+    encryptedLocation: { encryptedData: string; iv: string };
+  }
+) {
+  return createAttendance({
+    userId,
+    checkInLat: data.latitude.toString(),
+    checkInLng: data.longitude.toString(),
+    checkInAccuracy: data.accuracy.toString(),
+  });
+}
+
+export async function checkOut(
+  attendanceId: number,
+  data: {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+    timestamp: Date;
+    encryptedLocation: { encryptedData: string; iv: string };
+  }
+) {
+  // Get current attendance to calculate distance
+  const db = await getDb();
+  if (!db) return;
+  
+  const record = await db
+    .select()
+    .from(attendance)
+    .where(eq(attendance.id, attendanceId))
+    .limit(1);
+
+  if (!record.length) return;
+
+  const checkInLat = parseFloat(record[0].checkInLat as any);
+  const checkInLng = parseFloat(record[0].checkInLng as any);
+  
+  // Simple distance calculation (Haversine formula)
+  const R = 6371; // Earth's radius in km
+  const dLat = (data.latitude - checkInLat) * Math.PI / 180;
+  const dLng = (data.longitude - checkInLng) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(checkInLat * Math.PI / 180) * Math.cos(data.latitude * Math.PI / 180) *
+            Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distance = R * c * 1000; // Convert to meters
+  
+  return completeAttendance(attendanceId, {
+    checkOutLat: data.latitude.toString(),
+    checkOutLng: data.longitude.toString(),
+    checkOutAccuracy: data.accuracy.toString(),
+    distanceTraveled: distance.toString(),
+  });
+}
+
 export async function completeAttendance(
   attendanceId: number,
   data: {
@@ -2052,13 +2113,16 @@ export async function getKPIs() {
 
 // Generate daily timesheet summary report
 export async function generateDailyTimesheetSummary(date: Date = new Date()) {
+  const dbInstance = await getDb();
+  if (!dbInstance) return null;
+  
   const startOfDay = new Date(date);
   startOfDay.setHours(0, 0, 0, 0);
   
   const endOfDay = new Date(date);
   endOfDay.setHours(23, 59, 59, 999);
 
-  const records = await db
+  const records = await dbInstance
     .select({
       id: attendance.id,
       staffName: users.name,
@@ -2071,7 +2135,7 @@ export async function generateDailyTimesheetSummary(date: Date = new Date()) {
       pmEndTime: attendance.pmEndTime,
       workModality: attendance.workModality,
       activityCategoryName: activityCategories.name,
-      sdgGoalName: sdgGoals.goal,
+      sdgGoalName: sdgGoals.title,
       kpiName: kpis.name,
       taskDescription: attendance.taskDescription,
       staffRemarks: attendance.staffRemarks,

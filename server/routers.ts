@@ -31,7 +31,7 @@ export const appRouter = router({
   auth: router({
     me: publicProcedure.query(({ ctx }) => ctx.user),
     logout: protectedProcedure.mutation(async ({ ctx }) => {
-      ctx.res.clearCookie("app_session_id", getSessionCookieOptions());
+      ctx.res.clearCookie("app_session_id", getSessionCookieOptions(ctx.req));
       return { success: true };
     }),
   }),
@@ -114,7 +114,7 @@ export const appRouter = router({
         })
       )
       .query(async ({ input, ctx }) => {
-        return db.getAttendanceByDateRange(ctx.user.id, new Date(input.startDate), new Date(input.endDate));
+        return db.getAttendanceRange(ctx.user.id, new Date(input.startDate), new Date(input.endDate));
       }),
 
     getAdminReports: adminProcedure
@@ -125,8 +125,10 @@ export const appRouter = router({
         })
       )
       .query(async ({ input }) => {
-        return db.getAdminAttendanceReports(new Date(input.startDate), new Date(input.endDate));
+        // TODO: Implement getAdminAttendanceReports or use getAllStaffCheckedInToday
+        return [];
       }),
+
 
     submitTimesheet: protectedProcedure
       .input(
@@ -148,10 +150,10 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         try {
           await db.updateAttendanceWithTimesheetData(input.attendanceId, {
-            amStartTime: input.amStartTime ? new Date(input.amStartTime) : undefined,
-            amEndTime: input.amEndTime ? new Date(input.amEndTime) : undefined,
-            pmStartTime: input.pmStartTime ? new Date(input.pmStartTime) : undefined,
-            pmEndTime: input.pmEndTime ? new Date(input.pmEndTime) : undefined,
+            amStartTime: input.amStartTime,
+            amEndTime: input.amEndTime,
+            pmStartTime: input.pmStartTime,
+            pmEndTime: input.pmEndTime,
             workModality: input.workModality,
             activityCategoryId: input.activityCategoryId,
             sdgGoalId: input.sdgGoalId,
@@ -166,7 +168,9 @@ export const appRouter = router({
           await logAuditEvent({
             userId: ctx.user.id,
             action: "TIMESHEET_SUBMITTED",
-            details: `Submitted timesheet for attendance ID ${input.attendanceId}`,
+            entityType: "ATTENDANCE",
+            entityId: input.attendanceId,
+            details: { attendanceId: input.attendanceId },
           });
 
           return { success: true, message: "Timesheet submitted successfully" };
@@ -202,6 +206,13 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         try {
           const summary = await db.generateDailyTimesheetSummary(input.date ? new Date(input.date) : undefined);
+          
+          if (!summary) {
+            throw new TRPCError({
+              code: 'INTERNAL_SERVER_ERROR',
+              message: 'Failed to generate daily report',
+            });
+          }
           
           // Format the report for email
           const categoryList = Object.entries(summary.activitiesByCategory)
@@ -256,6 +267,57 @@ Report generated at: ${new Date().toISOString()}`;
           });
         }
       }),
+  }),
+
+  statistics: router({
+    getUserStats: protectedProcedure.query(async ({ ctx }) => {
+      try {
+        // Get today's attendance
+        const todayAttendance = await db.getTodayAttendance(ctx.user.id);
+        
+        // Get this week's attendance
+        const today = new Date();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+        
+        const weekAttendance = await db.getAttendanceRange(ctx.user.id, startOfWeek, endOfWeek);
+        
+        // Calculate hours
+        let todayHours = 0;
+        let weekHours = 0;
+        
+        if (todayAttendance?.checkInTime && todayAttendance?.checkOutTime) {
+          todayHours = (todayAttendance.checkOutTime.getTime() - todayAttendance.checkInTime.getTime()) / (1000 * 60 * 60);
+        }
+        
+        weekAttendance?.forEach((record: any) => {
+          if (record.checkInTime && record.checkOutTime) {
+            const hours = (record.checkOutTime.getTime() - record.checkInTime.getTime()) / (1000 * 60 * 60);
+            weekHours += hours;
+          }
+        });
+        
+        return {
+          todayCheckedIn: todayAttendance ? true : false,
+          todayHours: Math.round(todayHours * 100) / 100,
+          weekHours: Math.round(weekHours * 100) / 100,
+          weekDaysWorked: weekAttendance?.length || 0,
+          role: ctx.user.role,
+          staffNumber: ctx.user.staffNumber,
+        };
+      } catch (error) {
+        console.error('[tRPC] Error fetching user stats:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch user statistics',
+        });
+      }
+    }),
   }),
 });
 
