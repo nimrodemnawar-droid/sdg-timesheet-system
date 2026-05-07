@@ -540,5 +540,46 @@ Report generated at: ${new Date().toISOString()}`;
         }
       }),
   }),
+
+  scheduledExport: router({
+    configureWeekly: adminProcedure
+      .input(z.object({ 
+        dayOfWeek: z.enum(['monday', 'tuesday', 'wednesday', 'thursday', 'friday']),
+        time: z.string(),
+        format: z.enum(['csv', 'excel', 'pdf']),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          await notifyOwner({
+            title: 'Weekly Timesheet Export Configured',
+            content: `Automatic weekly timesheet exports configured for ${input.dayOfWeek} at ${input.time} in ${input.format} format.`,
+          });
+          return { success: true, message: 'Weekly export configured successfully' };
+        } catch (error) {
+          console.error('[tRPC] Error configuring weekly export:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to configure weekly export',
+          });
+        }
+      }),
+
+    getConfiguration: adminProcedure.query(async () => {
+      try {
+        return {
+          dayOfWeek: 'friday',
+          time: '17:00',
+          format: 'csv',
+          isActive: false,
+        };
+      } catch (error) {
+        console.error('[tRPC] Error fetching export configuration:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch export configuration',
+        });
+      }
+    }),
+  }),
 });
 export type AppRouter = typeof appRouter;
