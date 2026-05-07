@@ -793,15 +793,16 @@ export default function StaffDashboard() {
                 {/* Leave Balance Summary */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {allLeaveBalances && Array.isArray(allLeaveBalances) && allLeaveBalances.length > 0 ? (
-                    allLeaveBalances.map((balance) => {
+                    allLeaveBalances[0] && (['annual', 'sick', 'unpaid', 'maternity'] as const).map((leaveType) => {
+                      const balance = allLeaveBalances[0][leaveType];
+                      if (!balance) return null;
                       const leaveTypeLabels: Record<string, { label: string; color: string }> = {
                         annual: { label: 'Annual Leave', color: 'text-blue-400' },
                         sick: { label: 'Sick Leave', color: 'text-green-400' },
                         unpaid: { label: 'Unpaid Leave', color: 'text-yellow-400' },
                         maternity: { label: 'Maternity Leave', color: 'text-pink-400' },
-                        other: { label: 'Other Leave', color: 'text-purple-400' },
                       };
-                      const typeInfo = leaveTypeLabels[balance.leaveType] || { label: balance.leaveType, color: 'text-slate-400' };
+                      const typeInfo = leaveTypeLabels[leaveType];
                       return (
                         <div key={balance.id} className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
                           <p className="text-slate-400 text-xs font-medium mb-1">{typeInfo.label}</p>
@@ -836,7 +837,8 @@ export default function StaffDashboard() {
                     {leaveFormData.leaveType && allLeaveBalances && (
                       <div className="mt-3 p-3 bg-blue-900/30 border border-blue-500/50 rounded-lg">
                         {(() => {
-                          const selectedBalance = allLeaveBalances.find(b => b.leaveType === leaveFormData.leaveType);
+                          const leaveTypeKey = leaveFormData.leaveType as 'annual' | 'sick' | 'maternity' | 'unpaid';
+                          const selectedBalance = allLeaveBalances[0]?.[leaveTypeKey];
                           if (selectedBalance) {
                             const remaining = parseFloat(selectedBalance.remainingDays.toString());
                             const allocated = parseFloat(selectedBalance.allocatedDays.toString());
@@ -883,7 +885,8 @@ export default function StaffDashboard() {
                     const startDate = new Date(leaveFormData.startDate);
                     const endDate = new Date(leaveFormData.endDate);
                     const daysRequested = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-                    const selectedBalance = allLeaveBalances?.find(b => b.leaveType === leaveFormData.leaveType);
+                    const leaveTypeKey = leaveFormData.leaveType as 'annual' | 'sick' | 'maternity' | 'unpaid';
+                    const selectedBalance = allLeaveBalances?.[0]?.[leaveTypeKey];
                     const availableDays = selectedBalance ? parseFloat(selectedBalance.remainingDays.toString()) : 0;
                     const isEnoughBalance = daysRequested <= availableDays && daysRequested > 0;
                     

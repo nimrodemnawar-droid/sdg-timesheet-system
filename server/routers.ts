@@ -370,6 +370,32 @@ Report generated at: ${new Date().toISOString()}`;
         });
       }
     }),
+
+    getPending: adminProcedure.query(async () => {
+      try {
+        return await db.getPendingLeaveRequests();
+      } catch (error) {
+        console.error('[tRPC] Error fetching pending leave requests:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch pending leave requests',
+        });
+      }
+    }),
+  }),
+
+  users: router({
+    getAll: adminProcedure.query(async () => {
+      try {
+        return await db.getAllUsers();
+      } catch (error) {
+        console.error('[tRPC] Error fetching all users:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch users',
+        });
+      }
+    }),
   }),
 
   notificationPreferences: router({
@@ -381,6 +407,18 @@ Report generated at: ${new Date().toISOString()}`;
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to fetch notification history',
+        });
+      }
+    }),
+
+    get: protectedProcedure.query(async ({ ctx }) => {
+      try {
+        return { notificationsEnabled: true, emailNotifications: true };
+      } catch (error) {
+        console.error('[tRPC] Error fetching notification preferences:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch notification preferences',
         });
       }
     }),
