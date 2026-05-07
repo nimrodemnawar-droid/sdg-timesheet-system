@@ -466,5 +466,19 @@ Report generated at: ${new Date().toISOString()}`;
       }
     }),
   }),
+
+  timesheet: router({
+    getComplete: adminProcedure.query(async () => {
+      try {
+        return await db.getCompleteTimesheetData();
+      } catch (error) {
+        console.error('[tRPC] Error fetching complete timesheet data:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch timesheet data',
+        });
+      }
+    }),
+  }),
 });
 export type AppRouter = typeof appRouter;
