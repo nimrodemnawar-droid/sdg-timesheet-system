@@ -2048,3 +2048,87 @@ export async function getKPIs() {
     return [];
   }
 }
+
+
+// Generate daily timesheet summary report
+export async function generateDailyTimesheetSummary(date: Date = new Date()) {
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+  
+  const endOfDay = new Date(date);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const records = await db
+    .select({
+      id: attendance.id,
+      staffName: users.name,
+      staffNumber: users.staffNumber,
+      checkInTime: attendance.checkInTime,
+      checkOutTime: attendance.checkOutTime,
+      amStartTime: attendance.amStartTime,
+      amEndTime: attendance.amEndTime,
+      pmStartTime: attendance.pmStartTime,
+      pmEndTime: attendance.pmEndTime,
+      workModality: attendance.workModality,
+      activityCategoryName: activityCategories.name,
+      sdgGoalName: sdgGoals.goal,
+      kpiName: kpis.name,
+      taskDescription: attendance.taskDescription,
+      staffRemarks: attendance.staffRemarks,
+      isSubmitted: attendance.isSubmitted,
+    })
+    .from(attendance)
+    .leftJoin(users, eq(attendance.userId, users.id))
+    .leftJoin(activityCategories, eq(attendance.activityCategoryId, activityCategories.id))
+    .leftJoin(sdgGoals, eq(attendance.sdgGoalId, sdgGoals.id))
+    .leftJoin(kpis, eq(attendance.kpiId, kpis.id))
+    .where(
+      and(
+        gte(attendance.checkInTime, startOfDay),
+        lte(attendance.checkInTime, endOfDay)
+      )
+    )
+    .orderBy(users.name);
+
+  const totalStaffCheckedIn = new Set(records.map(r => r.staffNumber)).size;
+  const submittedCount = records.filter(r => r.isSubmitted).length;
+  const pendingCount = records.filter(r => !r.isSubmitted).length;
+
+  // Calculate total hours
+  let totalHours = 0;
+  records.forEach(record => {
+    if (record.amStartTime && record.amEndTime) {
+      const amHours = (record.amEndTime.getTime() - record.amStartTime.getTime()) / (1000 * 60 * 60);
+      totalHours += amHours;
+    }
+    if (record.pmStartTime && record.pmEndTime) {
+      const pmHours = (record.pmEndTime.getTime() - record.pmStartTime.getTime()) / (1000 * 60 * 60);
+      totalHours += pmHours;
+    }
+  });
+
+  // Group by activity category
+  const activitiesByCategory: Record<string, number> = {};
+  records.forEach(record => {
+    const category = record.activityCategoryName || 'Uncategorized';
+    activitiesByCategory[category] = (activitiesByCategory[category] || 0) + 1;
+  });
+
+  // Group by SDG goal
+  const activitiesBySDG: Record<string, number> = {};
+  records.forEach(record => {
+    const goal = record.sdgGoalName || 'Uncategorized';
+    activitiesBySDG[goal] = (activitiesBySDG[goal] || 0) + 1;
+  });
+
+  return {
+    date: date.toISOString().split('T')[0],
+    totalStaffCheckedIn,
+    submittedCount,
+    pendingCount,
+    totalHours: Math.round(totalHours * 100) / 100,
+    activitiesByCategory,
+    activitiesBySDG,
+    records,
+  };
+}

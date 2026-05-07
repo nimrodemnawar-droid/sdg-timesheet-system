@@ -517,3 +517,13 @@
 - [ ] Fix any data type mismatches between backend and frontend
 - [ ] Ensure correct time formatting (local timezone)
 - [ ] Verify GPS coordinates display correctly
+
+
+## Phase 43: Daily Timesheet Summary Report (Auto-Email)
+
+- [ ] Create backend endpoint to generate daily timesheet summary
+- [ ] Implement email notification with summary content using notifyOwner
+- [ ] Create scheduled task API endpoint for daily report trigger
+- [ ] Include: total staff checked in, hours worked, activities, missing submissions
+- [ ] Test end-to-end report generation and delivery
+- [ ] Set up scheduled task to run daily at end of day (6 PM EAT)
