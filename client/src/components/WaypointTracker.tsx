@@ -95,6 +95,9 @@ export function WaypointTracker({ attendanceId, isCheckedIn, isCheckedOut }: Way
         return;
       }
 
+      // Show info toast while acquiring GPS
+      toast.loading("Acquiring GPS coordinates...", { id: "gps-acquiring" });
+
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude, accuracy } = position.coords;
@@ -105,15 +108,18 @@ export function WaypointTracker({ attendanceId, isCheckedIn, isCheckedOut }: Way
               latitude,
               longitude,
               accuracy,
+              timestamp: new Date().toISOString(),
             });
 
             toast.success("Waypoint captured successfully");
             setLastUpdateTime(new Date());
             await refetchWaypoints();
+            toast.dismiss("gps-acquiring");
 
             // Invalidate cache for real-time updates
             await trpc.useUtils().attendance.getWaypoints.invalidate({ attendanceId });
           } catch (error) {
+            toast.dismiss("gps-acquiring");
             toast.error("Failed to capture waypoint");
             console.error(error);
           } finally {
@@ -121,10 +127,18 @@ export function WaypointTracker({ attendanceId, isCheckedIn, isCheckedOut }: Way
           }
         },
         (error) => {
-          toast.error(`Location error: ${error.message}`);
+          let errorMessage = "Location error";
+          if (error.code === error.TIMEOUT) {
+            errorMessage = "GPS timeout - please try again or enable high accuracy mode";
+          } else if (error.code === error.PERMISSION_DENIED) {
+            errorMessage = "Location permission denied - please enable location access";
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            errorMessage = "Location unavailable - please try again";
+          }
+          toast.error(errorMessage);
           setIsCapturing(false);
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
       );
     } catch (error) {
       toast.error("Failed to capture waypoint");
