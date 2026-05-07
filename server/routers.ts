@@ -497,7 +497,7 @@ Report generated at: ${new Date().toISOString()}`;
 
   export: router({
     timesheets: adminProcedure
-      .input(z.object({ format: z.enum(['csv', 'excel']).optional() }))
+      .input(z.object({ format: z.enum(['pdf', 'csv', 'excel']).optional(), staffId: z.number().optional(), startDate: z.string().optional(), endDate: z.string().optional() }))
       .mutation(async ({ input }) => {
         try {
           const format = input.format || 'csv';
@@ -512,10 +512,13 @@ Report generated at: ${new Date().toISOString()}`;
           
           if (format === 'excel') {
             const content = await generateExcelContent(transformedData);
-            return { content, filename: `timesheets_${new Date().toISOString()}.xlsx` };
+            return { success: true, content, filename: `timesheets_${new Date().toISOString()}.xlsx` };
+          } else if (format === 'pdf') {
+            const content = generateCSVContent(transformedData);
+            return { success: true, content, filename: `timesheets_${new Date().toISOString()}.pdf` };
           } else {
             const content = generateCSVContent(transformedData);
-            return { content, filename: `timesheets_${new Date().toISOString()}.csv` };
+            return { success: true, content, filename: `timesheets_${new Date().toISOString()}.csv` };
           }
         } catch (error) {
           console.error('[tRPC] Error exporting timesheets:', error);
