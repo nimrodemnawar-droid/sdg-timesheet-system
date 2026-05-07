@@ -350,6 +350,14 @@ Report generated at: ${new Date().toISOString()}`;
           todayHours: Math.round(todayHours * 100) / 100,
           weekHours: Math.round(weekHours * 100) / 100,
           weekDaysWorked: weekAttendance?.length || 0,
+          weekStart: startOfWeek.toISOString().split('T')[0],
+          weekEnd: endOfWeek.toISOString().split('T')[0],
+          leaveBalance: {
+            annual: 0,
+            sick: 0,
+            casual: 0,
+            maternity: 0,
+          },
           role: ctx.user.role,
           staffNumber: ctx.user.staffNumber,
         };
