@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { getLocationWithFallback, formatGeolocationError } from "@/lib/geolocation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -88,59 +89,47 @@ export function WaypointTracker({ attendanceId, isCheckedIn, isCheckedOut }: Way
 
     setIsCapturing(true);
     try {
-      // Get current location
-      if (!navigator.geolocation) {
-        toast.error("Geolocation is not supported by your browser");
-        setIsCapturing(false);
-        return;
-      }
+      // Show info toast while acquiring location
+      toast.loading("Acquiring location (GPS with IP fallback)...", { id: "location-acquiring" });
 
-      // Show info toast while acquiring GPS
-      toast.loading("Acquiring GPS coordinates...", { id: "gps-acquiring" });
+      try {
+        // Use GPS with IP fallback
+        const location = await getLocationWithFallback(30000);
 
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude, accuracy } = position.coords;
+        try {
+          await addWaypointMutation.mutateAsync({
+            attendanceId,
+            latitude: location.latitude,
+            longitude: location.longitude,
+            accuracy: location.accuracy,
+            timestamp: location.timestamp,
+          });
 
-          try {
-            await addWaypointMutation.mutateAsync({
-              attendanceId,
-              latitude,
-              longitude,
-              accuracy,
-              timestamp: new Date().toISOString(),
-            });
+          const sourceLabel = location.source === 'gps' ? 'GPS' : location.source === 'ip' ? 'IP-based' : 'Fallback';
+          toast.success(`Waypoint captured successfully (${sourceLabel})`);
+          setLastUpdateTime(new Date());
+          await refetchWaypoints();
+          toast.dismiss("location-acquiring");
 
-            toast.success("Waypoint captured successfully");
-            setLastUpdateTime(new Date());
-            await refetchWaypoints();
-            toast.dismiss("gps-acquiring");
-
-            // Invalidate cache for real-time updates
-            await trpc.useUtils().attendance.getWaypoints.invalidate({ attendanceId });
-          } catch (error) {
-            toast.dismiss("gps-acquiring");
-            toast.error("Failed to capture waypoint");
-            console.error(error);
-          } finally {
-            setIsCapturing(false);
-          }
-        },
-        (error) => {
-          let errorMessage = "Location error";
-          if (error.code === error.TIMEOUT) {
-            errorMessage = "GPS timeout - please try again or enable high accuracy mode";
-          } else if (error.code === error.PERMISSION_DENIED) {
-            errorMessage = "Location permission denied - please enable location access";
-          } else if (error.code === error.POSITION_UNAVAILABLE) {
-            errorMessage = "Location unavailable - please try again";
-          }
-          toast.error(errorMessage);
+          // Invalidate cache for real-time updates
+          await trpc.useUtils().attendance.getWaypoints.invalidate({ attendanceId });
+        } catch (error) {
+          toast.dismiss("location-acquiring");
+          toast.error("Failed to save waypoint");
+          console.error(error);
+        } finally {
           setIsCapturing(false);
-        },
-        { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
-      );
+        }
+      } catch (locationError) {
+        toast.dismiss("location-acquiring");
+        const errorMessage = locationError instanceof Error 
+          ? formatGeolocationError(locationError)
+          : "Failed to acquire location";
+        toast.error(errorMessage);
+        setIsCapturing(false);
+      }
     } catch (error) {
+      toast.dismiss("location-acquiring");
       toast.error("Failed to capture waypoint");
       console.error(error);
       setIsCapturing(false);
