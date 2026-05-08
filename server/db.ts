@@ -335,7 +335,22 @@ export async function getTodayAttendance(userId: number) {
     .orderBy(desc(attendance.checkInTime))
     .limit(1);
 
-  return result.length > 0 ? result[0] : null;
+  if (result.length === 0) return null;
+  
+  const record = result[0];
+  
+  // Calculate duration in minutes if both check-in and check-out times exist
+  let durationMinutes = 0;
+  if (record.checkInTime && record.checkOutTime) {
+    const checkInTime = new Date(record.checkInTime).getTime();
+    const checkOutTime = new Date(record.checkOutTime).getTime();
+    durationMinutes = Math.floor((checkOutTime - checkInTime) / (1000 * 60));
+  }
+  
+  return {
+    ...record,
+    durationMinutes
+  };
 }
 
 export async function getAttendanceRange(
