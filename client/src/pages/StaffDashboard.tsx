@@ -143,7 +143,7 @@ export default function StaffDashboard() {
   const [selectedWorkplace, setSelectedWorkplace] = useState<string>("field");
 
   const { data: todayAttendance, refetch: refetchAttendance } = trpc.attendance.getToday.useQuery();
-  const { data: allLeaveBalances } = trpc.leave.getAllBalances.useQuery({ year: new Date().getFullYear() });
+  const { data: allLeaveBalances } = trpc.leave.getAllBalances.useQuery();
   const { data: myLeaveRequests, isLoading: isLoadingLeaveRequests } = trpc.leave.getMyRequests.useQuery();
   const { data: kpiList, isLoading: isLoadingKPIs } = trpc.kpi.getKPIs.useQuery();
   const { data: todayWaypoints, refetch: refetchWaypoints } = trpc.attendance.getWaypoints.useQuery(
@@ -179,9 +179,8 @@ export default function StaffDashboard() {
       setLeaveFormData({ leaveType: '', startDate: '', endDate: '', reason: '' });
       utils.leave.getMyRequests.invalidate();
       utils.leave.getAllBalances.invalidate();
-      utils.leave.getBalance.invalidate();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error(`Failed to submit leave request: ${error.message}`);
     },
   });
@@ -256,7 +255,6 @@ export default function StaffDashboard() {
     setIsCheckingOut(true);
     try {
       await checkOutMutation.mutateAsync({
-        attendanceId: todayAttendance.id,
         latitude: gpsCoordinates.latitude,
         longitude: gpsCoordinates.longitude,
         accuracy: gpsCoordinates.accuracy,
@@ -323,7 +321,7 @@ export default function StaffDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-slate-400 text-sm mb-1 font-medium">Leave Balance</p>
-                  <p className="text-2xl font-bold text-white">{allLeaveBalances?.find(b => b.leaveType === 'annual')?.remainingDays || 0}</p>
+                  <p className="text-2xl font-bold text-white">{allLeaveBalances?.[0]?.annual?.remainingDays || 0}</p>
                   <p className="text-xs text-slate-500 mt-1">Annual leave days</p>
                 </div>
                 <Clock className="w-10 h-10 text-green-400 opacity-80" />
@@ -707,7 +705,7 @@ export default function StaffDashboard() {
                     try {
                       const submitData = {
                         attendanceId: todayAttendance.id,
-                        workModality: timesheetData.workModality,
+                        workModality: timesheetData.workModality as "nairobi_office" | "homa_bay_office" | "field" | "remote",
                         activityCategoryId: timesheetData.activityCategory ? parseInt(timesheetData.activityCategory) : undefined,
                         sdgGoalId: timesheetData.sdgGoal ? parseInt(timesheetData.sdgGoal) : undefined,
                         kpiId: timesheetData.kpi && timesheetData.kpi !== 'none' ? parseInt(timesheetData.kpi) : undefined,
@@ -945,9 +943,9 @@ export default function StaffDashboard() {
                         try {
                           await submitLeaveRequest.mutateAsync({
                             leaveType: leaveFormData.leaveType as any,
-                            startDate,
-                            endDate,
-                            daysRequested: daysRequested.toString(),
+                            startDate: startDate.toISOString().split('T')[0],
+                            endDate: endDate.toISOString().split('T')[0],
+                            daysRequested: parseInt(daysRequested.toString()),
                             reason: leaveFormData.reason,
                           });
                         } finally {

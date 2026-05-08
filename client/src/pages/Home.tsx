@@ -148,7 +148,7 @@ export default function Home() {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-300">Total Hours:</span>
-                    <span className="text-4xl font-bold text-blue-400">{stats?.weeklyHours || 0}</span>
+                    <span className="text-4xl font-bold text-blue-400">{stats?.weekHours || 0}</span>
                   </div>
                   <div className="text-sm text-slate-400 mt-4">
                     <p>Week: {stats?.weekStart} to {stats?.weekEnd}</p>
@@ -156,11 +156,11 @@ export default function Home() {
                   <div className="w-full bg-slate-700 rounded-full h-2 mt-4">
                     <div 
                       className="bg-blue-500 h-2 rounded-full transition-all"
-                      style={{ width: `${Math.min((stats?.weeklyHours || 0) / 40 * 100, 100)}%` }}
+                      style={{ width: `${Math.min((stats?.weekHours || 0) / 40 * 100, 100)}%` }}
                     />
                   </div>
                   <p className="text-xs text-slate-400 mt-2">
-                    {Math.max(0, 40 - (stats?.weeklyHours || 0)).toFixed(1)} hours remaining to reach 40h target
+                    {Math.max(0, 40 - (stats?.weekHours || 0)).toFixed(1)} hours remaining to reach 40h target
                   </p>
                 </div>
               )}

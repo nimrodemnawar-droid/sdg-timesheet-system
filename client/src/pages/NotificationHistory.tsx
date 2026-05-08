@@ -44,13 +44,10 @@ export default function NotificationHistory() {
 
   // Fetch notification history
   const { data: notificationsData = [], isLoading } = trpc.notificationPreferences.getHistory.useQuery(
-    {
-      limit: 100,
-      eventType: eventTypeFilter || undefined,
-      deliveryStatus: statusFilter || undefined,
-    },
+    undefined,
     { refetchInterval: 5000 }
   );
+  // TODO: Implement filtering for eventType and deliveryStatus on the client side
 
   const notifications = Array.isArray(notificationsData) ? notificationsData : [];
 

@@ -17,8 +17,8 @@ export function TimesheetViewTab() {
   // Fetch timesheet data
   const { data: timesheetData, isLoading, refetch } = trpc.timesheet.getComplete.useQuery(
     {
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: startDate,
+      endDate: endDate,
     },
     {
       refetchInterval: 5000, // Refresh every 5 seconds
@@ -279,9 +279,6 @@ export function TimesheetViewTab() {
                       <td className="py-3 px-4 text-slate-300">
                         <div className="flex flex-col">
                           <span>{record.date}</span>
-                          {record.previousDate && record.date !== record.previousDate && (
-                            <span className="text-xs text-slate-500 mt-1">↓ Gap</span>
-                          )}
                         </div>
                       </td>
                       <td className="py-3 px-4 text-slate-300">{record.checkInTime}</td>

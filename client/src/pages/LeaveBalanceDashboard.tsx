@@ -67,7 +67,7 @@ export default function LeaveBalanceDashboard() {
 
 // Fetch all leave balances for the dashboard
   const { data: allBalancesData, isLoading: balancesLoading } = trpc.leave.getAllBalances.useQuery(
-    { year: selectedYear },
+    undefined,
     { enabled: !!user }
   );
 
@@ -78,7 +78,7 @@ export default function LeaveBalanceDashboard() {
 
   useEffect(() => {
     if (allBalancesData && Array.isArray(allBalancesData)) {
-      setBalances(allBalancesData as LeaveBalance[]);
+      setBalances(allBalancesData as any);
       setIsLoading(false);
     } else if (balancesLoading) {
       setIsLoading(true);

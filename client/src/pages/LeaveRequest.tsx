@@ -26,7 +26,6 @@ export default function LeaveRequest() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: leaveRequests, refetch: refetchRequests } = trpc.leave.getMyRequests.useQuery();
-  const { data: leaveBalance, isError: leaveBalanceError } = trpc.leave.getBalance.useQuery({ leaveType });
   const createRequestMutation = trpc.leave.createRequest.useMutation();
 
   // Default leave balance if query fails
@@ -57,9 +56,9 @@ export default function LeaveRequest() {
 
       await createRequestMutation.mutateAsync({
         leaveType: leaveType as "annual" | "sick" | "unpaid" | "maternity" | "other",
-        startDate: start,
-        endDate: end,
-        daysRequested: daysRequested.toString(),
+        startDate: start.toISOString().split('T')[0],
+        endDate: end.toISOString().split('T')[0],
+        daysRequested: daysRequested,
         reason,
       });
 
@@ -116,21 +115,21 @@ export default function LeaveRequest() {
               <div className="p-3 bg-white rounded-lg border border-blue-200">
                 <p className="text-xs text-slate-600 mb-1">Allocated</p>
                 <p className="text-2xl font-bold text-blue-900">
-                  {(leaveBalance?.allocatedDays || defaultLeaveBalance.allocatedDays)}
+                  {defaultLeaveBalance.allocatedDays}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">days</p>
               </div>
               <div className="p-3 bg-white rounded-lg border border-blue-200">
                 <p className="text-xs text-slate-600 mb-1">Used</p>
                 <p className="text-2xl font-bold text-orange-600">
-                  {(leaveBalance?.usedDays || defaultLeaveBalance.usedDays)}
+                  {defaultLeaveBalance.usedDays}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">days</p>
               </div>
               <div className="p-3 bg-white rounded-lg border border-blue-200">
                 <p className="text-xs text-slate-600 mb-1">Remaining</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {parseFloat((leaveBalance?.allocatedDays || defaultLeaveBalance.allocatedDays).toString()) - parseFloat((leaveBalance?.usedDays || defaultLeaveBalance.usedDays).toString())}
+                  {defaultLeaveBalance.allocatedDays - defaultLeaveBalance.usedDays}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">days</p>
               </div>

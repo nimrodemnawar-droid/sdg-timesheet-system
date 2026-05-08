@@ -48,10 +48,10 @@ export default function WaypointHistory() {
   const [filterDistance, setFilterDistance] = useState<"all" | "short" | "medium" | "long">("all");
 
   // Query for attendance records with waypoints
-  const { data: attendanceRecords, isLoading, refetch } = trpc.attendance.getHistory.useQuery(
+  const { data: attendanceRecords, isLoading, refetch } = trpc.waypoints.getHistory.useQuery(
     {
-      startDate: new Date(selectedDate),
-      endDate: new Date(new Date(selectedDate).getTime() + 24 * 60 * 60 * 1000),
+      startDate: selectedDate,
+      endDate: new Date(new Date(selectedDate).getTime() + 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     },
     { enabled: !!selectedDate }
   );

@@ -103,7 +103,6 @@ export function WaypointTracker({ attendanceId, isCheckedIn, isCheckedOut }: Way
             latitude: location.latitude,
             longitude: location.longitude,
             accuracy: location.accuracy,
-            timestamp: location.timestamp,
           });
 
           const sourceLabel = location.source === 'gps' ? 'GPS' : location.source === 'ip' ? 'IP-based' : 'Fallback';

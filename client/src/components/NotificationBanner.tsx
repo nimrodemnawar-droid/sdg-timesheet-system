@@ -31,13 +31,10 @@ export function NotificationBanner() {
 
   // Fetch notification history
   const { data: notificationHistory, refetch } = trpc.notificationPreferences.getHistory.useQuery(
-    {
-      limit: 10,
-      offset: 0,
-      eventType: "LEAVE_APPROVAL",
-    },
+    undefined,
     { enabled: !!user, refetchInterval: 3000 }
   );
+  // TODO: Implement filtering for limit, offset, and eventType on the client side
 
   useEffect(() => {
     if (!notificationHistory) return;

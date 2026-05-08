@@ -11,7 +11,7 @@ export function MobileStaffDashboard() {
   const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { data: todayAttendance } = trpc.attendance.getToday.useQuery();
-  const { data: leaveBalance } = trpc.leave.getBalance.useQuery({ leaveType: 'annual' });
+  // TODO: Implement getBalance query for leave module
 
   const isCheckedIn = todayAttendance?.checkInTime && !todayAttendance?.checkOutTime;
   const isCheckedOut = todayAttendance?.checkOutTime;
@@ -82,30 +82,14 @@ export function MobileStaffDashboard() {
         </Card>
 
         {/* Leave Balance */}
-        {leaveBalance && (
-          <Card className="mobile-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Leave Balance</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Remaining</span>
-                <Badge variant="outline">{leaveBalance.remainingDays} days</Badge>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full bg-primary transition-all"
-                  style={{
-                    width: `${((Number(leaveBalance.remainingDays) || 0) / (Number(leaveBalance.allocatedDays) || 1)) * 100}%`,
-                  }}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {leaveBalance.usedDays} of {leaveBalance.allocatedDays} used
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        <Card className="mobile-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Leave Balance</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <p className="text-sm text-muted-foreground">Leave balance information coming soon</p>
+          </CardContent>
+        </Card>
 
         {/* Action Buttons */}
         <div className="space-y-2">

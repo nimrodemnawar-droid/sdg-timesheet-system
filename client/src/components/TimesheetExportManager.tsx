@@ -74,14 +74,24 @@ export function TimesheetExportManager({
       if (result?.success) {
         toast.success(`Timesheet exported as ${exportFormat.toUpperCase()}`);
         
-        // If URL is provided, trigger download
-        if (result.url) {
+        // Handle different response types
+        if ('url' in result && result.url) {
           const link = document.createElement("a");
           link.href = result.url;
           link.download = `timesheet_${new Date().getTime()}.${getFileExtension(exportFormat)}`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
+        } else if ('content' in result && result.content) {
+          const blob = new Blob([result.content], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `${result.filename}`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
         }
       } else {
         toast.error("Failed to export timesheet");
