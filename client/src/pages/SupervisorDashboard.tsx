@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Users, Clock, AlertCircle, Loader2, CheckCircle2, MessageSquare, TrendingUp } from "lucide-react";
+import { MapPin, Users, Clock, AlertCircle, Loader2, CheckCircle2, MessageSquare, TrendingUp, Map } from "lucide-react";
 import { toast } from "sonner";
+import { WaypointVisualization } from "@/components/WaypointVisualization";
 
 export default function SupervisorDashboard() {
   const { user } = useAuth();

@@ -10,7 +10,7 @@ import {
   getAccuracyQuality,
 } from "./encryption";
 import { TRPCError } from "@trpc/server";
-import { and, gte, lte, eq } from "drizzle-orm";
+import { and, gte, lte, eq, desc, asc } from "drizzle-orm";
 import { attendance } from "../drizzle/schema";
 import { analyticsRouter } from "./analyticsRouter";
 import { notifyOwner } from "./_core/notification";
@@ -623,6 +623,58 @@ Report generated at: ${new Date().toISOString()}`;
         });
       }
     }),
+  }),
+
+  waypoints: router({
+    getHistory: adminProcedure
+      .input(z.object({ 
+        staffId: z.number().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          // Get waypoints for the specified staff member or all staff
+          const db_instance = await db.getDb();
+          if (!db_instance) {
+            return [];
+          }
+          
+          let query = db_instance.select().from(attendance);
+          
+          if (input.staffId) {
+            query = query.where(eq(attendance.userId, input.staffId));
+          }
+          
+          if (input.startDate) {
+            query = query.where(gte(attendance.checkInTime, new Date(input.startDate)));
+          }
+          
+          if (input.endDate) {
+            query = query.where(lte(attendance.checkInTime, new Date(input.endDate)));
+          }
+          
+          const records = await query.orderBy(desc(attendance.checkInTime));
+          
+          // Format waypoints from attendance records
+          const formattedWaypoints = records.map((record: any) => ({
+            id: record.id,
+            latitude: record.checkInLat || 0,
+            longitude: record.checkInLng || 0,
+            accuracy: record.checkInAccuracy || 0,
+            timestamp: record.checkInTime,
+            staffId: record.userId,
+          }));
+          
+          return formattedWaypoints;
+        } catch (error) {
+          console.error('[tRPC] Error fetching waypoint history:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to fetch waypoint history',
+          });
+        }
+      }),
   }),
 });
 export type AppRouter = typeof appRouter;
