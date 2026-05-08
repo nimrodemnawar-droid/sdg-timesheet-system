@@ -1,0 +1,45 @@
+{
+  "query": "SELECT id, userId, checkInTime, checkOutTime, durationMinutes FROM attendance WHERE userId = 1 ORDER BY checkInTime DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute SELECT id, userId, checkInTime, checkOutTime, durationMinutes FROM attendance WHERE userId = 1 ORDER BY checkInTime DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "780001",
+      "userId": "1",
+      "checkInTime": "2026-05-08 03:26:01",
+      "checkOutTime": "NULL",
+      "durationMinutes": "NULL"
+    },
+    {
+      "id": "660001",
+      "userId": "1",
+      "checkInTime": "2026-05-07 04:39:51",
+      "checkOutTime": "NULL",
+      "durationMinutes": "NULL"
+    },
+    {
+      "id": "630005",
+      "userId": "1",
+      "checkInTime": "2026-05-06 07:17:47",
+      "checkOutTime": "2026-05-06 13:47:40",
+      "durationMinutes": "389"
+    },
+    {
+      "id": "630001",
+      "userId": "1",
+      "checkInTime": "2026-05-06 05:53:01",
+      "checkOutTime": "2026-05-06 07:06:35",
+      "durationMinutes": "73"
+    },
+    {
+      "id": "570001",
+      "userId": "1",
+      "checkInTime": "2026-05-05 05:49:41",
+      "checkOutTime": "2026-05-05 14:30:57",
+      "durationMinutes": "521"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tcheckInTime\tcheckOutTime\tdurationMinutes\n780001\t1\t2026-05-08 03:26:01\tNULL\tNULL\n660001\t1\t2026-05-07 04:39:51\tNULL\tNULL\n630005\t1\t2026-05-06 07:17:47\t2026-05-06 13:47:40\t389\n630001\t1\t2026-05-06 05:53:01\t2026-05-06 07:06:35\t73\n570001\t1\t2026-05-05 05:49:41\t2026-05-05 14:30:57\t521\n",
+  "stderr": "",
+  "execution_time_ms": 284
+}

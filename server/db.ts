@@ -245,16 +245,18 @@ export async function checkOut(
   const distance = R * c * 1000; // Convert to meters
   
   return completeAttendance(attendanceId, {
+    checkOutTime: data.timestamp,
     checkOutLat: data.latitude.toString(),
     checkOutLng: data.longitude.toString(),
     checkOutAccuracy: data.accuracy.toString(),
     distanceTraveled: distance.toString(),
-  });
+  } as any);
 }
 
 export async function completeAttendance(
   attendanceId: number,
   data: {
+    checkOutTime?: Date;
     checkOutLat: string;
     checkOutLng: string;
     checkOutAccuracy: string;
@@ -274,7 +276,7 @@ export async function completeAttendance(
   if (!record.length) return;
 
   const checkInTime = record[0].checkInTime;
-  const checkOutTime = new Date();
+  const checkOutTime = data.checkOutTime || new Date();
   const durationMinutes = Math.floor(
     (checkOutTime.getTime() - checkInTime.getTime()) / 60000
   );
