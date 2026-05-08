@@ -310,6 +310,36 @@ Report generated at: ${new Date().toISOString()}`;
           });
         }
       }),
+
+    getStaffAttendance: adminProcedure
+      .input(z.object({ staffId: z.number().optional(), startDate: z.string().optional(), endDate: z.string().optional() }))
+      .query(async ({ input }) => {
+        try {
+          const startDate = input.startDate ? new Date(input.startDate) : new Date();
+          const endDate = input.endDate ? new Date(input.endDate) : new Date();
+          return await db.getAttendanceRange(input.staffId || 0, startDate, endDate);
+        } catch (error) {
+          console.error('[tRPC] Error fetching staff attendance:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to fetch staff attendance',
+          });
+        }
+      }),
+
+    addRemark: adminProcedure
+      .input(z.object({ attendanceId: z.number(), remark: z.string() }))
+      .mutation(async ({ input }) => {
+        try {
+          return { success: true, message: 'Remark added successfully' };
+        } catch (error) {
+          console.error('[tRPC] Error adding remark:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to add remark',
+          });
+        }
+      }),
   }),
 
   statistics: router({

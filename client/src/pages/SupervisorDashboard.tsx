@@ -24,11 +24,11 @@ export default function SupervisorDashboard() {
   const { data: attendanceData, refetch: refetchAttendance } = trpc.attendance.getStaffAttendance.useQuery(
     selectedStaff
       ? {
-          userId: selectedStaff,
-          startDate: new Date(startDate),
-          endDate: new Date(endDate),
+          staffId: selectedStaff,
+          startDate: startDate,
+          endDate: endDate,
         }
-      : { userId: 0, startDate: new Date(), endDate: new Date() },
+      : { staffId: 0 },
     { enabled: !!selectedStaff }
   );
 
@@ -44,7 +44,6 @@ export default function SupervisorDashboard() {
     try {
       await addRemarkMutation.mutateAsync({
         attendanceId,
-        userId: selectedStaff!,
         remark,
       });
 

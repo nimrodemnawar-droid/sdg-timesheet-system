@@ -159,10 +159,12 @@ export default function StaffDashboard() {
     },
   });
   const checkOutMutation = trpc.attendance.checkOut.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidate all attendance-related queries to trigger immediate updates
-      utils.attendance.getToday.invalidate();
-      utils.attendance.getStaffAttendance.invalidate();
+      await utils.attendance.getToday.invalidate();
+      await utils.attendance.getStaffAttendance.invalidate();
+      // Refetch to ensure latest data is displayed
+      await refetchAttendance();
     },
   });
   const addWaypointMutation = trpc.attendance.addWaypoint.useMutation({
@@ -261,8 +263,8 @@ export default function StaffDashboard() {
         timestamp: new Date().toISOString(),
       });
       toast.success("Checked out successfully");
-      await refetchAttendance();
     } catch (error) {
+      console.error('Check-out error:', error);
       toast.error("Failed to check out");
     } finally {
       setIsCheckingOut(false);
