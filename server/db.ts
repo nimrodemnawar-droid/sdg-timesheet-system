@@ -1806,12 +1806,21 @@ export async function getAllStaffCheckedInToday() {
       const userRecords = todayRecords.filter(r => r.userId === userId);
       const latestRecord = userRecords[0];
 
+      // Calculate hours worked if both check-in and check-out times exist
+      let hoursWorked = 0;
+      if (latestRecord?.checkInTime && latestRecord?.checkOutTime) {
+        const checkInTime = new Date(latestRecord.checkInTime).getTime();
+        const checkOutTime = new Date(latestRecord.checkOutTime).getTime();
+        hoursWorked = parseFloat(((checkOutTime - checkInTime) / (1000 * 60 * 60)).toFixed(2));
+      }
+
       return {
         userId,
         userName: userInfo?.name || `Staff ${userId}`,
         staffNumber: userInfo?.staffNumber || userId,
         checkInTime: latestRecord?.checkInTime,
         checkOutTime: latestRecord?.checkOutTime,
+        hoursWorked,
         status: latestRecord?.checkOutTime ? 'Checked Out' : 'Checked In',
         workModality: latestRecord?.workModality || 'On-site',
         checkInLat: latestRecord?.checkInLat || null,

@@ -296,7 +296,7 @@ export default function StaffDashboard() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-blue-500/30 hover:border-blue-400 transition-all duration-300 shadow-lg">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -325,6 +325,26 @@ export default function StaffDashboard() {
                   <p className="text-xs text-slate-500 mt-1">Annual leave days</p>
                 </div>
                 <Clock className="w-10 h-10 text-green-400 opacity-80" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-yellow-500/30 hover:border-yellow-400 transition-all duration-300 shadow-lg">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm mb-1 font-medium">Hours Worked Today</p>
+                  <p className="text-2xl font-bold text-white">
+                    {todayAttendance?.checkOutTime
+                      ? (
+                          (new Date(todayAttendance.checkOutTime).getTime() - new Date(todayAttendance.checkInTime).getTime()) /
+                          (1000 * 60 * 60)
+                        ).toFixed(2)
+                      : "0.00"}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">hours</p>
+                </div>
+                <Clock className="w-10 h-10 text-yellow-400 opacity-80" />
               </div>
             </CardContent>
           </Card>

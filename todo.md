@@ -527,3 +527,13 @@
 - [ ] Include: total staff checked in, hours worked, activities, missing submissions
 - [ ] Test end-to-end report generation and delivery
 - [ ] Set up scheduled task to run daily at end of day (6 PM EAT)
+
+## Phase 50: Check-out Display on Admin Dashboard
+- [x] Create database helper function to calculate hours worked
+- [x] Add tRPC procedure to fetch today's staff check-out data with hours worked
+- [x] Create CheckOutDisplay component for Admin Dashboard
+- [x] Implement real-time check-out status display on Admin Dashboard
+- [x] Add hours worked calculation and display
+- [x] Add check-out time display on Staff Dashboard
+- [x] Write tests for check-out calculation logic (9 tests passing)
+- [x] Verify real-time updates between staff and admin dashboards

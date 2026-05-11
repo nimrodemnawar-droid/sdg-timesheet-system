@@ -333,9 +333,9 @@ export default function AdminDashboard() {
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <Activity className="w-5 h-5 text-blue-400" />
-                    Live Staff Status
+                    Live Staff Status & Hours Worked
                   </CardTitle>
-                  <CardDescription className="text-slate-400">Real-time check-in/out (updates every 3s)</CardDescription>
+                  <CardDescription className="text-slate-400">Real-time check-in/out and hours worked (updates every 3s)</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {staffList?.slice(0, 5).map((staff: any) => {
@@ -346,15 +346,21 @@ export default function AdminDashboard() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${isCheckedIn ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
-                            <p className="text-white font-medium">{staff.name}</p>
+                            <p className="text-white font-medium">{staff.name} (#{staffAttendance?.staffNumber || staff.id})</p>
                           </div>
                           <p className="text-xs text-slate-400">{staff.email}</p>
+                          {staffAttendance?.checkOutTime && (
+                            <p className="text-xs text-green-400 mt-1">Checked out: {new Date(staffAttendance.checkOutTime).toLocaleTimeString()}</p>
+                          )}
                         </div>
                         <div className="text-right">
-                          <Badge className={isCheckedIn ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}>
+                          <Badge className={isCheckedIn ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}>
                             {isCheckedIn ? "Checked In" : "Checked Out"}
                           </Badge>
-                          <p className="text-xs text-slate-400 mt-1">{staffAttendance ? new Date(staffAttendance.checkInTime).toLocaleTimeString() : "N/A"}</p>
+                          {staffAttendance && staffAttendance.hoursWorked > 0 && (
+                            <p className="text-sm font-semibold text-yellow-300 mt-1">{staffAttendance?.hoursWorked}h worked</p>
+                          )}
+                          <p className="text-xs text-slate-400 mt-1">In: {staffAttendance ? new Date(staffAttendance.checkInTime).toLocaleTimeString() : "N/A"}</p>
                         </div>
                       </div>
                     );
@@ -781,11 +787,19 @@ export default function AdminDashboard() {
                             <td className="py-3 px-4 text-white">{record.userName || `Staff ${record.userId}`}</td>
                             <td className="py-3 px-4 text-slate-400">{new Date(record.checkInTime).toISOString().split('T')[0]}</td>
                             <td className="py-3 px-4 text-slate-400">{new Date(record.checkInTime).toLocaleTimeString()}</td>
-                            <td className="py-3 px-4 text-slate-400">{record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString() : 'Not checked out'}</td>
-                            <td className="py-3 px-4 text-slate-400">
-                              {record.checkOutTime
-                                ? ((new Date(record.checkOutTime).getTime() - new Date(record.checkInTime).getTime()) / (1000 * 60 * 60)).toFixed(2)
-                                : '-'} h
+                            <td className="py-3 px-4">
+                              {record.checkOutTime ? (
+                                <span className="text-green-400 font-medium">{new Date(record.checkOutTime).toLocaleTimeString()}</span>
+                              ) : (
+                                <span className="text-slate-400">Not checked out</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4">
+                              {record.hoursWorked > 0 ? (
+                                <span className="text-yellow-300 font-semibold">{record.hoursWorked} h</span>
+                              ) : (
+                                <span className="text-slate-400">-</span>
+                              )}
                             </td>
                             <td className="py-3 px-4 text-slate-400">{record.distanceTraveled ? (parseFloat(record.distanceTraveled) / 1000).toFixed(2) : '0'}</td>
                             <td className="py-3 px-4 text-slate-400">
