@@ -510,7 +510,12 @@ export default function StaffDashboard() {
                     <Button
                       onClick={handleCheckIn}
                       disabled={!gpsCoordinates || isCheckingIn || isCheckedIn}
-                      className="bg-green-600 hover:bg-green-700 h-12 text-white border-0"
+                      className={`h-12 text-white border-0 font-semibold text-base ${
+                        isCheckedIn
+                          ? 'bg-gray-500 cursor-not-allowed opacity-50'
+                          : 'bg-green-600 hover:bg-green-700'
+                      }`}
+                      title={!gpsCoordinates ? 'Acquire GPS coordinates first' : isCheckedIn ? 'Already checked in' : ''}
                     >
                       {isCheckingIn ? (
                         <>
@@ -528,7 +533,12 @@ export default function StaffDashboard() {
                     <Button
                       onClick={handleCheckOut}
                       disabled={!gpsCoordinates || isCheckingOut || !isCheckedIn}
-                      className="bg-red-600 hover:bg-red-700 h-12 text-white border-0"
+                      className={`h-12 text-white border-0 font-semibold text-base ${
+                        !isCheckedIn
+                          ? 'bg-gray-500 cursor-not-allowed opacity-50'
+                          : 'bg-red-600 hover:bg-red-700'
+                      }`}
+                      title={!gpsCoordinates ? 'Acquire GPS coordinates first' : !isCheckedIn ? 'Check in first to enable check out' : ''}
                     >
                       {isCheckingOut ? (
                         <>
@@ -543,6 +553,23 @@ export default function StaffDashboard() {
                       )}
                     </Button>
                   </div>
+
+                  {/* Help Text */}
+                  {!gpsCoordinates && (
+                    <div className="p-3 bg-yellow-900/30 border border-yellow-600/50 rounded-lg">
+                      <p className="text-sm text-yellow-200">📍 <strong>GPS Required:</strong> Click "Acquire GPS Coordinates" above to enable Check In/Out</p>
+                    </div>
+                  )}
+                  {gpsCoordinates && !isCheckedIn && (
+                    <div className="p-3 bg-blue-900/30 border border-blue-600/50 rounded-lg">
+                      <p className="text-sm text-blue-200">✓ <strong>Ready to Check In:</strong> Click the Check In button to start your day</p>
+                    </div>
+                  )}
+                  {isCheckedIn && (
+                    <div className="p-3 bg-green-900/30 border border-green-600/50 rounded-lg">
+                      <p className="text-sm text-green-200">✓ <strong>You are Checked In:</strong> Click Check Out when you finish your day</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Today's Attendance Summary */}

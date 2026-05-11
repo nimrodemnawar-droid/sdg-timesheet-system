@@ -1,0 +1,35 @@
+{
+  "query": "SELECT \n  'Users' as entity, COUNT(*) as count, 'All users have IDs' as status \nFROM users \nWHERE id IS NOT NULL\nUNION ALL\nSELECT \n  'Staff with IDs' as entity, COUNT(*) as count, 'All staff have staff numbers' as status \nFROM users \nWHERE staffNumber IS NOT NULL\nUNION ALL\nSELECT \n  'Attendance Records' as entity, COUNT(*) as count, 'Valid check-in times' as status \nFROM attendance \nWHERE checkInTime IS NOT NULL\nUNION ALL\nSELECT \n  'Checked Out Staff' as entity, COUNT(*) as count, 'Staff with check-out times' as status \nFROM attendance \nWHERE checkOutTime IS NOT NULL\nUNION ALL\nSELECT \n  'Timesheets Submitted' as entity, COUNT(*) as count, 'Submitted timesheets' as status \nFROM attendance \nWHERE submittedAt IS NOT NULL",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute SELECT \n  'Users' as entity, COUNT(*) as count, 'All users have IDs' as status \nFROM users \nWHERE id IS NOT NULL\nUNION ALL\nSELECT \n  'Staff with IDs' as entity, COUNT(*) as count, 'All staff have staff numbers' as status \nFROM users \nWHERE staffNumber IS NOT NULL\nUNION ALL\nSELECT \n  'Attendance Records' as entity, COUNT(*) as count, 'Valid check-in times' as status \nFROM attendance \nWHERE checkInTime IS NOT NULL\nUNION ALL\nSELECT \n  'Checked Out Staff' as entity, COUNT(*) as count, 'Staff with check-out times' as status \nFROM attendance \nWHERE checkOutTime IS NOT NULL\nUNION ALL\nSELECT \n  'Timesheets Submitted' as entity, COUNT(*) as count, 'Submitted timesheets' as status \nFROM attendance \nWHERE submittedAt IS NOT NULL",
+  "rows": [
+    {
+      "entity": "Users",
+      "count": "16",
+      "status": "All users have IDs"
+    },
+    {
+      "entity": "Attendance Records",
+      "count": "62",
+      "status": "Valid check-in times"
+    },
+    {
+      "entity": "Timesheets Submitted",
+      "count": "14",
+      "status": "Submitted timesheets"
+    },
+    {
+      "entity": "Checked Out Staff",
+      "count": "11",
+      "status": "Staff with check-out times"
+    },
+    {
+      "entity": "Staff with IDs",
+      "count": "16",
+      "status": "All staff have staff numbers"
+    }
+  ],
+  "messages": [],
+  "stdout": "entity\tcount\tstatus\nUsers\t16\tAll users have IDs\nAttendance Records\t62\tValid check-in times\nTimesheets Submitted\t14\tSubmitted timesheets\nChecked Out Staff\t11\tStaff with check-out times\nStaff with IDs\t16\tAll staff have staff numbers\n",
+  "stderr": "",
+  "execution_time_ms": 627
+}
