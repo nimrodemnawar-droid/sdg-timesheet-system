@@ -17,6 +17,7 @@ import { LeaveCalendar } from "@/components/LeaveCalendar";
 import { WorkplaceSelector } from "@/components/WorkplaceSelector";
 import { GPSStatusIndicator } from "@/components/GPSStatusIndicator";
 import { MapView } from "@/components/Map";
+import { OvertimeAlert, OvertimeIndicator } from "@/components/OvertimeAlert";
 
 interface GPSCoordinates {
   latitude: number;
@@ -329,12 +330,30 @@ export default function StaffDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-yellow-500/30 hover:border-yellow-400 transition-all duration-300 shadow-lg">
+          <Card className={`bg-gradient-to-br from-slate-800 to-slate-900 transition-all duration-300 shadow-lg ${
+            todayAttendance?.checkOutTime && (new Date(todayAttendance.checkOutTime).getTime() - new Date(todayAttendance.checkInTime).getTime()) / (1000 * 60 * 60) > 8
+              ? 'border-red-500/30 hover:border-red-400'
+              : 'border-yellow-500/30 hover:border-yellow-400'
+          }`}>
             <CardContent className="pt-6">
+              {todayAttendance?.checkOutTime && (new Date(todayAttendance.checkOutTime).getTime() - new Date(todayAttendance.checkInTime).getTime()) / (1000 * 60 * 60) > 8 && (
+                <div className="mb-4">
+                  <OvertimeAlert
+                    hoursWorked={parseFloat(((new Date(todayAttendance.checkOutTime).getTime() - new Date(todayAttendance.checkInTime).getTime()) / (1000 * 60 * 60)).toFixed(2))}
+                    overtimeHours={parseFloat((((new Date(todayAttendance.checkOutTime).getTime() - new Date(todayAttendance.checkInTime).getTime()) / (1000 * 60 * 60)) - 8).toFixed(2))}
+                    isOvertime={true}
+                    compact={false}
+                  />
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-slate-400 text-sm mb-1 font-medium">Hours Worked Today</p>
-                  <p className="text-2xl font-bold text-white">
+                  <p className={`text-2xl font-bold ${
+                    todayAttendance?.checkOutTime && (new Date(todayAttendance.checkOutTime).getTime() - new Date(todayAttendance.checkInTime).getTime()) / (1000 * 60 * 60) > 8
+                      ? 'text-red-400'
+                      : 'text-white'
+                  }`}>
                     {todayAttendance?.checkOutTime
                       ? (
                           (new Date(todayAttendance.checkOutTime).getTime() - new Date(todayAttendance.checkInTime).getTime()) /
@@ -344,7 +363,11 @@ export default function StaffDashboard() {
                   </p>
                   <p className="text-xs text-slate-500 mt-1">hours</p>
                 </div>
-                <Clock className="w-10 h-10 text-yellow-400 opacity-80" />
+                <Clock className={`w-10 h-10 opacity-80 ${
+                  todayAttendance?.checkOutTime && (new Date(todayAttendance.checkOutTime).getTime() - new Date(todayAttendance.checkInTime).getTime()) / (1000 * 60 * 60) > 8
+                    ? 'text-red-400'
+                    : 'text-yellow-400'
+                }`} />
               </div>
             </CardContent>
           </Card>

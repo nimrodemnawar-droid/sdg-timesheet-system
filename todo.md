@@ -537,3 +537,14 @@
 - [x] Add check-out time display on Staff Dashboard
 - [x] Write tests for check-out calculation logic (9 tests passing)
 - [x] Verify real-time updates between staff and admin dashboards
+
+## Phase 51: Visual Overtime Alerts for Staff Exceeding 8 Hours
+- [x] Add overtime calculation logic to database helpers (hoursWorked > 8)
+- [x] Create OvertimeAlert component with visual indicators (red badge, warning icon)
+- [x] Implement overtime alerts on Admin Dashboard Live Staff Status
+- [x] Implement overtime alerts on Staff Dashboard Hours Worked card
+- [x] Add overtime badge to attendance table showing hours over 8
+- [x] Create toast notifications when staff exceeds 8 hours
+- [x] Add overtime metrics to KPI cards (total overtime hours)
+- [x] Write tests for overtime calculation logic (12 tests passing)
+- [x] Verify visual alerts display correctly on mobile devices

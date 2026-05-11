@@ -1814,6 +1814,10 @@ export async function getAllStaffCheckedInToday() {
         hoursWorked = parseFloat(((checkOutTime - checkInTime) / (1000 * 60 * 60)).toFixed(2));
       }
 
+      // Calculate overtime (hours over 8)
+      const overtimeHours = hoursWorked > 8 ? parseFloat((hoursWorked - 8).toFixed(2)) : 0;
+      const isOvertime = hoursWorked > 8;
+
       return {
         userId,
         userName: userInfo?.name || `Staff ${userId}`,
@@ -1821,6 +1825,8 @@ export async function getAllStaffCheckedInToday() {
         checkInTime: latestRecord?.checkInTime,
         checkOutTime: latestRecord?.checkOutTime,
         hoursWorked,
+        overtimeHours,
+        isOvertime,
         status: latestRecord?.checkOutTime ? 'Checked Out' : 'Checked In',
         workModality: latestRecord?.workModality || 'On-site',
         checkInLat: latestRecord?.checkInLat || null,

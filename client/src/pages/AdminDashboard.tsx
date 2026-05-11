@@ -42,6 +42,7 @@ import { MapView } from "@/components/Map";
 import { ReportSchedulingManager } from "@/components/ReportSchedulingManager";
 import { AdminManagement } from "@/components/AdminManagement";
 import { TimesheetViewTab } from "@/components/TimesheetViewTab";
+import { OvertimeAlert, OvertimeStatistics } from "@/components/OvertimeAlert";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -342,25 +343,44 @@ export default function AdminDashboard() {
                     const staffAttendance = Array.isArray(attendanceRecords) ? attendanceRecords.find((att: any) => att.userId === staff.id) : null;
                     const isCheckedIn = staffAttendance && !staffAttendance.checkOutTime;
                     return (
-                      <div key={staff.id} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition border border-slate-600/50">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${isCheckedIn ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
-                            <p className="text-white font-medium">{staff.name} (#{staffAttendance?.staffNumber || staff.id})</p>
+                      <div key={staff.id} className="space-y-2">
+                        {staffAttendance?.isOvertime && (
+                          <OvertimeAlert
+                            hoursWorked={staffAttendance.hoursWorked}
+                            overtimeHours={staffAttendance.overtimeHours}
+                            isOvertime={staffAttendance.isOvertime}
+                            staffName={staff.name}
+                            compact={true}
+                          />
+                        )}
+                        <div className={`flex items-center justify-between p-3 rounded-lg hover:bg-slate-700 transition border ${
+                          staffAttendance?.isOvertime
+                            ? 'bg-red-950/30 border-red-500/40'
+                            : 'bg-slate-700/50 border-slate-600/50'
+                        }`}>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${isCheckedIn ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
+                              <p className="text-white font-medium">{staff.name} (#{staffAttendance?.staffNumber || staff.id})</p>
+                            </div>
+                            <p className="text-xs text-slate-400">{staff.email}</p>
+                            {staffAttendance?.checkOutTime && (
+                              <p className={`text-xs mt-1 ${
+                                staffAttendance?.isOvertime ? 'text-red-400' : 'text-green-400'
+                              }`}>Checked out: {new Date(staffAttendance.checkOutTime).toLocaleTimeString()}</p>
+                            )}
                           </div>
-                          <p className="text-xs text-slate-400">{staff.email}</p>
-                          {staffAttendance?.checkOutTime && (
-                            <p className="text-xs text-green-400 mt-1">Checked out: {new Date(staffAttendance.checkOutTime).toLocaleTimeString()}</p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <Badge className={isCheckedIn ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}>
-                            {isCheckedIn ? "Checked In" : "Checked Out"}
-                          </Badge>
-                          {staffAttendance && staffAttendance.hoursWorked > 0 && (
-                            <p className="text-sm font-semibold text-yellow-300 mt-1">{staffAttendance?.hoursWorked}h worked</p>
-                          )}
-                          <p className="text-xs text-slate-400 mt-1">In: {staffAttendance ? new Date(staffAttendance.checkInTime).toLocaleTimeString() : "N/A"}</p>
+                          <div className="text-right">
+                            <Badge className={isCheckedIn ? "bg-green-600 hover:bg-green-700" : staffAttendance?.isOvertime ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}>
+                              {isCheckedIn ? "Checked In" : staffAttendance?.isOvertime ? "Overtime" : "Checked Out"}
+                            </Badge>
+                            {staffAttendance && staffAttendance.hoursWorked > 0 && (
+                              <p className={`text-sm font-semibold mt-1 ${
+                                staffAttendance?.isOvertime ? 'text-red-400' : 'text-yellow-300'
+                              }`}>{staffAttendance?.hoursWorked}h worked</p>
+                            )}
+                            <p className="text-xs text-slate-400 mt-1">In: {staffAttendance ? new Date(staffAttendance.checkInTime).toLocaleTimeString() : "N/A"}</p>
+                          </div>
                         </div>
                       </div>
                     );
