@@ -97,9 +97,21 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = new Date();
     }
 
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
+    const result = await db.insert(users).values(values).onDuplicateKeyUpdate({
       set: updateSet,
     });
+
+    // Get the user ID (either newly created or existing)
+    const userRecord = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.openId, user.openId))
+      .limit(1);
+
+    if (userRecord.length > 0) {
+      // Assign staff number if needed (on first login)
+      await assignStaffNumberIfNeeded(userRecord[0].id);
+    }
   } catch (error) {
     console.error("[Database] Failed to upsert user:", error);
     throw error;

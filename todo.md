@@ -548,3 +548,11 @@
 - [x] Add overtime metrics to KPI cards (total overtime hours)
 - [x] Write tests for overtime calculation logic (12 tests passing)
 - [x] Verify visual alerts display correctly on mobile devices
+
+## Phase 52: Staff ID Assignment Fix
+- [x] Identified missing staff number assignment in OAuth callback
+- [x] Integrated assignStaffNumberIfNeeded() into upsertUser() function
+- [x] Staff numbers now assigned automatically on first login (1-100 range)
+- [x] Created comprehensive staff number assignment tests (11 tests passing)
+- [x] Verified staff numbers display correctly on Admin Dashboard
+- [x] Verified staff numbers display correctly on Staff Dashboard
