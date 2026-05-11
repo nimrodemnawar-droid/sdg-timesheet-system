@@ -2054,43 +2054,96 @@ export async function updateAttendanceWithTimesheetData(
   }
 
   try {
+    // First, fetch the existing attendance record to get the check-in date
+    const existingRecord = await db
+      .select()
+      .from(attendance)
+      .where(eq(attendance.id, attendanceId))
+      .limit(1);
+
+    if (!existingRecord || existingRecord.length === 0) {
+      throw new Error(`Attendance record not found: ${attendanceId}`);
+    }
+
+    const attendanceDate = new Date(existingRecord[0].checkInTime);
     const updateData: any = {};
 
-    if (data.workModality) updateData.workModality = data.workModality;
-    if (data.activityCategoryId) updateData.activityCategoryId = data.activityCategoryId;
-    if (data.sdgGoalId) updateData.sdgGoalId = data.sdgGoalId;
-    if (data.kpiId) updateData.kpiId = data.kpiId;
-    if (data.taskDescription !== undefined) updateData.taskDescription = data.taskDescription || null;
-    if (data.staffRemarks !== undefined) updateData.staffRemarks = data.staffRemarks || null;
+    // Validate and update fields - use strict checks to allow zero/false values
+    if (data.workModality !== undefined && data.workModality !== null) {
+      updateData.workModality = data.workModality;
+    }
+    if (data.activityCategoryId !== undefined && data.activityCategoryId !== null) {
+      updateData.activityCategoryId = data.activityCategoryId;
+    }
+    if (data.sdgGoalId !== undefined && data.sdgGoalId !== null) {
+      updateData.sdgGoalId = data.sdgGoalId;
+    }
+    if (data.kpiId !== undefined && data.kpiId !== null) {
+      updateData.kpiId = data.kpiId;
+    }
+    if (data.taskDescription !== undefined) {
+      updateData.taskDescription = data.taskDescription || null;
+    }
+    if (data.staffRemarks !== undefined) {
+      updateData.staffRemarks = data.staffRemarks || null;
+    }
     
-    // Handle time fields - convert time strings to proper Date objects
+    // Handle time fields - convert time strings to proper Date objects using attendance date
     if (data.amStartTime) {
-      const today = new Date();
       const [hours, minutes] = data.amStartTime.split(':');
-      const amStart = new Date(today);
+      const amStart = new Date(attendanceDate);
       amStart.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      
+      // Validate time is reasonable (between 5 AM and 11 PM)
+      const hourNum = parseInt(hours);
+      if (hourNum < 5 || hourNum > 23) {
+        throw new Error(`Invalid AM start time: ${data.amStartTime}. Must be between 05:00 and 23:00`);
+      }
       updateData.amStartTime = amStart;
     }
     if (data.amEndTime) {
-      const today = new Date();
       const [hours, minutes] = data.amEndTime.split(':');
-      const amEnd = new Date(today);
+      const amEnd = new Date(attendanceDate);
       amEnd.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      
+      // Validate time is reasonable
+      const hourNum = parseInt(hours);
+      if (hourNum < 5 || hourNum > 23) {
+        throw new Error(`Invalid AM end time: ${data.amEndTime}. Must be between 05:00 and 23:00`);
+      }
       updateData.amEndTime = amEnd;
     }
     if (data.pmStartTime) {
-      const today = new Date();
       const [hours, minutes] = data.pmStartTime.split(':');
-      const pmStart = new Date(today);
+      const pmStart = new Date(attendanceDate);
       pmStart.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      
+      // Validate time is reasonable
+      const hourNum = parseInt(hours);
+      if (hourNum < 5 || hourNum > 23) {
+        throw new Error(`Invalid PM start time: ${data.pmStartTime}. Must be between 05:00 and 23:00`);
+      }
       updateData.pmStartTime = pmStart;
     }
     if (data.pmEndTime) {
-      const today = new Date();
       const [hours, minutes] = data.pmEndTime.split(':');
-      const pmEnd = new Date(today);
+      const pmEnd = new Date(attendanceDate);
       pmEnd.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      
+      // Validate time is reasonable
+      const hourNum = parseInt(hours);
+      if (hourNum < 5 || hourNum > 23) {
+        throw new Error(`Invalid PM end time: ${data.pmEndTime}. Must be between 05:00 and 23:00`);
+      }
       updateData.pmEndTime = pmEnd;
+    }
+    
+    // Validate time logic: AM start < AM end, PM start < PM end
+    if (updateData.amStartTime && updateData.amEndTime && updateData.amStartTime >= updateData.amEndTime) {
+      throw new Error('AM start time must be before AM end time');
+    }
+    if (updateData.pmStartTime && updateData.pmEndTime && updateData.pmStartTime >= updateData.pmEndTime) {
+      throw new Error('PM start time must be before PM end time');
     }
     
     if (data.program !== undefined) updateData.program = data.program || null;
