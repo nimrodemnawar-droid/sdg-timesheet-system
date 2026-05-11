@@ -43,6 +43,7 @@ import { ReportSchedulingManager } from "@/components/ReportSchedulingManager";
 import { AdminManagement } from "@/components/AdminManagement";
 import { TimesheetViewTab } from "@/components/TimesheetViewTab";
 import { OvertimeAlert, OvertimeStatistics } from "@/components/OvertimeAlert";
+import { TimesheetFilter, type TimesheetFilterOptions } from "@/components/TimesheetFilter";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -59,6 +60,14 @@ export default function AdminDashboard() {
   const [leaveSearchTerm, setLeaveSearchTerm] = useState("");
   const [showGpsMap, setShowGpsMap] = useState(false);
   const mapRef = useRef<google.maps.Map | null>(null);
+  const [timesheetFilters, setTimesheetFilters] = useState<TimesheetFilterOptions>({
+    startDate: null,
+    endDate: null,
+    overtimeStatus: 'all',
+    staffName: '',
+    sortBy: 'date-desc',
+  });
+  const [filteredAttendanceRecords, setFilteredAttendanceRecords] = useState<any[]>([]);
 
   // Queries with real-time polling for live updates
   const { data: stats, refetch: refetchStats } = trpc.attendance.getTodayAllStaff.useQuery(undefined, {
@@ -192,6 +201,74 @@ export default function AdminDashboard() {
 
     setLastAttendanceState(currentState);
   }, [attendanceRecords, staffList]);
+
+  // Apply filters and sorting to attendance records
+  useEffect(() => {
+    if (!Array.isArray(attendanceRecords)) {
+      setFilteredAttendanceRecords([]);
+      return;
+    }
+
+    let filtered = [...attendanceRecords];
+
+    // Filter by date range
+    if (timesheetFilters.startDate) {
+      const startDate = new Date(timesheetFilters.startDate);
+      filtered = filtered.filter((record: any) => {
+        const recordDate = new Date(record.checkInTime);
+        return recordDate >= startDate;
+      });
+    }
+
+    if (timesheetFilters.endDate) {
+      const endDate = new Date(timesheetFilters.endDate);
+      endDate.setHours(23, 59, 59, 999);
+      filtered = filtered.filter((record: any) => {
+        const recordDate = new Date(record.checkInTime);
+        return recordDate <= endDate;
+      });
+    }
+
+    // Filter by staff name
+    if (timesheetFilters.staffName) {
+      const searchLower = timesheetFilters.staffName.toLowerCase();
+      filtered = filtered.filter((record: any) => {
+        const name = (record.userName || `Staff ${record.userId}`).toLowerCase();
+        return name.includes(searchLower);
+      });
+    }
+
+    // Filter by overtime status
+    if (timesheetFilters.overtimeStatus !== 'all') {
+      filtered = filtered.filter((record: any) => {
+        const hoursWorked = record.hoursWorked || 0;
+        if (timesheetFilters.overtimeStatus === 'overtime') {
+          return hoursWorked > 8;
+        } else if (timesheetFilters.overtimeStatus === 'no-overtime') {
+          return hoursWorked <= 8;
+        }
+        return true;
+      });
+    }
+
+    // Apply sorting
+    filtered.sort((a: any, b: any) => {
+      switch (timesheetFilters.sortBy) {
+        case 'date-asc':
+          return new Date(a.checkInTime).getTime() - new Date(b.checkInTime).getTime();
+        case 'date-desc':
+          return new Date(b.checkInTime).getTime() - new Date(a.checkInTime).getTime();
+        case 'hours-asc':
+          return (a.hoursWorked || 0) - (b.hoursWorked || 0);
+        case 'hours-desc':
+          return (b.hoursWorked || 0) - (a.hoursWorked || 0);
+        default:
+          return 0;
+      }
+    });
+
+    setFilteredAttendanceRecords(filtered);
+  }, [attendanceRecords, timesheetFilters]);
 
   const handleClearNotification = (id: string) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
@@ -711,7 +788,14 @@ export default function AdminDashboard() {
                 <CardDescription className="text-slate-400">View and export attendance records with filters</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Filters */}
+                {/* Timesheet Filter Component */}
+                <TimesheetFilter
+                  onFilterChange={setTimesheetFilters}
+                  totalRecords={Array.isArray(attendanceRecords) ? attendanceRecords.length : 0}
+                  filteredRecords={filteredAttendanceRecords.length}
+                />
+
+                {/* Legacy Filters (kept for export functionality) */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-slate-700/30 rounded-lg">
                   <div>
                     <Label className="text-slate-300 text-sm mb-2 block">Start Date</Label>
@@ -800,8 +884,8 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {Array.isArray(attendanceRecords) && attendanceRecords.length > 0 ? (
-                        attendanceRecords.map((record: any) => (
+                      {filteredAttendanceRecords.length > 0 ? (
+                        filteredAttendanceRecords.map((record: any) => (
                           <tr key={record.userId} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition">
                             <td className="py-3 px-4 text-white">{record.staffNumber || record.userId}</td>
                             <td className="py-3 px-4 text-white">{record.userName || `Staff ${record.userId}`}</td>

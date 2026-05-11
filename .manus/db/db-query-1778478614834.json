@@ -1,0 +1,16 @@
+{
+  "query": "SELECT COUNT(*) as total_records, COUNT(CASE WHEN isSubmitted = 1 THEN 1 END) as submitted, COUNT(CASE WHEN isApproved = 1 THEN 1 END) as approved, COUNT(CASE WHEN taskDescription IS NOT NULL THEN 1 END) as with_description FROM attendance LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute SELECT COUNT(*) as total_records, COUNT(CASE WHEN isSubmitted = 1 THEN 1 END) as submitted, COUNT(CASE WHEN isApproved = 1 THEN 1 END) as approved, COUNT(CASE WHEN taskDescription IS NOT NULL THEN 1 END) as with_description FROM attendance LIMIT 1;",
+  "rows": [
+    {
+      "total_records": "62",
+      "submitted": "14",
+      "approved": "0",
+      "with_description": "5"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_records\tsubmitted\tapproved\twith_description\n62\t14\t0\t5\n",
+  "stderr": "",
+  "execution_time_ms": 265
+}

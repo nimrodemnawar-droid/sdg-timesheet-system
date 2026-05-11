@@ -1,0 +1,90 @@
+{
+  "query": "SELECT id, userId, checkInTime, checkOutTime, durationMinutes, ROUND(durationMinutes/60, 2) as calculated_hours FROM attendance WHERE checkOutTime IS NOT NULL LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute SELECT id, userId, checkInTime, checkOutTime, durationMinutes, ROUND(durationMinutes/60, 2) as calculated_hours FROM attendance WHERE checkOutTime IS NOT NULL LIMIT 10;",
+  "rows": [
+    {
+      "id": "510005",
+      "userId": "1800001",
+      "checkInTime": "2026-05-04 08:01:46",
+      "checkOutTime": "2026-05-04 13:43:05",
+      "durationMinutes": "341",
+      "calculated_hours": "5.68"
+    },
+    {
+      "id": "510009",
+      "userId": "1800005",
+      "checkInTime": "2026-05-04 10:51:24",
+      "checkOutTime": "2026-05-04 10:51:41",
+      "durationMinutes": "0",
+      "calculated_hours": "0.00"
+    },
+    {
+      "id": "540001",
+      "userId": "2342690",
+      "checkInTime": "2026-05-04 11:43:00",
+      "checkOutTime": "2026-05-04 14:02:09",
+      "durationMinutes": "139",
+      "calculated_hours": "2.32"
+    },
+    {
+      "id": "570001",
+      "userId": "1",
+      "checkInTime": "2026-05-05 05:49:41",
+      "checkOutTime": "2026-05-05 14:30:57",
+      "durationMinutes": "521",
+      "calculated_hours": "8.68"
+    },
+    {
+      "id": "570003",
+      "userId": "2342690",
+      "checkInTime": "2026-05-05 06:13:48",
+      "checkOutTime": "2026-05-05 14:34:54",
+      "durationMinutes": "501",
+      "calculated_hours": "8.35"
+    },
+    {
+      "id": "570005",
+      "userId": "1800001",
+      "checkInTime": "2026-05-05 06:43:49",
+      "checkOutTime": "2026-05-05 13:32:26",
+      "durationMinutes": "408",
+      "calculated_hours": "6.80"
+    },
+    {
+      "id": "570006",
+      "userId": "2531276",
+      "checkInTime": "2026-05-05 06:45:52",
+      "checkOutTime": "2026-05-05 15:18:46",
+      "durationMinutes": "512",
+      "calculated_hours": "8.53"
+    },
+    {
+      "id": "570010",
+      "userId": "2539113",
+      "checkInTime": "2026-05-05 07:37:00",
+      "checkOutTime": "2026-05-05 14:17:05",
+      "durationMinutes": "400",
+      "calculated_hours": "6.67"
+    },
+    {
+      "id": "630001",
+      "userId": "1",
+      "checkInTime": "2026-05-06 05:53:01",
+      "checkOutTime": "2026-05-06 07:06:35",
+      "durationMinutes": "73",
+      "calculated_hours": "1.22"
+    },
+    {
+      "id": "630004",
+      "userId": "1800001",
+      "checkInTime": "2026-05-06 07:03:53",
+      "checkOutTime": "2026-05-06 14:02:45",
+      "durationMinutes": "418",
+      "calculated_hours": "6.97"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tcheckInTime\tcheckOutTime\tdurationMinutes\tcalculated_hours\n510005\t1800001\t2026-05-04 08:01:46\t2026-05-04 13:43:05\t341\t5.68\n510009\t1800005\t2026-05-04 10:51:24\t2026-05-04 10:51:41\t0\t0.00\n540001\t2342690\t2026-05-04 11:43:00\t2026-05-04 14:02:09\t139\t2.32\n570001\t1\t2026-05-05 05:49:41\t2026-05-05 14:30:57\t521\t8.68\n570003\t2342690\t2026-05-05 06:13:48\t2026-05-05 14:34:54\t501\t8.35\n570005\t1800001\t2026-05-05 06:43:49\t2026-05-05 13:32:26\t408\t6.80\n570006\t2531276\t2026-05-05 06:45:52\t2026-05-05 15:18:46\t512\t8.53\n570010\t2539113\t2026-05-05 07:37:00\t2026-05-05 14:17:05\t400\t6.67\n630001\t1\t2026-05-06 05:53:01\t2026-05-06 07:06:35\t73\t1.22\n630004\t1800001\t2026-05-06 07:03:53\t2026-05-06 14:02:45\t418\t6.97\n",
+  "stderr": "",
+  "execution_time_ms": 270
+}

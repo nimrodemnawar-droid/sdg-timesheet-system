@@ -1,0 +1,15 @@
+{
+  "query": "SELECT COUNT(*) as total_staff, COUNT(staffNumber) as with_staff_number, COUNT(CASE WHEN staffNumber IS NULL THEN 1 END) as without_staff_number FROM users WHERE role = 'staff';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute SELECT COUNT(*) as total_staff, COUNT(staffNumber) as with_staff_number, COUNT(CASE WHEN staffNumber IS NULL THEN 1 END) as without_staff_number FROM users WHERE role = 'staff';",
+  "rows": [
+    {
+      "total_staff": "15",
+      "with_staff_number": "15",
+      "without_staff_number": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_staff\twith_staff_number\twithout_staff_number\n15\t15\t0\n",
+  "stderr": "",
+  "execution_time_ms": 281
+}
