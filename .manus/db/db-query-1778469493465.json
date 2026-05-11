@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, name, email, staffNumber FROM users WHERE id = 3660001;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute SELECT id, name, email, staffNumber FROM users WHERE id = 3660001;",
+  "rows": [
+    {
+      "id": "3660001",
+      "name": "Mnawar Nimrode",
+      "email": "nimrodemnawar@gmail.com",
+      "staffNumber": "17"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tstaffNumber\n3660001\tMnawar Nimrode\tnimrodemnawar@gmail.com\t17\n",
+  "stderr": "",
+  "execution_time_ms": 268
+}

@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE users SET staffNumber = 17 WHERE id = 3660001 AND staffNumber IS NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute UPDATE users SET staffNumber = 17 WHERE id = 3660001 AND staffNumber IS NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 267
+}

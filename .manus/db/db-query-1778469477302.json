@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COUNT(*) as missing_staff_numbers FROM users WHERE staffNumber IS NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute SELECT COUNT(*) as missing_staff_numbers FROM users WHERE staffNumber IS NULL;",
+  "rows": [
+    {
+      "missing_staff_numbers": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "missing_staff_numbers\n1\n",
+  "stderr": "",
+  "execution_time_ms": 314
+}
