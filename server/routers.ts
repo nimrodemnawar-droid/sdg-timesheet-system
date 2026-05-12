@@ -174,6 +174,26 @@ export const appRouter = router({
 
           await db.submitTimesheet(input.attendanceId);
 
+          // Send email notification to admin
+          const attendanceRecord = await db.getTodayAttendance(ctx.user.id);
+          const attendance = attendanceRecord && attendanceRecord.id === input.attendanceId ? attendanceRecord : null;
+
+          if (attendance) {
+            const hoursWorked = attendance.durationMinutes ? attendance.durationMinutes / 60 : 0;
+            const isOvertime = hoursWorked > 8;
+            const overtimeHours = isOvertime ? hoursWorked - 8 : 0;
+
+            try {
+              await notifyOwner({
+                title: `📋 Timesheet Submitted - ${ctx.user.name} (#${(ctx.user.staffNumber || 0).toString().padStart(3, '0')})`,
+                content: `Staff member ${ctx.user.name} has submitted their timesheet.\n\nWork Hours: ${hoursWorked.toFixed(2)}h${isOvertime ? ` (⚠️ OVERTIME: ${overtimeHours.toFixed(2)}h)` : ''}\nWork Modality: ${input.workModality || 'Not specified'}\nTask: ${input.taskDescription || 'No description provided'}`,
+              });
+            } catch (emailError) {
+              console.error('[tRPC] Error sending timesheet notification:', emailError);
+              // Don't fail the timesheet submission if email fails
+            }
+          }
+
           await logAuditEvent({
             userId: ctx.user.id,
             action: "TIMESHEET_SUBMITTED",
