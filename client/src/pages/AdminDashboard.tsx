@@ -44,6 +44,8 @@ import { AdminManagement } from "@/components/AdminManagement";
 import { TimesheetViewTab } from "@/components/TimesheetViewTab";
 import { OvertimeAlert, OvertimeStatistics } from "@/components/OvertimeAlert";
 import { TimesheetFilter, type TimesheetFilterOptions } from "@/components/TimesheetFilter";
+import { WaypointDisplay } from "@/components/WaypointDisplay";
+import { WaypointFilter, type WaypointFilterOptions } from "@/components/WaypointFilter";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -68,6 +70,11 @@ export default function AdminDashboard() {
     sortBy: 'date-desc',
   });
   const [filteredAttendanceRecords, setFilteredAttendanceRecords] = useState<any[]>([]);
+  const [waypointFilters, setWaypointFilters] = useState<WaypointFilterOptions>({
+    date: '',
+    staffName: '',
+  });
+  const [filteredWaypointRecords, setFilteredWaypointRecords] = useState<any[]>([]);
 
   // Queries with real-time polling for live updates
   const { data: stats, refetch: refetchStats } = trpc.attendance.getTodayAllStaff.useQuery(undefined, {
@@ -269,6 +276,36 @@ export default function AdminDashboard() {
 
     setFilteredAttendanceRecords(filtered);
   }, [attendanceRecords, timesheetFilters]);
+
+  // Apply filters to waypoint records
+  useEffect(() => {
+    if (!Array.isArray(attendanceRecords)) {
+      setFilteredWaypointRecords([]);
+      return;
+    }
+
+    let filtered = [...attendanceRecords];
+
+    // Filter by date
+    if (waypointFilters.date) {
+      const filterDate = new Date(waypointFilters.date).toISOString().split('T')[0];
+      filtered = filtered.filter((record: any) => {
+        const recordDate = new Date(record.checkInTime).toISOString().split('T')[0];
+        return recordDate === filterDate;
+      });
+    }
+
+    // Filter by staff name
+    if (waypointFilters.staffName) {
+      const searchLower = waypointFilters.staffName.toLowerCase();
+      filtered = filtered.filter((record: any) => {
+        const name = (record.userName || `Staff ${record.userId}`).toLowerCase();
+        return name.includes(searchLower);
+      });
+    }
+
+    setFilteredWaypointRecords(filtered);
+  }, [attendanceRecords, waypointFilters]);
 
   const handleClearNotification = (id: string) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
@@ -926,6 +963,42 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Waypoints Display Section */}
+                {filteredAttendanceRecords.length > 0 && (
+                  <div className="mt-6 pt-6 border-t border-slate-600">
+                    <h3 className="flex items-center gap-2 text-lg font-semibold text-white mb-4">
+                      <MapPin className="w-5 h-5 text-blue-400" />
+                      Location Waypoints
+                    </h3>
+                    <WaypointFilter
+                      onFilterChange={setWaypointFilters}
+                      totalRecords={attendanceRecords?.length || 0}
+                      filteredRecords={filteredWaypointRecords?.length || 0}
+                    />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                      {filteredWaypointRecords.map((record: any) => (
+                        <WaypointDisplay
+                          key={record.userId}
+                          waypoint={{
+                            checkInTime: new Date(record.checkInTime),
+                            checkInLat: parseFloat(record.checkInLat),
+                            checkInLng: parseFloat(record.checkInLng),
+                            checkInAccuracy: parseFloat(record.checkInAccuracy || 0),
+                            checkOutTime: record.checkOutTime ? new Date(record.checkOutTime) : undefined,
+                            checkOutLat: record.checkOutLat ? parseFloat(record.checkOutLat) : undefined,
+                            checkOutLng: record.checkOutLng ? parseFloat(record.checkOutLng) : undefined,
+                            checkOutAccuracy: record.checkOutAccuracy ? parseFloat(record.checkOutAccuracy) : undefined,
+                            distanceTraveled: record.distanceTraveled ? parseFloat(record.distanceTraveled) : undefined,
+                            durationMinutes: record.durationMinutes,
+                          }}
+                          staffName={record.userName || `Staff ${record.userId}`}
+                          staffNumber={record.staffNumber || record.userId}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

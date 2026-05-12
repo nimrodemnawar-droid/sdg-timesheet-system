@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, userId, checkInTime, checkOutTime, duration, hoursWorked FROM attendance WHERE userId = (SELECT id FROM users WHERE email LIKE '%nimrode%') ORDER BY createdAt DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute SELECT id, userId, checkInTime, checkOutTime, duration, hoursWorked FROM attendance WHERE userId = (SELECT id FROM users WHERE email LIKE '%nimrode%') ORDER BY createdAt DESC LIMIT 5;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1242 (21000) at line 1: Subquery returns more than 1 row"
+  ]
+}

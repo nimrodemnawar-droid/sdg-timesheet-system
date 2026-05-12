@@ -1,0 +1,306 @@
+{
+  "query": "DESCRIBE attendance;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute DESCRIBE attendance;",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "userId",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "checkInTime",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "checkOutTime",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "checkInLat",
+      "Type": "decimal(11,8)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "checkInLng",
+      "Type": "decimal(11,8)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "checkOutLat",
+      "Type": "decimal(11,8)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "checkOutLng",
+      "Type": "decimal(11,8)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "checkInAccuracy",
+      "Type": "decimal(6,2)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "checkOutAccuracy",
+      "Type": "decimal(6,2)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "distanceTraveled",
+      "Type": "decimal(10,3)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "durationMinutes",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "overtimeMinutes",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "isSubmitted",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "submittedAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "createdAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "Field": "amStartTime",
+      "Type": "datetime",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "amEndTime",
+      "Type": "datetime",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "pmStartTime",
+      "Type": "datetime",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "pmEndTime",
+      "Type": "datetime",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "workModality",
+      "Type": "enum('nairobi_office','homa_bay_office','field','remote')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "activityCategoryId",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "sdgGoalId",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "program",
+      "Type": "varchar(255)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "kpiId",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "taskDescription",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "evidenceUploadKey",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "staffRemarks",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "isApproved",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "approvedBy",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "approvedAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "dailyStaffNumber",
+      "Type": "varchar(3)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "checkInAddress",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "checkOutAddress",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "hasCheckedInToday",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "hasCheckedOutToday",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\nuserId\tint\tNO\t\tNULL\t\ncheckInTime\ttimestamp\tNO\t\tNULL\t\ncheckOutTime\ttimestamp\tYES\t\tNULL\t\ncheckInLat\tdecimal(11,8)\tNO\t\tNULL\t\ncheckInLng\tdecimal(11,8)\tNO\t\tNULL\t\ncheckOutLat\tdecimal(11,8)\tYES\t\tNULL\t\ncheckOutLng\tdecimal(11,8)\tYES\t\tNULL\t\ncheckInAccuracy\tdecimal(6,2)\tYES\t\tNULL\t\ncheckOutAccuracy\tdecimal(6,2)\tYES\t\tNULL\t\ndistanceTraveled\tdecimal(10,3)\tYES\t\tNULL\t\ndurationMinutes\tint\tYES\t\tNULL\t\novertimeMinutes\tint\tYES\t\tNULL\t\nisSubmitted\ttinyint(1)\tNO\t\t0\t\nsubmittedAt\ttimestamp\tYES\t\tNULL\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\namStartTime\tdatetime\tYES\t\tNULL\t\namEndTime\tdatetime\tYES\t\tNULL\t\npmStartTime\tdatetime\tYES\t\tNULL\t\npmEndTime\tdatetime\tYES\t\tNULL\t\nworkModality\tenum('nairobi_office','homa_bay_office','field','remote')\tYES\t\tNULL\t\nactivityCategoryId\tint\tYES\t\tNULL\t\nsdgGoalId\tint\tYES\t\tNULL\t\nprogram\tvarchar(255)\tYES\t\tNULL\t\nkpiId\tint\tYES\t\tNULL\t\ntaskDescription\ttext\tYES\t\tNULL\t\nevidenceUploadKey\ttext\tYES\t\tNULL\t\nstaffRemarks\ttext\tYES\t\tNULL\t\nisApproved\ttinyint(1)\tNO\t\t0\t\napprovedBy\tint\tYES\t\tNULL\t\napprovedAt\ttimestamp\tYES\t\tNULL\t\ndailyStaffNumber\tvarchar(3)\tYES\t\tNULL\t\ncheckInAddress\ttext\tYES\t\tNULL\t\ncheckOutAddress\ttext\tYES\t\tNULL\t\nhasCheckedInToday\ttinyint(1)\tNO\t\t0\t\nhasCheckedOutToday\ttinyint(1)\tNO\t\t0\t\n",
+  "stderr": "",
+  "execution_time_ms": 268
+}

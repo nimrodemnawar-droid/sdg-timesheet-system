@@ -596,3 +596,23 @@
 - [x] Verified Supervisor Dashboard displays check-out information
 - [x] Added tooltips explaining why buttons are disabled
 - [x] Tested check-out functionality across all dashboards
+
+
+## Phase 57: Waypoints in Timesheet Admin Board
+- [ ] Review waypoint data structure in database
+- [ ] Create waypoint display component for Admin Dashboard
+- [ ] Add waypoints section to timesheet/attendance table
+- [ ] Display check-in and check-out locations with GPS coordinates
+- [ ] Add distance traveled calculation and display
+- [ ] Integrate Google Maps to show waypoint locations
+- [ ] Test waypoint accuracy and display on mobile devices
+- [ ] Verify waypoints sync in real-time with staff dashboard
+
+## Phase 58: Waypoint Filters (Date & Staff Name)
+- [ ] Create waypoint filter component with date and staff name inputs
+- [ ] Add filter state management to Admin Dashboard
+- [ ] Implement filtering logic for waypoints by date and staff name
+- [ ] Add filter UI to waypoints section with clear/reset button
+- [ ] Test waypoint filters with various search criteria
+- [ ] Verify filters work on mobile devices
+- [ ] Add filter result counter showing matching records

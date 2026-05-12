@@ -79,6 +79,15 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input, ctx }) => {
+        // Get today's attendance record for the user to get the attendance ID
+        const todayAttendance = await db.getTodayAttendance(ctx.user.id);
+        if (!todayAttendance) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'No check-in found for today. Please check in first.',
+          });
+        }
+
         const encrypted = encryptData(
           JSON.stringify({
             latitude: input.latitude,
@@ -87,7 +96,7 @@ export const appRouter = router({
           })
         );
 
-        const result = await db.checkOut(ctx.user.id, {
+        const result = await db.checkOut(todayAttendance.id, {
           latitude: input.latitude,
           longitude: input.longitude,
           accuracy: input.accuracy,

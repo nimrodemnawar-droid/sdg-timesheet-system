@@ -1,0 +1,45 @@
+{
+  "query": "SELECT id, userId, checkInTime, checkOutTime, durationMinutes FROM attendance ORDER BY createdAt DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4QmKQ5D9aUMkFu3.root --database Y6QXkr6MF6bWis5GKruirk --execute SELECT id, userId, checkInTime, checkOutTime, durationMinutes FROM attendance ORDER BY createdAt DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "1140002",
+      "userId": "1",
+      "checkInTime": "2026-05-12 05:57:59",
+      "checkOutTime": "NULL",
+      "durationMinutes": "NULL"
+    },
+    {
+      "id": "1140001",
+      "userId": "2539113",
+      "checkInTime": "2026-05-12 05:48:42",
+      "checkOutTime": "NULL",
+      "durationMinutes": "NULL"
+    },
+    {
+      "id": "1110001",
+      "userId": "4830001",
+      "checkInTime": "2026-05-12 05:37:46",
+      "checkOutTime": "NULL",
+      "durationMinutes": "NULL"
+    },
+    {
+      "id": "1080002",
+      "userId": "2265889",
+      "checkInTime": "2026-05-12 05:24:40",
+      "checkOutTime": "NULL",
+      "durationMinutes": "NULL"
+    },
+    {
+      "id": "1080001",
+      "userId": "2342690",
+      "checkInTime": "2026-05-12 05:19:37",
+      "checkOutTime": "NULL",
+      "durationMinutes": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tcheckInTime\tcheckOutTime\tdurationMinutes\n1140002\t1\t2026-05-12 05:57:59\tNULL\tNULL\n1140001\t2539113\t2026-05-12 05:48:42\tNULL\tNULL\n1110001\t4830001\t2026-05-12 05:37:46\tNULL\tNULL\n1080002\t2265889\t2026-05-12 05:24:40\tNULL\tNULL\n1080001\t2342690\t2026-05-12 05:19:37\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 264
+}
