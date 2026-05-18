@@ -1226,15 +1226,46 @@ export function calculatePayoutAmount(
 // ============ TIMESHEET EXPORT FUNCTIONS ============
 
 export interface TimesheetExportData {
-  date: string;
-  staffNumber?: number;
+  // Staff Information
+  staffNumber?: number | string;
   staffName: string;
+  staffEmail: string;
+  
+  // Date & Time
+  date: string;
   checkInTime: string;
   checkOutTime: string;
-  hoursWorked: number;
-  overtimeHours: number;
-  location: string;
-  remarks: string;
+  
+  // Location Data
+  checkInCoordinates: string;
+  checkInAddress: string;
+  checkOutCoordinates: string;
+  checkOutAddress: string;
+  
+  // Hours & Distance
+  hoursWorked: number | string;
+  overtimeHours: number | string;
+  distanceTraveled: string;
+  
+  // Work Details
+  workModality: string;
+  activityCategory: string;
+  sdgGoal: string;
+  kpi: string;
+  taskDescription: string;
+  staffRemarks: string;
+  
+  // Session Times
+  amStartTime: string;
+  amEndTime: string;
+  pmStartTime: string;
+  pmEndTime: string;
+  
+  // Additional Info
+  program: string;
+  evidenceUploadKey: string;
+  isSubmitted: boolean | string;
+  submittedAt: string;
 }
 
 export async function getTimesheetDataForExport(data: {
@@ -1249,49 +1280,46 @@ export async function getTimesheetDataForExport(data: {
   }
 
   try {
-    let query = db
-      .select({
-        id: attendance.id,
-        userId: attendance.userId,
-        userName: users.name,
-        staffNumber: users.staffNumber,
-        checkInTime: attendance.checkInTime,
-        checkOutTime: attendance.checkOutTime,
-        location: attendance.workModality,
-        remarks: supervisorRemarks.encryptedRemark,
-      })
-      .from(attendance)
-      .innerJoin(users, eq(attendance.userId, users.id))
-      .leftJoin(supervisorRemarks, eq(attendance.id, supervisorRemarks.attendanceId))
-      .where(
-        and(
-          gte(attendance.checkInTime, data.startDate),
-          lte(attendance.checkInTime, data.endDate),
-          data.staffId ? eq(attendance.userId, data.staffId) : undefined
-        )
-      )
-      .orderBy(desc(attendance.checkInTime));
+    // Use getCompleteTimesheetData which already retrieves all necessary fields
+    const records = await getCompleteTimesheetData({
+      staffId: data.staffId,
+      startDate: data.startDate,
+      endDate: data.endDate,
+    });
 
-    const records = await query;
-
+    // Transform to TimesheetExportData format
     return records.map((r) => {
-      const checkIn = new Date(r.checkInTime);
-      const checkOut = r.checkOutTime ? new Date(r.checkOutTime) : null;
-      const hoursWorked = checkOut
-        ? (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60)
-        : 0;
+      const hoursWorked = parseFloat(String(r.hoursWorked));
       const overtimeHours = Math.max(0, hoursWorked - 8);
-
+      
       return {
-        date: checkIn.toISOString().split("T")[0],
-        staffNumber: r.staffNumber || undefined,
-        staffName: r.userName || "Unknown",
-        checkInTime: checkIn.toLocaleTimeString(),
-        checkOutTime: checkOut ? checkOut.toLocaleTimeString() : "Not checked out",
-        hoursWorked: Math.round(hoursWorked * 100) / 100,
+        staffNumber: r.staffNumber,
+        staffName: r.staffName,
+        staffEmail: r.staffEmail,
+        date: r.date,
+        checkInTime: r.checkInTime,
+        checkOutTime: r.checkOutTime,
+        checkInCoordinates: r.checkInCoordinates,
+        checkInAddress: r.checkInAddress,
+        checkOutCoordinates: r.checkOutCoordinates,
+        checkOutAddress: r.checkOutAddress,
+        hoursWorked,
         overtimeHours: Math.round(overtimeHours * 100) / 100,
-        location: r.location || "Not specified",
-        remarks: r.remarks || "No remarks",
+        distanceTraveled: r.distanceTraveled,
+        workModality: r.workModality,
+        activityCategory: r.activityCategory,
+        sdgGoal: r.sdgGoal,
+        kpi: r.kpi,
+        taskDescription: r.taskDescription,
+        staffRemarks: r.staffRemarks,
+        amStartTime: r.amStartTime,
+        amEndTime: r.amEndTime,
+        pmStartTime: r.pmStartTime,
+        pmEndTime: r.pmEndTime,
+        program: r.program,
+        evidenceUploadKey: r.evidenceUploadKey,
+        isSubmitted: r.isSubmitted,
+        submittedAt: r.submittedAt,
       };
     });
   } catch (error) {
@@ -1301,17 +1329,53 @@ export async function getTimesheetDataForExport(data: {
 }
 
 export function generateCSVContent(data: TimesheetExportData[]): string {
-  const headers = ["Staff #", "Date", "Staff Name", "Check-in", "Check-out", "Hours Worked", "Overtime", "Location", "Remarks"];
+  const headers = [
+    "Staff #", "Staff Name", "Staff Email", "Date",
+    "Check-in Time", "Check-in Coordinates", "Check-in Address",
+    "Check-out Time", "Check-out Coordinates", "Check-out Address",
+    "Hours Worked", "Overtime Hours", "Distance Traveled",
+    "Work Modality", "Activity Category", "SDG Goal", "KPI",
+    "Task Description", "Staff Remarks",
+    "AM Start", "AM End", "PM Start", "PM End",
+    "Program", "Evidence Upload Key", "Submission Status", "Submitted At"
+  ];
+  
+  const escapeCSV = (value: string): string => {
+    const str = String(value || '');
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+  
   const rows = data.map((row) => [
     row.staffNumber ? String(row.staffNumber).padStart(3, '0') : "-",
+    escapeCSV(row.staffName),
+    escapeCSV(row.staffEmail),
     row.date,
-    row.staffName,
     row.checkInTime,
+    escapeCSV(row.checkInCoordinates),
+    escapeCSV(row.checkInAddress),
     row.checkOutTime,
-    row.hoursWorked,
-    row.overtimeHours,
-    row.location,
-    `"${row.remarks.replace(/"/g, '""')}"`, // Escape quotes in remarks
+    escapeCSV(row.checkOutCoordinates),
+    escapeCSV(row.checkOutAddress),
+    String(row.hoursWorked),
+    String(row.overtimeHours),
+    escapeCSV(row.distanceTraveled),
+    escapeCSV(row.workModality),
+    escapeCSV(row.activityCategory),
+    escapeCSV(row.sdgGoal),
+    escapeCSV(row.kpi),
+    escapeCSV(row.taskDescription),
+    escapeCSV(row.staffRemarks),
+    row.amStartTime,
+    row.amEndTime,
+    row.pmStartTime,
+    row.pmEndTime,
+    escapeCSV(row.program),
+    escapeCSV(row.evidenceUploadKey),
+    String(row.isSubmitted),
+    row.submittedAt,
   ]);
 
   const csvContent = [
@@ -1324,32 +1388,54 @@ export function generateCSVContent(data: TimesheetExportData[]): string {
 
 export function generateExcelContent(data: TimesheetExportData[]): string {
   // Generate HTML that can be saved as Excel format
+  const totalHours = data.reduce((sum, r) => sum + (typeof r.hoursWorked === 'number' ? r.hoursWorked : parseFloat(String(r.hoursWorked)) || 0), 0);
+  const totalOvertime = data.reduce((sum, r) => sum + (typeof r.overtimeHours === 'number' ? r.overtimeHours : parseFloat(String(r.overtimeHours)) || 0), 0);
+  
   const html = `
     <html>
       <head>
         <meta charset="UTF-8">
         <style>
-          table { border-collapse: collapse; width: 100%; }
-          th, td { border: 1px solid black; padding: 8px; text-align: left; }
+          table { border-collapse: collapse; width: 100%; font-size: 11px; }
+          th, td { border: 1px solid #999; padding: 6px; text-align: left; }
           th { background-color: #4472C4; color: white; font-weight: bold; }
           tr:nth-child(even) { background-color: #f2f2f2; }
+          .summary { margin-top: 20px; font-size: 12px; color: #333; font-weight: bold; }
         </style>
       </head>
       <body>
-        <h2>Timesheet Report</h2>
+        <h2>Timesheet Report - Complete Data Export</h2>
         <p>Generated: ${new Date().toLocaleString()}</p>
         <table>
           <thead>
             <tr>
               <th>Staff #</th>
-              <th>Date</th>
               <th>Staff Name</th>
-              <th>Check-in</th>
-              <th>Check-out</th>
+              <th>Staff Email</th>
+              <th>Date</th>
+              <th>Check-in Time</th>
+              <th>Check-in Coordinates</th>
+              <th>Check-in Address</th>
+              <th>Check-out Time</th>
+              <th>Check-out Coordinates</th>
+              <th>Check-out Address</th>
               <th>Hours Worked</th>
-              <th>Overtime</th>
-              <th>Location</th>
-              <th>Remarks</th>
+              <th>Overtime Hours</th>
+              <th>Distance Traveled</th>
+              <th>Work Modality</th>
+              <th>Activity Category</th>
+              <th>SDG Goal</th>
+              <th>KPI</th>
+              <th>Task Description</th>
+              <th>Staff Remarks</th>
+              <th>AM Start</th>
+              <th>AM End</th>
+              <th>PM Start</th>
+              <th>PM End</th>
+              <th>Program</th>
+              <th>Evidence Upload Key</th>
+              <th>Submission Status</th>
+              <th>Submitted At</th>
             </tr>
           </thead>
           <tbody>
@@ -1358,22 +1444,40 @@ export function generateExcelContent(data: TimesheetExportData[]): string {
                 (row) => `
               <tr>
                 <td>${row.staffNumber ? String(row.staffNumber).padStart(3, '0') : '-'}</td>
-                <td>${row.date}</td>
                 <td>${row.staffName}</td>
+                <td>${row.staffEmail}</td>
+                <td>${row.date}</td>
                 <td>${row.checkInTime}</td>
+                <td>${row.checkInCoordinates}</td>
+                <td>${row.checkInAddress}</td>
                 <td>${row.checkOutTime}</td>
+                <td>${row.checkOutCoordinates}</td>
+                <td>${row.checkOutAddress}</td>
                 <td>${row.hoursWorked}</td>
                 <td>${row.overtimeHours}</td>
-                <td>${row.location}</td>
-                <td>${row.remarks}</td>
+                <td>${row.distanceTraveled}</td>
+                <td>${row.workModality}</td>
+                <td>${row.activityCategory}</td>
+                <td>${row.sdgGoal}</td>
+                <td>${row.kpi}</td>
+                <td>${row.taskDescription}</td>
+                <td>${row.staffRemarks}</td>
+                <td>${row.amStartTime}</td>
+                <td>${row.amEndTime}</td>
+                <td>${row.pmStartTime}</td>
+                <td>${row.pmEndTime}</td>
+                <td>${row.program}</td>
+                <td>${row.evidenceUploadKey}</td>
+                <td>${row.isSubmitted}</td>
+                <td>${row.submittedAt}</td>
               </tr>
             `
               )
               .join("")}
           </tbody>
         </table>
-        <p style="margin-top: 20px; font-size: 12px; color: #666;">
-          Total Records: ${data.length} | Total Hours: ${data.reduce((sum, r) => sum + r.hoursWorked, 0).toFixed(2)} | Total Overtime: ${data.reduce((sum, r) => sum + r.overtimeHours, 0).toFixed(2)}
+        <p class="summary">
+          Total Records: ${data.length} | Total Hours: ${totalHours.toFixed(2)} | Total Overtime: ${totalOvertime.toFixed(2)}
         </p>
       </body>
     </html>

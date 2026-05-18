@@ -611,25 +611,36 @@ Report generated at: ${new Date().toISOString()}`;
       .mutation(async ({ input }) => {
         try {
           const format = input.format || 'csv';
-          const data = await db.getCompleteTimesheetData();
           
-          const transformedData = data.map((item: any) => ({
-            ...item,
-            overtimeHours: 0,
-            location: item.checkInAddress || '',
-            remarks: '',
-          }));
+          // Parse dates with proper defaults
+          const startDate = input.startDate ? new Date(input.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+          const endDate = input.endDate ? new Date(input.endDate) : new Date();
+          
+          // Fetch complete timesheet data with filters applied
+          const data = await db.getTimesheetDataForExport({
+            staffId: input.staffId,
+            startDate,
+            endDate,
+          });
+          
+          // Generate content based on format
+          let content: string;
+          let filename: string;
           
           if (format === 'excel') {
-            const content = await generateExcelContent(transformedData);
-            return { success: true, content, filename: `timesheets_${new Date().toISOString()}.xlsx` };
+            content = db.generateExcelContent(data);
+            filename = `timesheets_${new Date().toISOString().split('T')[0]}.xlsx`;
           } else if (format === 'pdf') {
-            const content = generateCSVContent(transformedData);
-            return { success: true, content, filename: `timesheets_${new Date().toISOString()}.pdf` };
+            // For PDF, we generate CSV content and let the client handle PDF conversion
+            // or use a PDF library. For now, returning CSV content with PDF filename
+            content = db.generateCSVContent(data);
+            filename = `timesheets_${new Date().toISOString().split('T')[0]}.pdf`;
           } else {
-            const content = generateCSVContent(transformedData);
-            return { success: true, content, filename: `timesheets_${new Date().toISOString()}.csv` };
+            content = db.generateCSVContent(data);
+            filename = `timesheets_${new Date().toISOString().split('T')[0]}.csv`;
           }
+          
+          return { success: true, content, filename };
         } catch (error) {
           console.error('[tRPC] Error exporting timesheets:', error);
           throw new TRPCError({
