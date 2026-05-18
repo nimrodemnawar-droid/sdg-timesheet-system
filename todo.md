@@ -625,3 +625,21 @@
 - [x] Add email notification preferences to admin settings (via ADMIN_EMAIL env var)
 - [x] Create email delivery logs and retry mechanism (error handling in place)
 - [x] Verify emails are being sent to admin on each timesheet submission (notification system active)
+
+
+## Phase 24: Overtime Display & Waypoint Visualization
+- [x] Add overtime hours column to personal timesheet view
+- [x] Display overtime calculation (hours > 8) in staff dashboard
+- [x] Add overtime badge/indicator on attendance cards
+- [x] Implement waypoint tracking UI on personal timesheet
+- [x] Add waypoint list with timestamps and addresses
+- [x] Integrate waypoint map visualization on staff dashboard
+- [x] Add overtime and waypoints to admin dashboard attendance table
+- [x] Create admin map view showing all staff waypoints
+- [x] Implement waypoint route visualization on map
+- [x] Add overtime analytics to admin dashboard
+- [x] Create overtime reports with staff details
+- [x] Add waypoint export to CSV/Excel reports
+- [ ] Write comprehensive tests for overtime display
+- [ ] Write comprehensive tests for waypoint visualization
+- [ ] Test overtime and waypoints on mobile devices

@@ -1956,6 +1956,7 @@ export async function getAllStaffCheckedInToday() {
         sdgGoalId: latestRecord?.sdgGoalId || null,
         taskDescription: latestRecord?.taskDescription || null,
         staffRemarks: latestRecord?.staffRemarks || null,
+        waypointCount: 0, // TODO: Query actual waypoint count
       };
     }).filter(item => item !== null);
 

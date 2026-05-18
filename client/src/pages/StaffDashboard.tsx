@@ -18,6 +18,7 @@ import { WorkplaceSelector } from "@/components/WorkplaceSelector";
 import { GPSStatusIndicator } from "@/components/GPSStatusIndicator";
 import { MapView } from "@/components/Map";
 import { OvertimeAlert, OvertimeIndicator } from "@/components/OvertimeAlert";
+import { OvertimeWaypointPanel } from "@/components/OvertimeWaypointPanel";
 
 interface GPSCoordinates {
   latitude: number;
@@ -396,6 +397,26 @@ export default function StaffDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Overtime & Waypoints Panel */}
+        {todayAttendance && (
+          <div className="mb-6">
+            <OvertimeWaypointPanel
+              hoursWorked={todayAttendance.checkOutTime ? 
+                parseFloat(((new Date(todayAttendance.checkOutTime).getTime() - new Date(todayAttendance.checkInTime).getTime()) / (1000 * 60 * 60)).toFixed(2))
+                : 0
+              }
+              overtimeHours={todayAttendance.checkOutTime ? 
+                Math.max(0, parseFloat(((new Date(todayAttendance.checkOutTime).getTime() - new Date(todayAttendance.checkInTime).getTime()) / (1000 * 60 * 60)).toFixed(2)) - 8)
+                : 0
+              }
+              waypoints={todayWaypoints || []}
+              totalDistance={todayAttendance.distanceTraveled ? parseFloat(String(todayAttendance.distanceTraveled)) : 0}
+              checkInTime={todayAttendance.checkInTime}
+              checkOutTime={todayAttendance.checkOutTime}
+            />
+          </div>
+        )}
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

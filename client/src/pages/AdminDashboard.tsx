@@ -915,7 +915,9 @@ export default function AdminDashboard() {
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Check In</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Check Out</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Hours Worked</th>
+                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Overtime (h)</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Distance (km)</th>
+                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Waypoints</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Linked Output / KPI</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Status</th>
                       </tr>
@@ -942,7 +944,21 @@ export default function AdminDashboard() {
                                 <span className="text-slate-400">-</span>
                               )}
                             </td>
+                            <td className="py-3 px-4">
+                              {record.overtimeHours && record.overtimeHours > 0 ? (
+                                <span className="text-red-400 font-semibold">{record.overtimeHours} h</span>
+                              ) : (
+                                <span className="text-slate-400">0</span>
+                              )}
+                            </td>
                             <td className="py-3 px-4 text-slate-400">{record.distanceTraveled ? (parseFloat(record.distanceTraveled) / 1000).toFixed(2) : '0'}</td>
+                            <td className="py-3 px-4 text-center">
+                              {record.waypointCount && record.waypointCount > 0 ? (
+                                <span className="bg-blue-600/30 text-blue-300 px-2 py-1 rounded text-xs font-semibold">{record.waypointCount}</span>
+                              ) : (
+                                <span className="text-slate-500">-</span>
+                              )}
+                            </td>
                             <td className="py-3 px-4 text-slate-400">
                               {record.kpiName ? record.kpiName : '-'}
                             </td>
@@ -955,7 +971,7 @@ export default function AdminDashboard() {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={9} className="py-4 px-4 text-center text-slate-400">
+                          <td colSpan={11} className="py-4 px-4 text-center text-slate-400">
                             No staff checked in today
                           </td>
                         </tr>
