@@ -97,26 +97,64 @@ describe("Timesheet Export System", () => {
   });
 
   describe("generateCSVContent", () => {
-    const mockData = [
+    const mockData: any[] = [
       {
         date: "2026-04-15",
         staffName: "John Doe",
+        staffNumber: 1,
+        staffEmail: "john@example.com",
         checkInTime: "08:00:00",
         checkOutTime: "17:00:00",
+        checkInCoordinates: "-1.2921,36.8219",
+        checkInAddress: "Nairobi Office",
+        checkOutCoordinates: "-1.2921,36.8219",
+        checkOutAddress: "Nairobi Office",
         hoursWorked: 9,
         overtimeHours: 1,
-        location: "Nairobi Office",
-        remarks: "Regular work day",
+        distanceTraveled: "0",
+        workModality: "nairobi_office",
+        activityCategory: "Program Implementation",
+        sdgGoal: "SDG 1",
+        kpi: "KPI-001",
+        taskDescription: "Regular work day",
+        staffRemarks: "Regular work day",
+        amStartTime: "08:00:00",
+        amEndTime: "12:00:00",
+        pmStartTime: "13:00:00",
+        pmEndTime: "17:00:00",
+        program: "Main Program",
+        evidenceUploadKey: "",
+        isSubmitted: true,
+        submittedAt: "2026-04-15T17:30:00Z",
       },
       {
         date: "2026-04-16",
         staffName: "Jane Smith",
+        staffNumber: 2,
+        staffEmail: "jane@example.com",
         checkInTime: "07:30:00",
         checkOutTime: "18:30:00",
+        checkInCoordinates: "-0.3031,34.7469",
+        checkInAddress: "Field",
+        checkOutCoordinates: "-0.3031,34.7469",
+        checkOutAddress: "Field",
         hoursWorked: 11,
         overtimeHours: 3,
-        location: "Field",
-        remarks: 'Project "Alpha" completion',
+        distanceTraveled: "15.5",
+        workModality: "field",
+        activityCategory: "Community Outreach",
+        sdgGoal: "SDG 3",
+        kpi: "KPI-002",
+        taskDescription: 'Project "Alpha" completion',
+        staffRemarks: 'Project "Alpha" completion',
+        amStartTime: "07:30:00",
+        amEndTime: "12:00:00",
+        pmStartTime: "13:00:00",
+        pmEndTime: "18:30:00",
+        program: "Field Program",
+        evidenceUploadKey: "evidence-001.pdf",
+        isSubmitted: true,
+        submittedAt: "2026-04-16T18:45:00Z",
       },
     ];
 
@@ -132,12 +170,12 @@ describe("Timesheet Export System", () => {
 
       expect(csv).toContain("Date");
       expect(csv).toContain("Staff Name");
-      expect(csv).toContain("Check-in");
-      expect(csv).toContain("Check-out");
+      expect(csv).toContain("Check-in Time");
+      expect(csv).toContain("Check-out Time");
       expect(csv).toContain("Hours Worked");
-      expect(csv).toContain("Overtime");
-      expect(csv).toContain("Location");
-      expect(csv).toContain("Remarks");
+      expect(csv).toContain("Overtime Hours");
+      expect(csv).toContain("Check-in Address");
+      expect(csv).toContain("Staff Remarks");
     });
 
     it("should include all data rows in CSV", () => {
@@ -145,21 +183,40 @@ describe("Timesheet Export System", () => {
 
       expect(csv).toContain("John Doe");
       expect(csv).toContain("Jane Smith");
-      expect(csv).toContain("Nairobi Office");
-      expect(csv).toContain("Field");
+      expect(csv).toContain("nairobi_office");
+      expect(csv).toContain("field");
     });
 
     it("should escape quotes in remarks", () => {
-      const dataWithQuotes = [
+      const dataWithQuotes: any[] = [
         {
           date: "2026-04-15",
           staffName: "Test User",
+          staffNumber: 1,
+          staffEmail: "test@example.com",
           checkInTime: "08:00:00",
           checkOutTime: "17:00:00",
+          checkInCoordinates: "-1.2921,36.8219",
+          checkInAddress: "Office",
+          checkOutCoordinates: "-1.2921,36.8219",
+          checkOutAddress: "Office",
           hoursWorked: 9,
           overtimeHours: 1,
-          location: "Office",
-          remarks: 'Test "quoted" remarks',
+          distanceTraveled: "0",
+          workModality: "office",
+          activityCategory: "Work",
+          sdgGoal: "SDG 1",
+          kpi: "KPI-001",
+          taskDescription: 'Test "quoted" remarks',
+          staffRemarks: 'Test "quoted" remarks',
+          amStartTime: "08:00:00",
+          amEndTime: "12:00:00",
+          pmStartTime: "13:00:00",
+          pmEndTime: "17:00:00",
+          program: "Main",
+          evidenceUploadKey: "",
+          isSubmitted: true,
+          submittedAt: "2026-04-15T17:30:00Z",
         },
       ];
 
@@ -187,26 +244,64 @@ describe("Timesheet Export System", () => {
   });
 
   describe("generateExcelContent", () => {
-    const mockData = [
+    const mockData: any[] = [
       {
         date: "2026-04-15",
         staffName: "John Doe",
+        staffNumber: 1,
+        staffEmail: "john@example.com",
         checkInTime: "08:00:00",
         checkOutTime: "17:00:00",
+        checkInCoordinates: "-1.2921,36.8219",
+        checkInAddress: "Nairobi Office",
+        checkOutCoordinates: "-1.2921,36.8219",
+        checkOutAddress: "Nairobi Office",
         hoursWorked: 9,
         overtimeHours: 1,
-        location: "Nairobi Office",
-        remarks: "Regular work day",
+        distanceTraveled: "0",
+        workModality: "nairobi_office",
+        activityCategory: "Program Implementation",
+        sdgGoal: "SDG 1",
+        kpi: "KPI-001",
+        taskDescription: "Regular work day",
+        staffRemarks: "Regular work day",
+        amStartTime: "08:00:00",
+        amEndTime: "12:00:00",
+        pmStartTime: "13:00:00",
+        pmEndTime: "17:00:00",
+        program: "Main Program",
+        evidenceUploadKey: "",
+        isSubmitted: true,
+        submittedAt: "2026-04-15T17:30:00Z",
       },
       {
         date: "2026-04-16",
         staffName: "Jane Smith",
+        staffNumber: 2,
+        staffEmail: "jane@example.com",
         checkInTime: "07:30:00",
         checkOutTime: "18:30:00",
+        checkInCoordinates: "-0.3031,34.7469",
+        checkInAddress: "Field",
+        checkOutCoordinates: "-0.3031,34.7469",
+        checkOutAddress: "Field",
         hoursWorked: 11,
         overtimeHours: 3,
-        location: "Field",
-        remarks: "Project completion",
+        distanceTraveled: "15.5",
+        workModality: "field",
+        activityCategory: "Community Outreach",
+        sdgGoal: "SDG 3",
+        kpi: "KPI-002",
+        taskDescription: "Project completion",
+        staffRemarks: "Project completion",
+        amStartTime: "07:30:00",
+        amEndTime: "12:00:00",
+        pmStartTime: "13:00:00",
+        pmEndTime: "18:30:00",
+        program: "Field Program",
+        evidenceUploadKey: "evidence-001.pdf",
+        isSubmitted: true,
+        submittedAt: "2026-04-16T18:45:00Z",
       },
     ];
 
@@ -233,12 +328,12 @@ describe("Timesheet Export System", () => {
 
       expect(html).toContain("<th>Date</th>");
       expect(html).toContain("<th>Staff Name</th>");
-      expect(html).toContain("<th>Check-in</th>");
-      expect(html).toContain("<th>Check-out</th>");
+      expect(html).toContain("<th>Check-in Time</th>");
+      expect(html).toContain("<th>Check-out Time</th>");
       expect(html).toContain("<th>Hours Worked</th>");
-      expect(html).toContain("<th>Overtime</th>");
-      expect(html).toContain("<th>Location</th>");
-      expect(html).toContain("<th>Remarks</th>");
+      expect(html).toContain("<th>Overtime Hours</th>");
+      expect(html).toContain("<th>Check-in Address</th>");
+      expect(html).toContain("<th>Staff Remarks</th>");
     });
 
     it("should include all data rows", () => {
@@ -246,8 +341,8 @@ describe("Timesheet Export System", () => {
 
       expect(html).toContain("John Doe");
       expect(html).toContain("Jane Smith");
-      expect(html).toContain("Nairobi Office");
-      expect(html).toContain("Field");
+      expect(html).toContain("nairobi_office");
+      expect(html).toContain("field");
       expect(html).toContain("2026-04-15");
       expect(html).toContain("2026-04-16");
     });
@@ -312,8 +407,8 @@ describe("Timesheet Export System", () => {
         expect(firstRecord).toHaveProperty("checkOutTime");
         expect(firstRecord).toHaveProperty("hoursWorked");
         expect(firstRecord).toHaveProperty("overtimeHours");
-        expect(firstRecord).toHaveProperty("location");
-        expect(firstRecord).toHaveProperty("remarks");
+        expect(firstRecord).toHaveProperty("checkInAddress");
+        expect(firstRecord).toHaveProperty("staffRemarks");
       }
     });
 
@@ -335,8 +430,8 @@ describe("Timesheet Export System", () => {
         expect(typeof firstRecord.checkOutTime).toBe("string");
         expect(typeof firstRecord.hoursWorked).toBe("number");
         expect(typeof firstRecord.overtimeHours).toBe("number");
-        expect(typeof firstRecord.location).toBe("string");
-        expect(typeof firstRecord.remarks).toBe("string");
+        expect(typeof firstRecord.checkInAddress).toBe("string");
+        expect(typeof firstRecord.staffRemarks).toBe("string");
       }
     });
   });
