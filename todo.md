@@ -652,3 +652,28 @@
 - [x] Added user-friendly error messages in map container
 - [x] Improved script loading timeout handling
 - [x] Added verification for google.maps availability
+
+
+## Phase 26: Automatic Weekly Status Report Generation
+- [ ] Create weekly status report generation script
+- [ ] Collect comprehensive system metrics and statistics
+- [ ] Generate timesheet summary statistics
+- [ ] Calculate attendance rates and trends
+- [ ] Analyze overtime patterns
+- [ ] Create HTML email template for reports
+- [ ] Set up tRPC procedures for report scheduling
+- [ ] Configure Manus scheduled task for weekly execution
+- [ ] Test report generation and email delivery
+- [ ] Verify report accuracy and completeness
+- [ ] Document scheduling setup and configuration
+
+
+## Phase 27: GPS Address Capture & Map Display Enhancement
+- [x] Implement reverse geocoding using Google Maps Geocoding API
+- [x] Update check-in procedure to capture address names
+- [x] Update check-out procedure to capture address names
+- [x] Enhance LiveGPSMap to display address names in markers
+- [x] Add address names to info windows on map
+- [ ] Test reverse geocoding accuracy
+- [ ] Verify addresses display correctly on all views
+- [ ] Test address capture on mobile devices

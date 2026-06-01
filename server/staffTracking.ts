@@ -196,15 +196,56 @@ export async function getTodayCheckOuts() {
 
 /**
  * Reverse geocode coordinates to get human-readable address
- * This is a placeholder - integrate with actual geocoding service
+ * Uses Google Maps Geocoding API via Manus proxy
  */
 export async function reverseGeocode(
   latitude: number,
   longitude: number
 ): Promise<string> {
-  // Placeholder implementation
-  // In production, integrate with Google Maps Geocoding API or similar
-  return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+  try {
+    const FORGE_BASE_URL = process.env.BUILT_IN_FORGE_API_URL || 'https://forge.butterfly-effect.dev';
+    const API_KEY = process.env.BUILT_IN_FORGE_API_KEY;
+    
+    if (!API_KEY) {
+      console.warn('[Geocoding] API key not configured, returning coordinates');
+      return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+    }
+
+    const mapsProxyUrl = `${FORGE_BASE_URL}/v1/maps/proxy`;
+    
+    const response = await fetch(mapsProxyUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`,
+      },
+      body: JSON.stringify({
+        endpoint: '/maps/api/geocode/json',
+        params: {
+          latlng: `${latitude},${longitude}`,
+          key: API_KEY,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      console.warn(`[Geocoding] API error: ${response.status}`);
+      return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+    }
+
+    const data = await response.json();
+    
+    if (data.results && data.results.length > 0) {
+      // Get the most specific address (usually the first result)
+      const address = data.results[0].formatted_address;
+      return address || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+    }
+    
+    return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+  } catch (error) {
+    console.error('[Geocoding] Error reverse geocoding:', error);
+    return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+  }
 }
 
 /**

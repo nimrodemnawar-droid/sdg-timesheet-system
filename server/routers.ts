@@ -58,12 +58,17 @@ export const appRouter = router({
           })
         );
 
+        // Get address name from coordinates using reverse geocoding
+        const { reverseGeocode } = await import('./staffTracking');
+        const address = await reverseGeocode(input.latitude, input.longitude);
+
         const result = await db.checkIn(ctx.user.id, {
           latitude: input.latitude,
           longitude: input.longitude,
           accuracy: input.accuracy,
           timestamp: new Date(input.timestamp),
           encryptedLocation: encrypted,
+          address: address,
         });
 
         return result;
@@ -96,12 +101,17 @@ export const appRouter = router({
           })
         );
 
+        // Get address name from coordinates using reverse geocoding
+        const { reverseGeocode } = await import('./staffTracking');
+        const address = await reverseGeocode(input.latitude, input.longitude);
+
         const result = await db.checkOut(todayAttendance.id, {
           latitude: input.latitude,
           longitude: input.longitude,
           accuracy: input.accuracy,
           timestamp: new Date(input.timestamp),
           encryptedLocation: encrypted,
+          address: address,
         });
 
         return result;

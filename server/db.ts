@@ -172,6 +172,7 @@ export async function createAttendance(data: {
   checkInLng: string;
   checkInAccuracy: string;
   workModality?: string;
+  checkInAddress?: string;
 }) {
   const db = await getDb();
   if (!db) return undefined;
@@ -194,6 +195,7 @@ export async function createAttendance(data: {
       checkInLng: lng as any,
       checkInAccuracy: accuracy as any,
       workModality: data.workModality as any,
+      checkInAddress: data.checkInAddress,
     });
 
     return result;
@@ -211,6 +213,7 @@ export async function checkIn(
     accuracy: number;
     timestamp: Date;
     encryptedLocation: { encryptedData: string; iv: string };
+    address?: string;
   }
 ) {
   return createAttendance({
@@ -218,6 +221,7 @@ export async function checkIn(
     checkInLat: data.latitude.toString(),
     checkInLng: data.longitude.toString(),
     checkInAccuracy: data.accuracy.toString(),
+    checkInAddress: data.address || `${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}`,
   });
 }
 
@@ -229,6 +233,7 @@ export async function checkOut(
     accuracy: number;
     timestamp: Date;
     encryptedLocation: { encryptedData: string; iv: string };
+    address?: string;
   }
 ) {
   // Get current attendance to calculate distance
@@ -258,6 +263,7 @@ export async function checkOut(
   
   return completeAttendance(attendanceId, {
     checkOutTime: data.timestamp,
+    checkOutAddress: data.address || `${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}`,
     checkOutLat: data.latitude.toString(),
     checkOutLng: data.longitude.toString(),
     checkOutAccuracy: data.accuracy.toString(),

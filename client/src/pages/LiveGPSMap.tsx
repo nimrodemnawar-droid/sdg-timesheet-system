@@ -19,8 +19,10 @@ interface StaffLocation {
   status: "checked-in" | "checked-out";
   checkInLat?: number;
   checkInLng?: number;
+  checkInAddress?: string;
   checkOutLat?: number;
   checkOutLng?: number;
+  checkOutAddress?: string;
 }
 
 interface Waypoint {
@@ -102,8 +104,10 @@ export default function LiveGPSMap() {
             status,
             checkInLat: latest.checkInLat ? parseFloat(latest.checkInLat) : undefined,
             checkInLng: latest.checkInLng ? parseFloat(latest.checkInLng) : undefined,
+            checkInAddress: latest.checkInAddress || "Location not available",
             checkOutLat: latest.checkOutLat ? parseFloat(latest.checkOutLat) : undefined,
             checkOutLng: latest.checkOutLng ? parseFloat(latest.checkOutLng) : undefined,
+            checkOutAddress: latest.checkOutAddress || "Location not available",
           });
         }
       }
@@ -237,6 +241,7 @@ export default function LiveGPSMap() {
         <div style="background: white; padding: 12px; border-radius: 6px; max-width: 280px; font-family: Arial, sans-serif;">
           <h3 style="font-weight: bold; color: #1f2937; margin: 0 0 6px 0; font-size: 14px;">${staff.name}</h3>
           <p style="color: #4b5563; font-size: 12px; margin: 0 0 6px 0;">Check-in Location</p>
+          <p style="color: #6b7280; font-size: 11px; margin: 2px 0;"><strong>Address:</strong> ${staff.checkInAddress || "N/A"}</p>
           <p style="color: #6b7280; font-size: 11px; margin: 2px 0;">Time: ${formatTime(staff.lastUpdated)}</p>
           <p style="color: #6b7280; font-size: 11px; margin: 2px 0;">Accuracy: ${staff.accuracy.toFixed(1)}m</p>
           <p style="color: #6b7280; font-size: 11px; margin: 2px 0;">Lat: ${staff.checkInLat.toFixed(8)}</p>
