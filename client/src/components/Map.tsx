@@ -92,8 +92,16 @@ const FORGE_BASE_URL =
   "https://forge.butterfly-effect.dev";
 const MAPS_PROXY_URL = `${FORGE_BASE_URL}/v1/maps/proxy`;
 
+// Debug logging
+if (!API_KEY) {
+  console.warn("Warning: VITE_FRONTEND_FORGE_API_KEY is not set");
+}
+if (!FORGE_BASE_URL) {
+  console.warn("Warning: VITE_FRONTEND_FORGE_API_URL is not set");
+}
+
 function loadMapScript() {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     // Check if Google Maps API is already loaded
     if (window.google?.maps) {
       resolve(null);
@@ -102,32 +110,63 @@ function loadMapScript() {
 
     // Check if script is already being loaded
     const existingScript = document.querySelector(
-      `script[src*="${MAPS_PROXY_URL}"]`
+      `script[src*="maps/api/js"]`
     );
     if (existingScript) {
       // Wait for existing script to load
+      let attempts = 0;
       const checkGoogle = () => {
         if (window.google?.maps) {
           resolve(null);
-        } else {
+        } else if (attempts < 50) {
+          attempts++;
           setTimeout(checkGoogle, 100);
+        } else {
+          reject(new Error("Timeout waiting for Google Maps to load"));
         }
       };
       checkGoogle();
       return;
     }
 
+    // Validate API key and URL
+    if (!API_KEY) {
+      console.error("Google Maps API key is not configured");
+      reject(new Error("Missing API key"));
+      return;
+    }
+
     const script = document.createElement("script");
-    script.src = `${MAPS_PROXY_URL}/maps/api/js?key=${API_KEY}&v=weekly&libraries=marker,places,geocoding,geometry`;
+    const scriptSrc = `${MAPS_PROXY_URL}/maps/api/js?key=${API_KEY}&v=weekly&libraries=marker,places,geocoding,geometry`;
+    
+    console.log("Loading Google Maps from:", scriptSrc);
+    
+    script.src = scriptSrc;
     script.async = true;
+    script.defer = true;
     script.crossOrigin = "anonymous";
+    
     script.onload = () => {
-      resolve(null);
+      console.log("Google Maps script loaded successfully");
+      if (window.google?.maps) {
+        resolve(null);
+      } else {
+        // Script loaded but google.maps not available
+        setTimeout(() => {
+          if (window.google?.maps) {
+            resolve(null);
+          } else {
+            reject(new Error("Google Maps API not available after script load"));
+          }
+        }, 500);
+      }
     };
-    script.onerror = () => {
-      console.error("Failed to load Google Maps script");
-      resolve(null);
+    
+    script.onerror = (event) => {
+      console.error("Failed to load Google Maps script", event);
+      reject(new Error("Failed to load Google Maps script"));
     };
+    
     document.head.appendChild(script);
   });
 }
@@ -159,21 +198,38 @@ export function MapView({
       return;
     }
     
-    await loadMapScript();
-    if (!mapContainer.current) {
-      return;
-    }
-    map.current = new window.google.maps.Map(mapContainer.current, {
-      zoom: initialZoom,
-      center: initialCenter,
-      mapTypeControl: true,
-      fullscreenControl: true,
-      zoomControl: true,
-      streetViewControl: true,
-      mapId: "DEMO_MAP_ID",
-    });
-    if (onMapReady) {
-      onMapReady(map.current);
+    try {
+      await loadMapScript();
+      if (!mapContainer.current) {
+        return;
+      }
+      
+      // Verify google.maps is available
+      if (!window.google?.maps) {
+        console.error("Google Maps API is not available");
+        if (mapContainer.current) {
+          mapContainer.current.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f5f5f5; color: #666; font-family: sans-serif;">Failed to load Google Maps. Please refresh the page.</div>';
+        }
+        return;
+      }
+      
+      map.current = new window.google.maps.Map(mapContainer.current, {
+        zoom: initialZoom,
+        center: initialCenter,
+        mapTypeControl: true,
+        fullscreenControl: true,
+        zoomControl: true,
+        streetViewControl: true,
+        mapId: "DEMO_MAP_ID",
+      });
+      if (onMapReady) {
+        onMapReady(map.current);
+      }
+    } catch (error) {
+      console.error("Error initializing map:", error);
+      if (mapContainer.current) {
+        mapContainer.current.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f5f5f5; color: #666; font-family: sans-serif;">Map failed to load. Please check your connection and refresh.</div>';
+      }
     }
   });
 
