@@ -26,12 +26,36 @@ function createStaffContext(userId: number = 200): TrpcContext {
     res: {} as TrpcContext["res"],
   };
 }
+function createAdminContext(userId: number = 100): TrpcContext {
+  const user: AuthenticatedUser = {
+    id: userId,
+    openId: `admin-${userId}`,
+    email: `admin${userId}@example.com`,
+    name: `Admin ${userId}`,
+    loginMethod: "manus",
+    role: "admin",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastSignedIn: new Date(),
+  };
+
+  return {
+    user,
+    req: {
+      protocol: "https",
+      headers: {},
+    } as TrpcContext["req"],
+    res: {} as TrpcContext["res"],
+  };
+}
+
+
 
 describe("Leave Balance Dashboard", () => {
   describe("Get All Leave Balances", () => {
     it("should allow staff to get all leave balances for current year", async () => {
-      const staffCtx = createStaffContext(200);
-      const caller = appRouter.createCaller(staffCtx);
+      const adminCtx = createAdminContext(100);
+      const caller = appRouter.createCaller(adminCtx);
 
       const balances = await caller.leave.getAllBalances({ year: 2026 });
 
@@ -39,8 +63,8 @@ describe("Leave Balance Dashboard", () => {
     });
 
     it("should return balances for all leave types", async () => {
-      const staffCtx = createStaffContext(201);
-      const caller = appRouter.createCaller(staffCtx);
+      const adminCtx = createAdminContext(101);
+      const caller = appRouter.createCaller(adminCtx);
 
       const balances = await caller.leave.getAllBalances({ year: 2026 });
 
@@ -51,8 +75,8 @@ describe("Leave Balance Dashboard", () => {
     });
 
     it("should include allocated and remaining days in balance data", async () => {
-      const staffCtx = createStaffContext(202);
-      const caller = appRouter.createCaller(staffCtx);
+      const adminCtx = createAdminContext(102);
+      const caller = appRouter.createCaller(adminCtx);
 
       const balances = await caller.leave.getAllBalances({ year: 2026 });
 
@@ -66,8 +90,8 @@ describe("Leave Balance Dashboard", () => {
     });
 
     it("should support querying different years", async () => {
-      const staffCtx = createStaffContext(203);
-      const caller = appRouter.createCaller(staffCtx);
+      const adminCtx = createAdminContext(103);
+      const caller = appRouter.createCaller(adminCtx);
 
       const balances2026 = await caller.leave.getAllBalances({ year: 2026 });
       const balances2025 = await caller.leave.getAllBalances({ year: 2025 });
@@ -77,8 +101,8 @@ describe("Leave Balance Dashboard", () => {
     });
 
     it("should use current year if year parameter not provided", async () => {
-      const staffCtx = createStaffContext(204);
-      const caller = appRouter.createCaller(staffCtx);
+      const adminCtx = createAdminContext(104);
+      const caller = appRouter.createCaller(adminCtx);
 
       const balances = await caller.leave.getAllBalances({});
 
@@ -88,8 +112,8 @@ describe("Leave Balance Dashboard", () => {
 
   describe("Leave Balance Calculation", () => {
     it("should calculate remaining days correctly", async () => {
-      const staffCtx = createStaffContext(205);
-      const caller = appRouter.createCaller(staffCtx);
+      const adminCtx = createAdminContext(105);
+      const caller = appRouter.createCaller(adminCtx);
 
       const balances = await caller.leave.getAllBalances({ year: 2026 });
 

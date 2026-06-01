@@ -448,6 +448,27 @@ Report generated at: ${new Date().toISOString()}`;
   }),
 
   leave: router({
+    getBalance: protectedProcedure
+      .input(
+        z.object({
+          leaveType: z.enum(['annual', 'sick', 'unpaid', 'maternity', 'other']),
+          year: z.number().optional(),
+        })
+      )
+      .query(async ({ input, ctx }) => {
+        try {
+          const year = input.year || new Date().getFullYear();
+          const balance = await db.getLeaveBalance(ctx.user.id, input.leaveType, year);
+          return balance;
+        } catch (error) {
+          console.error('[tRPC] Error fetching leave balance:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to fetch leave balance',
+          });
+        }
+      }),
+
     getMyRequests: protectedProcedure.query(async ({ ctx }) => {
       try {
         return await db.getUserLeaveRequests(ctx.user.id);
