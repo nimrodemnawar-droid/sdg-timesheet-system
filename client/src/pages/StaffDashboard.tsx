@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, MapPin, Clock, AlertCircle, CheckCircle2, FileUp, Activity, Briefcase, Target, Plus, Trash2, Navigation, Calendar } from "lucide-react";
+import { LoadingAnimationButton, SuccessToastContent, ErrorToastContent } from "@/components/LoadingAnimationButton";
 import { toast } from "sonner";
 import { NotificationBanner } from "@/components/NotificationBanner";
 import { WaypointTracker } from "@/components/WaypointTracker";
@@ -76,6 +77,12 @@ export default function StaffDashboard() {
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [checkInSuccess, setCheckInSuccess] = useState(false);
+  const [checkOutSuccess, setCheckOutSuccess] = useState(false);
+  const [checkInError, setCheckInError] = useState(false);
+  const [checkOutError, setCheckOutError] = useState(false);
+  const [lastCheckInAddress, setLastCheckInAddress] = useState<string>("");
+  const [lastCheckOutAddress, setLastCheckOutAddress] = useState<string>("");
   const [isSubmittingTimesheet, setIsSubmittingTimesheet] = useState(false);
   const submitTimesheetMutation = trpc.attendance.submitTimesheet.useMutation({
     onSuccess: () => {
@@ -234,6 +241,8 @@ export default function StaffDashboard() {
     }
 
     setIsCheckingIn(true);
+    setCheckInError(false);
+    setCheckInSuccess(false);
     try {
       await checkInMutation.mutateAsync({
         latitude: gpsCoordinates.latitude,
@@ -241,10 +250,35 @@ export default function StaffDashboard() {
         accuracy: gpsCoordinates.accuracy,
         timestamp: new Date().toISOString(),
       });
-      toast.success(`Checked in successfully at ${selectedWorkplace}`);
+      
+      // Show success with location details
+      const address = selectedWorkplace || "Current location";
+      setLastCheckInAddress(address);
+      setCheckInSuccess(true);
+      
+      toast.success(
+        <SuccessToastContent
+          title="Checked in successfully"
+          location={address}
+          accuracy={gpsCoordinates.accuracy}
+          timestamp={new Date()}
+        />
+      );
+      
+      // Reset success state after 3 seconds
+      setTimeout(() => setCheckInSuccess(false), 3000);
       await refetchAttendance();
-    } catch (error) {
-      toast.error("Failed to check in");
+    } catch (error: any) {
+      setCheckInError(true);
+      toast.error(
+        <ErrorToastContent
+          title="Check-in failed"
+          message={error?.message || "Unable to process your check-in. Please try again."}
+          retryable={true}
+        />
+      );
+      // Reset error state after 3 seconds
+      setTimeout(() => setCheckInError(false), 3000);
     } finally {
       setIsCheckingIn(false);
     }
@@ -262,6 +296,8 @@ export default function StaffDashboard() {
     }
 
     setIsCheckingOut(true);
+    setCheckOutError(false);
+    setCheckOutSuccess(false);
     try {
       await checkOutMutation.mutateAsync({
         latitude: gpsCoordinates.latitude,
@@ -269,10 +305,36 @@ export default function StaffDashboard() {
         accuracy: gpsCoordinates.accuracy,
         timestamp: new Date().toISOString(),
       });
-      toast.success("Checked out successfully");
-    } catch (error) {
+      
+      // Show success with location details
+      const address = "Current location";
+      setLastCheckOutAddress(address);
+      setCheckOutSuccess(true);
+      
+      toast.success(
+        <SuccessToastContent
+          title="Checked out successfully"
+          location={address}
+          accuracy={gpsCoordinates.accuracy}
+          timestamp={new Date()}
+        />
+      );
+      
+      // Reset success state after 3 seconds
+      setTimeout(() => setCheckOutSuccess(false), 3000);
+      await refetchAttendance();
+    } catch (error: any) {
       console.error('Check-out error:', error);
-      toast.error("Failed to check out");
+      setCheckOutError(true);
+      toast.error(
+        <ErrorToastContent
+          title="Check-out failed"
+          message={error?.message || "Unable to process your check-out. Please try again."}
+          retryable={true}
+        />
+      );
+      // Reset error state after 3 seconds
+      setTimeout(() => setCheckOutError(false), 3000);
     } finally {
       setIsCheckingOut(false);
     }
