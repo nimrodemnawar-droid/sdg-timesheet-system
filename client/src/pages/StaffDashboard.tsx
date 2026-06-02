@@ -244,15 +244,15 @@ export default function StaffDashboard() {
     setCheckInError(false);
     setCheckInSuccess(false);
     try {
-      await checkInMutation.mutateAsync({
+      const result = await checkInMutation.mutateAsync({
         latitude: gpsCoordinates.latitude,
         longitude: gpsCoordinates.longitude,
         accuracy: gpsCoordinates.accuracy,
         timestamp: new Date().toISOString(),
       });
       
-      // Show success with location details
-      const address = selectedWorkplace || "Current location";
+      // Show success with location details from reverse geocoding
+      const address = (result as any)?.checkInAddress || selectedWorkplace || "Current location";
       setLastCheckInAddress(address);
       setCheckInSuccess(true);
       
@@ -299,15 +299,15 @@ export default function StaffDashboard() {
     setCheckOutError(false);
     setCheckOutSuccess(false);
     try {
-      await checkOutMutation.mutateAsync({
+      const result = await checkOutMutation.mutateAsync({
         latitude: gpsCoordinates.latitude,
         longitude: gpsCoordinates.longitude,
         accuracy: gpsCoordinates.accuracy,
         timestamp: new Date().toISOString(),
       });
       
-      // Show success with location details
-      const address = "Current location";
+      // Show success with location details from reverse geocoding
+      const address = (result as any)?.checkOutAddress || "Current location";
       setLastCheckOutAddress(address);
       setCheckOutSuccess(true);
       

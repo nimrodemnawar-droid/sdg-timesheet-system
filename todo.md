@@ -635,6 +635,7 @@
 - [x] Add waypoint list with timestamps and addresses
 - [x] Integrate waypoint map visualization on staff dashboard
 - [x] Add overtime and waypoints to admin dashboard attendance table
+- [x] Display actual street address names in success messages instead of raw GPS coordinates
 - [x] Create admin map view showing all staff waypoints
 - [x] Implement waypoint route visualization on map
 - [x] Add overtime analytics to admin dashboard

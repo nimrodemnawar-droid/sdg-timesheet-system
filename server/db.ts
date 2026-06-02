@@ -188,7 +188,7 @@ export async function createAttendance(data: {
       throw new Error('Invalid coordinate values');
     }
 
-    const result = await db.insert(attendance).values({
+    await db.insert(attendance).values({
       userId: data.userId,
       checkInTime: new Date(),
       checkInLat: lat as any,
@@ -198,7 +198,14 @@ export async function createAttendance(data: {
       checkInAddress: data.checkInAddress,
     });
 
-    return result;
+    // Return the created record with address information
+    return {
+      checkInAddress: data.checkInAddress,
+      checkInLat: lat,
+      checkInLng: lng,
+      checkInAccuracy: accuracy,
+      checkInTime: new Date(),
+    };
   } catch (error) {
     console.error('Error creating attendance record:', error);
     throw error;
