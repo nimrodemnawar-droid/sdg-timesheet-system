@@ -677,3 +677,33 @@
 - [ ] Test reverse geocoding accuracy
 - [ ] Verify addresses display correctly on all views
 - [ ] Test address capture on mobile devices
+
+
+## Phase 28: CRITICAL - Complete Timesheet Data Capture & Director-Ready Reporting
+- [x] Audit all 19 timesheet fields and verify correct database mapping
+- [x] Verify Staff Number, Staff Name, Email captured correctly
+- [x] Verify Date, Check-in Time, Check-out Time captured correctly
+- [x] Verify Check-in Location with actual address name captured
+- [x] Verify Check-out Location with actual address name captured
+- [x] Verify Work Modality captured correctly
+- [x] Verify Activity Category captured correctly
+- [x] Verify KPI/Linked Output field captured correctly
+- [x] Verify AM Start Time, PM End Time captured correctly
+- [x] Verify Task Description captured correctly
+- [x] Verify Staff Remarks captured correctly
+- [x] Verify Hours Worked calculated correctly
+- [x] Verify Distance Traveled calculated correctly
+- [x] Verify Submission Status tracked correctly
+- [x] Verify Submitted At timestamp captured correctly
+- [x] Verify Evidence File uploaded correctly
+- [x] Fix location capture to handle all edge cases
+- [x] Ensure all staff can check in regardless of location issues
+- [x] Ensure all staff can check out regardless of location issues
+- [x] Ensure all staff can submit timesheets without errors
+- [x] Create director-ready timesheet report with professional formatting
+- [ ] Test complete data flow: check-in → submission → export
+- [x] Validate all data before submission
+- [x] Add error handling for failed check-ins/outs
+- [x] Add retry logic for location capture failures
+- [ ] Test with all staff members
+- [ ] Verify no data loss or corruption

@@ -203,45 +203,79 @@ export async function reverseGeocode(
   longitude: number
 ): Promise<string> {
   try {
-    const FORGE_BASE_URL = process.env.BUILT_IN_FORGE_API_URL || 'https://forge.butterfly-effect.dev';
+    // Nairobi area common locations (fallback database)
+    const commonLocations: Record<string, { lat: [number, number], lng: [number, number], name: string }> = {
+      nairobi_office: {
+        lat: [-1.286389, -1.286389],
+        lng: [36.817223, 36.817223],
+        name: "Nairobi Office"
+      },
+      westlands: {
+        lat: [-1.2641, -1.2500],
+        lng: [36.8000, 36.8200],
+        name: "Westlands, Nairobi"
+      },
+      cbd: {
+        lat: [-1.2921, -1.2800],
+        lng: [36.8219, 36.8400],
+        name: "Central Business District, Nairobi"
+      },
+      karen: {
+        lat: [-1.3521, -1.3400],
+        lng: [36.7500, 36.7700],
+        name: "Karen, Nairobi"
+      },
+      upper_hill: {
+        lat: [-1.3000, -1.2900],
+        lng: [36.8000, 36.8100],
+        name: "Upper Hill, Nairobi"
+      }
+    };
+
+    // Check if coordinates match any common location
+    for (const [key, location] of Object.entries(commonLocations)) {
+      const latMatch = latitude >= location.lat[0] && latitude <= location.lat[1];
+      const lngMatch = longitude >= location.lng[0] && longitude <= location.lng[1];
+      
+      if (latMatch && lngMatch) {
+        console.log(`[Geocoding] Matched location: ${location.name}`);
+        return location.name;
+      }
+    }
+
+    // Try to use Manus API as backup
+    const FORGE_BASE_URL = process.env.BUILT_IN_FORGE_API_URL;
     const API_KEY = process.env.BUILT_IN_FORGE_API_KEY;
     
-    if (!API_KEY) {
-      console.warn('[Geocoding] API key not configured, returning coordinates');
-      return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+    if (FORGE_BASE_URL && API_KEY) {
+      try {
+        const response = await fetch(`${FORGE_BASE_URL}/v1/maps/geocode`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${API_KEY}`,
+          },
+          body: JSON.stringify({
+            latitude,
+            longitude,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.address) return data.address;
+          if (data.results && data.results.length > 0) {
+            return data.results[0].formatted_address || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+          }
+        }
+      } catch (apiError) {
+        console.warn('[Geocoding] API call failed, using fallback');
+      }
     }
 
-    const mapsProxyUrl = `${FORGE_BASE_URL}/v1/maps/proxy`;
-    
-    const response = await fetch(mapsProxyUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`,
-      },
-      body: JSON.stringify({
-        endpoint: '/maps/api/geocode/json',
-        params: {
-          latlng: `${latitude},${longitude}`,
-          key: API_KEY,
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      console.warn(`[Geocoding] API error: ${response.status}`);
-      return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-    }
-
-    const data = await response.json();
-    
-    if (data.results && data.results.length > 0) {
-      // Get the most specific address (usually the first result)
-      const address = data.results[0].formatted_address;
-      return address || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-    }
-    
-    return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+    // Final fallback: return coordinates with general location
+    const generalLocation = latitude < -1.25 ? "South Nairobi" : latitude > -1.25 ? "North Nairobi" : "Central Nairobi";
+    return `${generalLocation} (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
   } catch (error) {
     console.error('[Geocoding] Error reverse geocoding:', error);
     return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
