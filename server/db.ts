@@ -270,10 +270,10 @@ export async function checkOut(
   
   return completeAttendance(attendanceId, {
     checkOutTime: data.timestamp,
-    checkOutAddress: data.address || `${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}`,
     checkOutLat: data.latitude.toString(),
     checkOutLng: data.longitude.toString(),
     checkOutAccuracy: data.accuracy.toString(),
+    checkOutAddress: data.address || `${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}`,
     distanceTraveled: distance.toString(),
   } as any);
 }
@@ -286,6 +286,7 @@ export async function completeAttendance(
     checkOutLng: string;
     checkOutAccuracy: string;
     distanceTraveled: string;
+    checkOutAddress?: string;
   }
 ) {
   const db = await getDb();
@@ -326,6 +327,7 @@ export async function completeAttendance(
         checkOutLat: checkOutLat as any,
         checkOutLng: checkOutLng as any,
         checkOutAccuracy: checkOutAccuracy as any,
+        checkOutAddress: data.checkOutAddress || `${checkOutLat.toFixed(4)}, ${checkOutLng.toFixed(4)}`,
         distanceTraveled: distance as any,
         durationMinutes,
         overtimeMinutes,
@@ -1952,7 +1954,9 @@ export async function getAllStaffCheckedInToday() {
         userName: userInfo?.name || `Staff ${userId}`,
         staffNumber: userInfo?.staffNumber || userId,
         checkInTime: latestRecord?.checkInTime,
+        checkInAddress: latestRecord?.checkInAddress || null,
         checkOutTime: latestRecord?.checkOutTime,
+        checkOutAddress: latestRecord?.checkOutAddress || null,
         hoursWorked,
         overtimeHours,
         isOvertime,
@@ -1963,6 +1967,7 @@ export async function getAllStaffCheckedInToday() {
         checkInAccuracy: latestRecord?.checkInAccuracy || null,
         checkOutLat: latestRecord?.checkOutLat || null,
         checkOutLng: latestRecord?.checkOutLng || null,
+        checkOutAccuracy: latestRecord?.checkOutAccuracy || null,
         distanceTraveled: latestRecord?.distanceTraveled || null,
         kpiId: latestRecord?.kpiId || null,
         activityCategoryId: latestRecord?.activityCategoryId || null,
