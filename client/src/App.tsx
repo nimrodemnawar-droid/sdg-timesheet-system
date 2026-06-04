@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import { getLoginUrl } from "@/const";
+import { ConnectionStatusIndicator } from "@/components/ConnectionStatusIndicator";
 
 // Pages
 import Home from "./pages/Home";
@@ -71,6 +72,7 @@ function Navigation() {
           </div>
 
           <div className="flex items-center gap-4">
+            <ConnectionStatusIndicator />
             <span className="text-sm text-slate-300">{user.name}</span>
             <button
               onClick={() => logout()}
