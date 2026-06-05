@@ -52,64 +52,37 @@ export default function LiveGPSMap() {
   const [showCheckOutMarkers, setShowCheckOutMarkers] = useState(true);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch all staff
-  const { data: allStaff } = trpc.users.getAll.useQuery() as any;
-
-  // Fetch attendance for a specific user
-  const fetchAttendanceForStaff = async (userId: number) => {
-    try {
-      const today = new Date();
-      const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-      
-      // Use the trpc query to fetch attendance
-      const response = await fetch(
-        `/api/trpc/attendance.getStaffAttendance?input=${encodeURIComponent(
-          JSON.stringify({ userId, startDate: startDate.toISOString(), endDate: endDate.toISOString() })
-        )}`
-      );
-      
-      if (!response.ok) return null;
-      const data = await response.json();
-      return data.result?.data || null;
-    } catch (error) {
-      console.error("Error fetching attendance:", error);
-      return null;
-    }
-  };
+  // Fetch all staff who checked in today using tRPC
+  const { data: todayStaff } = trpc.attendance.getTodayAllStaff.useQuery() as any;
 
   // Fetch all staff attendance data
   const fetchAllStaffLocations = async () => {
-    if (!allStaff || allStaff.length === 0) return;
+    if (!todayStaff || todayStaff.length === 0) return;
 
     setIsLoading(true);
     try {
       const locations: StaffLocation[] = [];
 
-      for (const staff of allStaff) {
-        const attendanceData = await fetchAttendanceForStaff(staff.id);
+      // Use the data from getTodayAllStaff which already includes all checked-in staff
+      for (const staff of todayStaff) {
+        const status: "checked-in" | "checked-out" = staff.checkOutTime ? "checked-out" : "checked-in";
         
-        if (attendanceData && Array.isArray(attendanceData) && attendanceData.length > 0) {
-          const latest = attendanceData[attendanceData.length - 1];
-          const status: "checked-in" | "checked-out" = latest.checkOutTime ? "checked-out" : "checked-in";
-          
-          locations.push({
-            id: staff.id,
-            name: staff.name || "Unknown",
-            email: staff.email || "",
-            latitude: parseFloat(latest.checkInLat || "-1.2921"),
-            longitude: parseFloat(latest.checkInLng || "36.8219"),
-            accuracy: parseFloat(latest.checkInAccuracy || "10"),
-            lastUpdated: new Date(latest.checkInTime),
-            status,
-            checkInLat: latest.checkInLat ? parseFloat(latest.checkInLat) : undefined,
-            checkInLng: latest.checkInLng ? parseFloat(latest.checkInLng) : undefined,
-            checkInAddress: latest.checkInAddress || "Location not available",
-            checkOutLat: latest.checkOutLat ? parseFloat(latest.checkOutLat) : undefined,
-            checkOutLng: latest.checkOutLng ? parseFloat(latest.checkOutLng) : undefined,
-            checkOutAddress: latest.checkOutAddress || "Location not available",
-          });
-        }
+        locations.push({
+          id: staff.userId,
+          name: staff.staffName || "Unknown",
+          email: staff.email || "",
+          latitude: parseFloat(staff.checkInLat || "-1.2921"),
+          longitude: parseFloat(staff.checkInLng || "36.8219"),
+          accuracy: parseFloat(staff.checkInAccuracy || "10"),
+          lastUpdated: new Date(staff.checkInTime),
+          status,
+          checkInLat: staff.checkInLat ? parseFloat(staff.checkInLat) : undefined,
+          checkInLng: staff.checkInLng ? parseFloat(staff.checkInLng) : undefined,
+          checkInAddress: staff.checkInAddress || "Location not available",
+          checkOutLat: staff.checkOutLat ? parseFloat(staff.checkOutLat) : undefined,
+          checkOutLng: staff.checkOutLng ? parseFloat(staff.checkOutLng) : undefined,
+          checkOutAddress: staff.checkOutAddress || "Location not available",
+        });
       }
 
       setStaffLocations(locations);
@@ -142,7 +115,7 @@ export default function LiveGPSMap() {
         clearInterval(refreshIntervalRef.current);
       }
     };
-  }, [autoRefresh, allStaff]);
+  }, [autoRefresh, todayStaff]);
 
   // Update map markers
   const updateMapMarkers = (locations: StaffLocation[]) => {

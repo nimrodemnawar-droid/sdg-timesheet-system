@@ -1,4 +1,4 @@
-import { eq, and, gte, lt, desc } from "drizzle-orm";
+import { and, eq, gte, lt } from "drizzle-orm";
 import { attendance, users } from "../drizzle/schema";
 import { getDb } from "./db";
 
@@ -109,39 +109,26 @@ export async function getTodayAttendance(userId: number) {
         lt(attendance.checkInTime, tomorrow)
       )
     )
-    .orderBy(desc(attendance.checkInTime))
     .limit(1);
 
   return record[0] || null;
 }
 
 /**
- * Get all today's check-ins ordered by time (for daily numbering)
+ * Get all staff who checked in today with their current locations
  */
-export async function getTodayCheckIns() {
+export async function getAllStaffCheckedInToday() {
   const db = await getDb();
   if (!db) return [];
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  return await db
-    .select({
-      id: attendance.id,
-      userId: attendance.userId,
-      dailyStaffNumber: attendance.dailyStaffNumber,
-      checkInTime: attendance.checkInTime,
-      checkInLat: attendance.checkInLat,
-      checkInLng: attendance.checkInLng,
-      checkInAddress: attendance.checkInAddress,
-      checkInAccuracy: attendance.checkInAccuracy,
-      userName: users.name,
-      userEmail: users.email,
-      userDepartment: users.department,
-    })
+  const records = await db
+    .select()
     .from(attendance)
-    .innerJoin(users, eq(attendance.userId, users.id))
     .where(
       and(
         gte(attendance.checkInTime, today),
@@ -150,85 +137,147 @@ export async function getTodayCheckIns() {
       )
     )
     .orderBy(attendance.checkInTime);
+
+  return records;
 }
 
 /**
- * Get all today's check-outs with locations
+ * Get attendance records for a staff member within a date range
  */
-export async function getTodayCheckOuts() {
+export async function getAttendanceRange(
+  userId: number,
+  startDate: Date,
+  endDate: Date
+) {
   const db = await getDb();
   if (!db) return [];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
 
+  if (userId === 0) {
+    // Admin requesting all staff
+    return await db
+      .select()
+      .from(attendance)
+      .where(
+        and(
+          gte(attendance.checkInTime, startDate),
+          lt(attendance.checkInTime, endDate)
+        )
+      )
+      .orderBy(attendance.checkInTime);
+  }
+
+  // Staff requesting their own records
   return await db
-    .select({
-      id: attendance.id,
-      userId: attendance.userId,
-      dailyStaffNumber: attendance.dailyStaffNumber,
-      checkInTime: attendance.checkInTime,
-      checkOutTime: attendance.checkOutTime,
-      checkInLat: attendance.checkInLat,
-      checkInLng: attendance.checkInLng,
-      checkInAddress: attendance.checkInAddress,
-      checkOutLat: attendance.checkOutLat,
-      checkOutLng: attendance.checkOutLng,
-      checkOutAddress: attendance.checkOutAddress,
-      distanceTraveled: attendance.distanceTraveled,
-      durationMinutes: attendance.durationMinutes,
-      userName: users.name,
-      userEmail: users.email,
-      userDepartment: users.department,
-    })
+    .select()
     .from(attendance)
-    .innerJoin(users, eq(attendance.userId, users.id))
     .where(
       and(
-        gte(attendance.checkInTime, today),
-        lt(attendance.checkInTime, tomorrow),
-        eq(attendance.hasCheckedOutToday, true)
+        eq(attendance.userId, userId),
+        gte(attendance.checkInTime, startDate),
+        lt(attendance.checkInTime, endDate)
       )
     )
     .orderBy(attendance.checkInTime);
 }
 
 /**
- * Reverse geocode coordinates to get human-readable address
- * Uses Google Maps Geocoding API via Manus proxy
+ * Get complete timesheet data for export
+ */
+export async function getCompleteTimesheetData(
+  startDate: Date,
+  endDate: Date
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(attendance)
+    .where(
+      and(
+        gte(attendance.checkInTime, startDate),
+        lt(attendance.checkInTime, endDate)
+      )
+    )
+    .orderBy(attendance.checkInTime);
+}
+
+/**
+ * Reverse geocode GPS coordinates to get address name
+ * Returns specific building/street names instead of vague regions
  */
 export async function reverseGeocode(
   latitude: number,
   longitude: number
 ): Promise<string> {
   try {
-    // Nairobi area common locations (fallback database)
+    // Kenya area common locations with specific building/street names
     const commonLocations: Record<string, { lat: [number, number], lng: [number, number], name: string }> = {
-      nairobi_office: {
-        lat: [-1.286389, -1.286389],
-        lng: [36.817223, 36.817223],
-        name: "Nairobi Office"
+      // Nairobi CBD - Tom Mboya Street area
+      cbd_tom_mboya: {
+        lat: [-1.2921, -1.2900],
+        lng: [36.8219, 36.8280],
+        name: "Nairobi CBD, Tom Mboya Street"
       },
-      westlands: {
-        lat: [-1.2641, -1.2500],
-        lng: [36.8000, 36.8200],
-        name: "Westlands, Nairobi"
+      // Nairobi Westlands - Westlands Avenue
+      westlands_ave: {
+        lat: [-1.2641, -1.2600],
+        lng: [36.8050, 36.8120],
+        name: "Westlands, Westlands Avenue"
       },
-      cbd: {
-        lat: [-1.2921, -1.2800],
-        lng: [36.8219, 36.8400],
-        name: "Central Business District, Nairobi"
+      // Nairobi Upper Hill - Bishops Road
+      upper_hill_bishops: {
+        lat: [-1.3000, -1.2950],
+        lng: [36.8000, 36.8080],
+        name: "Upper Hill, Bishops Road"
       },
-      karen: {
+      // Nairobi Karen - Karen Road
+      karen_road: {
         lat: [-1.3521, -1.3400],
         lng: [36.7500, 36.7700],
-        name: "Karen, Nairobi"
+        name: "Karen, Karen Road"
       },
-      upper_hill: {
-        lat: [-1.3000, -1.2900],
-        lng: [36.8000, 36.8100],
-        name: "Upper Hill, Nairobi"
+      // Nairobi Kilimani - Kilimani Road
+      kilimani_road: {
+        lat: [-1.3100, -1.3000],
+        lng: [36.7800, 36.7900],
+        name: "Kilimani, Kilimani Road"
+      },
+      // Mombasa - Nkrumah Road
+      mombasa_nkrumah: {
+        lat: [-4.0435, -4.0400],
+        lng: [39.6682, 39.6750],
+        name: "Mombasa, Nkrumah Road"
+      },
+      // Mombasa - Port Authority
+      mombasa_port: {
+        lat: [-4.0500, -4.0450],
+        lng: [39.6600, 39.6700],
+        name: "Mombasa Port Authority"
+      },
+      // Kisumu - Oginga Odinga Street
+      kisumu_oginga: {
+        lat: [-0.1022, -0.0990],
+        lng: [34.7617, 34.7700],
+        name: "Kisumu, Oginga Odinga Street"
+      },
+      // Homa Bay - Homa Bay Town
+      homa_bay_town: {
+        lat: [-0.4850, -0.4800],
+        lng: [34.4600, 34.4700],
+        name: "Homa Bay Town"
+      },
+      // Nakuru - Kenyatta Avenue
+      nakuru_kenyatta: {
+        lat: [-0.3031, -0.3000],
+        lng: [36.0662, 36.0750],
+        name: "Nakuru, Kenyatta Avenue"
+      },
+      // Eldoret - Uganda Road
+      eldoret_uganda: {
+        lat: [0.5149, 0.5200],
+        lng: [35.2699, 35.2800],
+        name: "Eldoret, Uganda Road"
       }
     };
 
@@ -243,7 +292,7 @@ export async function reverseGeocode(
       }
     }
 
-    // Try to use Manus API as backup
+    // Try to use Manus API as backup for more precise geocoding
     const FORGE_BASE_URL = process.env.BUILT_IN_FORGE_API_URL;
     const API_KEY = process.env.BUILT_IN_FORGE_API_KEY;
     
@@ -273,9 +322,32 @@ export async function reverseGeocode(
       }
     }
 
-    // Final fallback: return coordinates with general location
-    const generalLocation = latitude < -1.25 ? "South Nairobi" : latitude > -1.25 ? "North Nairobi" : "Central Nairobi";
-    return `${generalLocation} (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
+    // Final fallback: return coordinates with more specific region information
+    let region = "Kenya";
+    if (latitude < -3.5) {
+      region = "Southern Kenya (Coast Region)";
+    } else if (latitude < -0.5) {
+      region = "Central Kenya";
+    } else if (latitude < 0.5) {
+      region = "Western Kenya";
+    } else {
+      region = "Northern Kenya";
+    }
+    
+    // Try to provide more specific location based on coordinates
+    if (latitude >= -1.3 && latitude <= -1.25 && longitude >= 36.8 && longitude <= 36.85) {
+      return `Nairobi Central Business District (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
+    } else if (latitude >= -1.27 && latitude <= -1.25 && longitude >= 36.8 && longitude <= 36.82) {
+      return `Nairobi Westlands (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
+    } else if (latitude >= -4.05 && latitude <= -4.03 && longitude >= 39.66 && longitude <= 39.68) {
+      return `Mombasa (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
+    } else if (latitude >= -0.11 && latitude <= -0.09 && longitude >= 34.76 && longitude <= 34.77) {
+      return `Kisumu (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
+    } else if (latitude >= -0.49 && latitude <= -0.47 && longitude >= 34.46 && longitude <= 34.48) {
+      return `Homa Bay (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
+    }
+    
+    return `${region} (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
   } catch (error) {
     console.error('[Geocoding] Error reverse geocoding:', error);
     return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
@@ -302,21 +374,4 @@ export function calculateDistance(
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
-}
-
-/**
- * Get staff attendance summary for a date range
- */
-export async function getAttendanceSummary(startDate: Date, endDate: Date) {
-  const db = await getDb();
-  if (!db) return [];
-  return await db
-    .select()
-    .from(attendance)
-    .where(
-      and(
-        gte(attendance.checkInTime, startDate),
-        lt(attendance.checkInTime, endDate)
-      )
-    );
 }
