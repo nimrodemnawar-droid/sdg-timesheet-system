@@ -1192,7 +1192,7 @@ export default function AdminDashboard() {
                     <CardContent className="pt-6">
                       <div className="text-center">
                         <p className="text-slate-400 text-sm">Accuracy</p>
-                        <p className="text-sm font-mono text-yellow-400">{Array.isArray(attendanceRecords) && attendanceRecords.length > 0 && attendanceRecords[0].checkInAccuracy ? parseFloat(attendanceRecords[0].checkInAccuracy).toFixed(1) : 'N/A'}m</p>
+                        <p className="text-sm font-mono text-yellow-400">{Array.isArray(attendanceRecords) && attendanceRecords.length > 0 && attendanceRecords[0].checkInAccuracy ? (typeof attendanceRecords[0].checkInAccuracy === 'number' ? attendanceRecords[0].checkInAccuracy.toFixed(1) : parseFloat(attendanceRecords[0].checkInAccuracy as any).toFixed(1)) : 'N/A'}m</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -1205,11 +1205,11 @@ export default function AdminDashboard() {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-slate-400">Latitude:</span>
-                        <span className="text-white font-mono">{Array.isArray(attendanceRecords) && attendanceRecords.length > 0 && attendanceRecords[0].checkInLat ? parseFloat(attendanceRecords[0].checkInLat).toFixed(6) : 'N/A'}</span>
+                        <span className="text-white font-mono">{Array.isArray(attendanceRecords) && attendanceRecords.length > 0 && attendanceRecords[0].checkInLat ? (typeof attendanceRecords[0].checkInLat === 'number' ? attendanceRecords[0].checkInLat.toFixed(6) : parseFloat(attendanceRecords[0].checkInLat as any).toFixed(6)) : 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-400">Longitude:</span>
-                        <span className="text-white font-mono">{Array.isArray(attendanceRecords) && attendanceRecords.length > 0 && attendanceRecords[0].checkInLng ? parseFloat(attendanceRecords[0].checkInLng).toFixed(6) : 'N/A'}</span>
+                        <span className="text-white font-mono">{Array.isArray(attendanceRecords) && attendanceRecords.length > 0 && attendanceRecords[0].checkInLng ? (typeof attendanceRecords[0].checkInLng === 'number' ? attendanceRecords[0].checkInLng.toFixed(6) : parseFloat(attendanceRecords[0].checkInLng as any).toFixed(6)) : 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-400">Check-in Time:</span>

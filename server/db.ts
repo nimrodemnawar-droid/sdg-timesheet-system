@@ -1950,9 +1950,26 @@ export async function getAllStaffCheckedInToday() {
       const userRecords = todayRecords.filter(r => r.userId === userId);
       const latestRecord = userRecords[0];
 
+      if (!latestRecord) return null;
+
+      // Convert DECIMAL coordinates from MySQL to numbers
+      const checkInLat = latestRecord.checkInLat ? parseFloat(String(latestRecord.checkInLat)) : null;
+      const checkInLng = latestRecord.checkInLng ? parseFloat(String(latestRecord.checkInLng)) : null;
+      const checkOutLat = latestRecord.checkOutLat ? parseFloat(String(latestRecord.checkOutLat)) : null;
+      const checkOutLng = latestRecord.checkOutLng ? parseFloat(String(latestRecord.checkOutLng)) : null;
+      const checkInAccuracy = latestRecord.checkInAccuracy ? parseFloat(String(latestRecord.checkInAccuracy)) : null;
+      const checkOutAccuracy = latestRecord.checkOutAccuracy ? parseFloat(String(latestRecord.checkOutAccuracy)) : null;
+      const distanceTraveled = latestRecord.distanceTraveled ? parseFloat(String(latestRecord.distanceTraveled)) : null;
+
+      // Validate coordinates are valid numbers
+      if (!checkInLat || !checkInLng || isNaN(checkInLat) || isNaN(checkInLng)) {
+        console.warn(`[DB] Staff ${userId} has invalid check-in coordinates:`, { checkInLat, checkInLng });
+        return null; // Skip staff without valid coordinates
+      }
+
       // Calculate hours worked if both check-in and check-out times exist
       let hoursWorked = 0;
-      if (latestRecord?.checkInTime && latestRecord?.checkOutTime) {
+      if (latestRecord.checkInTime && latestRecord.checkOutTime) {
         const checkInTime = new Date(latestRecord.checkInTime).getTime();
         const checkOutTime = new Date(latestRecord.checkOutTime).getTime();
         hoursWorked = parseFloat(((checkOutTime - checkInTime) / (1000 * 60 * 60)).toFixed(2));
@@ -1966,32 +1983,37 @@ export async function getAllStaffCheckedInToday() {
         userId,
         userName: userInfo?.name || `Staff ${userId}`,
         staffNumber: userInfo?.staffNumber || userId,
-        checkInTime: latestRecord?.checkInTime,
-        checkInAddress: latestRecord?.checkInAddress || null,
-        checkOutTime: latestRecord?.checkOutTime,
-        checkOutAddress: latestRecord?.checkOutAddress || null,
+        email: userInfo?.email || null,
+        checkInTime: latestRecord.checkInTime,
+        checkInAddress: latestRecord.checkInAddress || null,
+        checkOutTime: latestRecord.checkOutTime,
+        checkOutAddress: latestRecord.checkOutAddress || null,
         hoursWorked,
         overtimeHours,
         isOvertime,
-        status: latestRecord?.checkOutTime ? 'Checked Out' : 'Checked In',
-        workModality: latestRecord?.workModality || 'On-site',
-        checkInLat: latestRecord?.checkInLat || null,
-        checkInLng: latestRecord?.checkInLng || null,
-        checkInAccuracy: latestRecord?.checkInAccuracy || null,
-        checkOutLat: latestRecord?.checkOutLat || null,
-        checkOutLng: latestRecord?.checkOutLng || null,
-        checkOutAccuracy: latestRecord?.checkOutAccuracy || null,
-        distanceTraveled: latestRecord?.distanceTraveled || null,
-        kpiId: latestRecord?.kpiId || null,
-        activityCategoryId: latestRecord?.activityCategoryId || null,
-        sdgGoalId: latestRecord?.sdgGoalId || null,
-        taskDescription: latestRecord?.taskDescription || null,
-        staffRemarks: latestRecord?.staffRemarks || null,
+        status: latestRecord.checkOutTime ? 'Checked Out' : 'Checked In',
+        workModality: latestRecord.workModality || 'On-site',
+        checkInLat: checkInLat,
+        checkInLng: checkInLng,
+        checkInAccuracy: checkInAccuracy,
+        checkOutLat: checkOutLat,
+        checkOutLng: checkOutLng,
+        checkOutAccuracy: checkOutAccuracy,
+        distanceTraveled: distanceTraveled,
+        kpiId: latestRecord.kpiId || null,
+        activityCategoryId: latestRecord.activityCategoryId || null,
+        sdgGoalId: latestRecord.sdgGoalId || null,
+        taskDescription: latestRecord.taskDescription || null,
+        staffRemarks: latestRecord.staffRemarks || null,
         waypointCount: 0, // TODO: Query actual waypoint count
       };
     }).filter(item => item !== null);
 
     // Return array directly so frontend can use Array.isArray()
+    console.log(`[DB] getAllStaffCheckedInToday returning ${staffList.length} staff with valid coordinates`);
+    staffList.forEach(staff => {
+      console.log(`[DB] ${staff.userName}: (${staff.checkInLat}, ${staff.checkInLng}) - ${staff.checkInAddress}`);
+    });
     return staffList;
   } catch (error) {
     console.error('[Database] Error getting staff checked in today:', error);
