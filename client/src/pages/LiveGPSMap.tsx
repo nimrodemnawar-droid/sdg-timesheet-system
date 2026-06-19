@@ -66,28 +66,36 @@ export default function LiveGPSMap() {
       // Use the data from getTodayAllStaff which already includes all checked-in staff
       for (const staff of todayStaff) {
         // Validate coordinates exist before using them
-        const checkInLat = staff.checkInLat ? parseFloat(staff.checkInLat) : null;
-        const checkInLng = staff.checkInLng ? parseFloat(staff.checkInLng) : null;
+        // Use != null to allow 0 coordinates (e.g., Eldoret at lat ~0.5)
+        const checkInLat = staff.checkInLat != null ? parseFloat(staff.checkInLat) : null;
+        const checkInLng = staff.checkInLng != null ? parseFloat(staff.checkInLng) : null;
         
         // Skip staff without valid check-in coordinates
-        if (!checkInLat || !checkInLng || isNaN(checkInLat) || isNaN(checkInLng)) {
+        // Use Number.isFinite to properly validate (allows 0, rejects NaN/null/undefined)
+        if (!Number.isFinite(checkInLat) || !Number.isFinite(checkInLng)) {
           console.warn(`[GPS Map] Skipping staff ${staff.userName} - invalid coordinates:`, { checkInLat, checkInLng });
           continue;
         }
         
         const status: "checked-in" | "checked-out" = staff.checkOutTime ? "checked-out" : "checked-in";
         
+        // Use check-out location if available (current location), otherwise use check-in
+        const checkOutLat = staff.checkOutLat != null ? parseFloat(staff.checkOutLat) : null;
+        const checkOutLng = staff.checkOutLng != null ? parseFloat(staff.checkOutLng) : null;
+        const currentLat = Number.isFinite(checkOutLat) ? checkOutLat : checkInLat!;
+        const currentLng = Number.isFinite(checkOutLng) ? checkOutLng : checkInLng!;
+        
         locations.push({
           id: staff.userId,
           name: staff.userName || `Staff ${staff.userId}`,
           email: staff.email || "",
-          latitude: checkInLat,
-          longitude: checkInLng,
+          latitude: currentLat!,
+          longitude: currentLng!,
           accuracy: staff.checkInAccuracy ? parseFloat(staff.checkInAccuracy) : 10,
           lastUpdated: new Date(staff.checkInTime),
           status,
-          checkInLat: checkInLat,
-          checkInLng: checkInLng,
+          checkInLat: checkInLat!,
+          checkInLng: checkInLng!,
           checkInAddress: staff.checkInAddress || "Location not available",
           checkOutLat: staff.checkOutLat ? parseFloat(staff.checkOutLat) : undefined,
           checkOutLng: staff.checkOutLng ? parseFloat(staff.checkOutLng) : undefined,

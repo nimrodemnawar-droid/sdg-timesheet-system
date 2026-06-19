@@ -213,70 +213,70 @@ export async function reverseGeocode(
   try {
     // Kenya area common locations with specific building/street names
     const commonLocations: Record<string, { lat: [number, number], lng: [number, number], name: string }> = {
-      // Nairobi CBD - Tom Mboya Street area
+      // Nairobi CBD - Tom Mboya Street area (narrower range to prevent mismatches)
       cbd_tom_mboya: {
-        lat: [-1.2921, -1.2900],
-        lng: [36.8219, 36.8280],
+        lat: [-1.290, -1.280],
+        lng: [36.815, 36.830],
         name: "Nairobi CBD, Tom Mboya Street"
       },
-      // Nairobi Westlands - Westlands Avenue
+      // Nairobi Westlands - Westlands Avenue (expanded range)
       westlands_ave: {
-        lat: [-1.2641, -1.2600],
-        lng: [36.8050, 36.8120],
+        lat: [-1.270, -1.250],
+        lng: [36.795, 36.825],
         name: "Westlands, Westlands Avenue"
       },
-      // Nairobi Upper Hill - Bishops Road
+      // Nairobi Upper Hill - Bishops Road (expanded range)
       upper_hill_bishops: {
-        lat: [-1.3000, -1.2950],
-        lng: [36.8000, 36.8080],
+        lat: [-1.310, -1.280],
+        lng: [36.790, 36.820],
         name: "Upper Hill, Bishops Road"
       },
-      // Nairobi Karen - Karen Road
+      // Nairobi Karen - Karen Road (expanded range)
       karen_road: {
-        lat: [-1.3521, -1.3400],
-        lng: [36.7500, 36.7700],
+        lat: [-1.360, -1.330],
+        lng: [36.740, 36.780],
         name: "Karen, Karen Road"
       },
-      // Nairobi Kilimani - Kilimani Road
+      // Nairobi Kilimani - Kilimani Road (expanded range)
       kilimani_road: {
-        lat: [-1.3100, -1.3000],
-        lng: [36.7800, 36.7900],
+        lat: [-1.320, -1.290],
+        lng: [36.770, 36.800],
         name: "Kilimani, Kilimani Road"
       },
-      // Mombasa - Nkrumah Road
+      // Mombasa - Nkrumah Road (expanded range)
       mombasa_nkrumah: {
-        lat: [-4.0435, -4.0400],
-        lng: [39.6682, 39.6750],
+        lat: [-4.055, -4.030],
+        lng: [39.660, 39.680],
         name: "Mombasa, Nkrumah Road"
       },
-      // Mombasa - Port Authority
+      // Mombasa - Port Authority (specific range to avoid overlap with Nkrumah)
       mombasa_port: {
-        lat: [-4.0500, -4.0450],
-        lng: [39.6600, 39.6700],
+        lat: [-4.065, -4.055],
+        lng: [39.655, 39.670],
         name: "Mombasa Port Authority"
       },
-      // Kisumu - Oginga Odinga Street
+      // Kisumu - Oginga Odinga Street (expanded range)
       kisumu_oginga: {
-        lat: [-0.1022, -0.0990],
-        lng: [34.7617, 34.7700],
+        lat: [-0.115, -0.090],
+        lng: [34.755, 34.775],
         name: "Kisumu, Oginga Odinga Street"
       },
-      // Homa Bay - Homa Bay Town
+      // Homa Bay - Homa Bay Town (expanded range)
       homa_bay_town: {
-        lat: [-0.4850, -0.4800],
-        lng: [34.4600, 34.4700],
+        lat: [-0.495, -0.470],
+        lng: [34.455, 34.475],
         name: "Homa Bay Town"
       },
-      // Nakuru - Kenyatta Avenue
+      // Nakuru - Kenyatta Avenue (expanded range)
       nakuru_kenyatta: {
-        lat: [-0.3031, -0.3000],
-        lng: [36.0662, 36.0750],
+        lat: [-0.310, -0.290],
+        lng: [36.060, 36.080],
         name: "Nakuru, Kenyatta Avenue"
       },
-      // Eldoret - Uganda Road
+      // Eldoret - Uganda Road (expanded range)
       eldoret_uganda: {
-        lat: [0.5149, 0.5200],
-        lng: [35.2699, 35.2800],
+        lat: [0.510, 0.530],
+        lng: [35.265, 35.285],
         name: "Eldoret, Uganda Road"
       }
     };
