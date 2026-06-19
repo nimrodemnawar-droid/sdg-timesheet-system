@@ -215,15 +215,14 @@ export default function StaffDashboard() {
         setGpsStatus("ready");
       },
       (error) => {
-        // Fallback to mock GPS for testing environments (sandbox, no GPS hardware)
-        console.warn("GPS acquisition failed, using mock coordinates for testing");
-        setGpsCoordinates({
-          latitude: -1.2921,
-          longitude: 36.8219,
-          accuracy: 5.0,
-        });
-        setGpsStatus("ready");
-        setGpsError(null);
+        // Do NOT use hardcoded fallback - require actual device GPS
+        console.error("GPS acquisition failed:", error.message);
+        setGpsError(
+          `GPS Error: ${error.message}. Please enable location services and try again. ` +
+          `Your device location is required for accurate check-in/check-out.`
+        );
+        setGpsStatus("idle");
+        setGpsCoordinates(null);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
