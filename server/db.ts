@@ -181,11 +181,18 @@ export async function createAttendance(data: {
     // Convert string coordinates to numbers for decimal fields
     const lat = parseFloat(data.checkInLat);
     const lng = parseFloat(data.checkInLng);
-    const accuracy = parseFloat(data.checkInAccuracy);
+    let accuracy = parseFloat(data.checkInAccuracy);
 
     // Validate coordinates are valid numbers
     if (isNaN(lat) || isNaN(lng) || isNaN(accuracy)) {
       throw new Error('Invalid coordinate values');
+    }
+
+    // Convert accuracy from meters to kilometers to fit within database column (precision: 6, scale: 2)
+    // Database column can hold max 9999.99, so convert meters to km
+    // If accuracy is > 1000 meters (1km), it's likely in meters from GPS, so divide by 1000
+    if (accuracy > 1000) {
+      accuracy = accuracy / 1000; // Convert from meters to kilometers
     }
 
     await db.insert(attendance).values({
@@ -268,11 +275,17 @@ export async function checkOut(
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   const distance = R * c * 1000; // Convert to meters
   
+  // Convert checkout accuracy from meters to kilometers to fit within database column
+  let checkOutAccuracy = data.accuracy;
+  if (checkOutAccuracy > 1000) {
+    checkOutAccuracy = checkOutAccuracy / 1000; // Convert from meters to kilometers
+  }
+  
   return completeAttendance(attendanceId, {
     checkOutTime: data.timestamp,
     checkOutLat: data.latitude.toString(),
     checkOutLng: data.longitude.toString(),
-    checkOutAccuracy: data.accuracy.toString(),
+    checkOutAccuracy: checkOutAccuracy.toString(),
     checkOutAddress: data.address || `${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}`,
     distanceTraveled: distance.toString(),
   } as any);

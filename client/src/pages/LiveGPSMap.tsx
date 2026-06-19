@@ -12,13 +12,13 @@ interface StaffLocation {
   id: number;
   name: string;
   email: string;
-  latitude: number;
-  longitude: number;
+  latitude: number; // Current location (check-in by default, or check-out if available)
+  longitude: number; // Current location (check-in by default, or check-out if available)
   accuracy: number;
   lastUpdated: Date;
   status: "checked-in" | "checked-out";
-  checkInLat?: number;
-  checkInLng?: number;
+  checkInLat: number; // Always populated from database
+  checkInLng: number; // Always populated from database
   checkInAddress?: string;
   checkOutLat?: number;
   checkOutLng?: number;
@@ -65,19 +65,29 @@ export default function LiveGPSMap() {
 
       // Use the data from getTodayAllStaff which already includes all checked-in staff
       for (const staff of todayStaff) {
+        // Validate coordinates exist before using them
+        const checkInLat = staff.checkInLat ? parseFloat(staff.checkInLat) : null;
+        const checkInLng = staff.checkInLng ? parseFloat(staff.checkInLng) : null;
+        
+        // Skip staff without valid check-in coordinates
+        if (!checkInLat || !checkInLng || isNaN(checkInLat) || isNaN(checkInLng)) {
+          console.warn(`[GPS Map] Skipping staff ${staff.userName} - invalid coordinates:`, { checkInLat, checkInLng });
+          continue;
+        }
+        
         const status: "checked-in" | "checked-out" = staff.checkOutTime ? "checked-out" : "checked-in";
         
         locations.push({
           id: staff.userId,
-          name: staff.staffName || "Unknown",
+          name: staff.userName || `Staff ${staff.userId}`,
           email: staff.email || "",
-          latitude: parseFloat(staff.checkInLat || "-1.2921"),
-          longitude: parseFloat(staff.checkInLng || "36.8219"),
-          accuracy: parseFloat(staff.checkInAccuracy || "10"),
+          latitude: checkInLat,
+          longitude: checkInLng,
+          accuracy: staff.checkInAccuracy ? parseFloat(staff.checkInAccuracy) : 10,
           lastUpdated: new Date(staff.checkInTime),
           status,
-          checkInLat: staff.checkInLat ? parseFloat(staff.checkInLat) : undefined,
-          checkInLng: staff.checkInLng ? parseFloat(staff.checkInLng) : undefined,
+          checkInLat: checkInLat,
+          checkInLng: checkInLng,
           checkInAddress: staff.checkInAddress || "Location not available",
           checkOutLat: staff.checkOutLat ? parseFloat(staff.checkOutLat) : undefined,
           checkOutLng: staff.checkOutLng ? parseFloat(staff.checkOutLng) : undefined,
