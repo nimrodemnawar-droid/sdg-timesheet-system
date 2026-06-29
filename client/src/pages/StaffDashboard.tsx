@@ -111,6 +111,8 @@ export default function StaffDashboard() {
   const [activeTab, setActiveTab] = useState("check-in");
   const [showGpsMap, setShowGpsMap] = useState(false);
   const mapRef = useRef<google.maps.Map | null>(null);
+  const watchIdRef = useRef<number | null>(null);
+  const watchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Timesheet form state
   // Fetch activity categories, SDG goals, and KPIs
@@ -194,43 +196,136 @@ export default function StaffDashboard() {
     },
   });
 
-  // Acquire GPS coordinates
+  // Acquire GPS coordinates with improved reliability
   const acquireGPS = () => {
     setGpsStatus("acquiring");
     setGpsError(null);
 
     if (!navigator.geolocation) {
-      setGpsError("Geolocation is not supported by your browser");
+      setGpsError("Geolocation is not supported by your browser. Please use a modern browser with location support.");
       setGpsStatus("idle");
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
+    // Stop any previous watch
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+    if (watchTimeoutRef.current) {
+      clearTimeout(watchTimeoutRef.current);
+      watchTimeoutRef.current = null;
+    }
+
+    let bestPosition: GeolocationPosition | null = null;
+    let bestAccuracy = Infinity;
+
+    // Use watchPosition for more reliable GPS acquisition
+    watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
-        setGpsCoordinates({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-        });
-        setGpsStatus("ready");
+        // Keep track of the most accurate position
+        if (position.coords.accuracy < bestAccuracy) {
+          bestAccuracy = position.coords.accuracy;
+          bestPosition = position;
+        }
+
+        // If we have a good accuracy (<50m), use it immediately
+        if (position.coords.accuracy < 50) {
+          const coords = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+          };
+          
+          console.log("🔴 DEBUG: GPS COORDINATES CAPTURED FROM DEVICE");
+          console.log(`Latitude: ${coords.latitude}`);
+          console.log(`Longitude: ${coords.longitude}`);
+          console.log(`Accuracy: ${coords.accuracy}m (HIGH ACCURACY)`);
+          
+          setGpsCoordinates(coords);
+          setGpsStatus("ready");
+          
+          // Stop watching
+          if (watchIdRef.current !== null) {
+            navigator.geolocation.clearWatch(watchIdRef.current);
+            watchIdRef.current = null;
+          }
+          if (watchTimeoutRef.current) {
+            clearTimeout(watchTimeoutRef.current);
+            watchTimeoutRef.current = null;
+          }
+        }
       },
       (error) => {
-        // Do NOT use hardcoded fallback - require actual device GPS
         console.error("GPS acquisition failed:", error.message);
-        setGpsError(
-          `GPS Error: ${error.message}. Please enable location services and try again. ` +
-          `Your device location is required for accurate check-in/check-out.`
-        );
+        console.error("Error code:", error.code);
+        
+        let errorMsg = "GPS Error: ";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMsg += "Location permission denied. Please enable location access in your browser settings and try again.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMsg += "Location information is unavailable. Please ensure location services are enabled on your device.";
+            break;
+          case error.TIMEOUT:
+            errorMsg += "GPS acquisition timed out. Please try again in an area with better GPS signal.";
+            break;
+          default:
+            errorMsg += error.message;
+        }
+        
+        setGpsError(errorMsg);
         setGpsStatus("idle");
         setGpsCoordinates(null);
+        
+        if (watchIdRef.current !== null) {
+          navigator.geolocation.clearWatch(watchIdRef.current);
+          watchIdRef.current = null;
+        }
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
     );
+
+    // Set a timeout to stop watching after 30 seconds
+    watchTimeoutRef.current = setTimeout(() => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+
+      // Use the best position we got, even if not perfect
+      if (bestPosition) {
+        const coords = {
+          latitude: bestPosition.coords.latitude,
+          longitude: bestPosition.coords.longitude,
+          accuracy: bestPosition.coords.accuracy,
+        };
+        
+        console.log("🔴 DEBUG: GPS COORDINATES CAPTURED (BEST AVAILABLE)");
+        console.log(`Latitude: ${coords.latitude}`);
+        console.log(`Longitude: ${coords.longitude}`);
+        console.log(`Accuracy: ${coords.accuracy}m`);
+        
+        setGpsCoordinates(coords);
+        setGpsStatus("ready");
+      } else {
+        setGpsError("Could not acquire GPS coordinates. Please ensure location services are enabled and try again.");
+        setGpsStatus("idle");
+        setGpsCoordinates(null);
+      }
+    }, 30000);
   };
 
   const handleCheckIn = async () => {
     if (!gpsCoordinates) {
-      toast.error("Please acquire GPS coordinates first");
+      toast.error("GPS coordinates required. Please click 'Acquire GPS' first.");
+      return;
+    }
+
+    // Block check-in if GPS accuracy is too poor (>1000m = likely coarse/ISP location)
+    if (gpsCoordinates.accuracy > 1000) {
+      toast.error(`GPS accuracy too low (${gpsCoordinates.accuracy.toFixed(0)}m). Please try again in an area with better GPS signal.`);
       return;
     }
 
