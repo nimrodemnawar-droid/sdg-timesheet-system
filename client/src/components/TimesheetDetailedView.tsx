@@ -78,10 +78,8 @@ export function TimesheetDetailedView() {
       "Date",
       "Check-in Time",
       "Check-out Time",
-      "Check-in Location (Lat, Lng)",
-      "Check-in Address",
-      "Check-out Location (Lat, Lng)",
-      "Check-out Address",
+      "Check-in Location",
+      "Check-out Location",
       "Work Modality",
       "Activity Category",
       "KPI",
@@ -101,9 +99,7 @@ export function TimesheetDetailedView() {
       record.date || "N/A",
       record.checkInTime || "N/A",
       record.checkOutTime || "N/A",
-      record.checkInCoordinates || `${record.checkInLat}, ${record.checkInLng}`,
       record.checkInAddress || "N/A",
-      record.checkOutCoordinates || (record.checkOutLat ? `${record.checkOutLat}, ${record.checkOutLng}` : "N/A"),
       record.checkOutAddress || "N/A",
       record.workModality || "N/A",
       record.activityCategory || "N/A",
@@ -237,9 +233,7 @@ export function TimesheetDetailedView() {
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Check-in Time</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Check-out Time</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Check-in Location</th>
-                    <th className="text-left py-3 px-2 text-slate-200 font-bold">Check-in Address</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Check-out Location</th>
-                    <th className="text-left py-3 px-2 text-slate-200 font-bold">Check-out Address</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Work Modality</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Activity Category</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">KPI</th>
@@ -271,10 +265,8 @@ export function TimesheetDetailedView() {
                       </td>
                       <td className="py-2 px-2 text-slate-300">{record.checkInTime || "N/A"}</td>
                       <td className="py-2 px-2 text-slate-300">{record.checkOutTime || "N/A"}</td>
-                      <td className="py-2 px-2 text-slate-400 text-xs">{record.checkInCoordinates || "N/A"}</td>
-                      <td className="py-2 px-2 text-slate-300 text-xs">{record.checkInAddress || "N/A"}</td>
-                      <td className="py-2 px-2 text-slate-400 text-xs">{record.checkOutCoordinates || "N/A"}</td>
-                      <td className="py-2 px-2 text-slate-300 text-xs">{record.checkOutAddress || "N/A"}</td>
+                      <td className="py-2 px-2 text-slate-300 text-xs font-medium">{record.checkInAddress || "N/A"}</td>
+                      <td className="py-2 px-2 text-slate-300 text-xs font-medium">{record.checkOutAddress || "N/A"}</td>
                       <td className="py-2 px-2">
                         <Badge variant="outline" className="text-xs">
                           {record.workModality || "N/A"}
