@@ -42,6 +42,7 @@ import { MapView } from "@/components/Map";
 import { ReportSchedulingManager } from "@/components/ReportSchedulingManager";
 import { AdminManagement } from "@/components/AdminManagement";
 import { TimesheetViewTab } from "@/components/TimesheetViewTab";
+import { TimesheetDetailedView } from "@/components/TimesheetDetailedView";
 import { OvertimeAlert, OvertimeStatistics } from "@/components/OvertimeAlert";
 import { TimesheetFilter, type TimesheetFilterOptions } from "@/components/TimesheetFilter";
 import { WaypointDisplay } from "@/components/WaypointDisplay";
@@ -1233,7 +1234,7 @@ export default function AdminDashboard() {
 
           {/* Admin Management Tab */}
           <TabsContent value="timesheet" className="space-y-4">
-            <TimesheetViewTab />
+            <TimesheetDetailedView />
           </TabsContent>
 
           <TabsContent value="admin-management" className="space-y-4">
