@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
+import AdminDashboardEnhanced from "./AdminDashboardEnhanced";
 import { generateAttendanceReportCSV, generateLeaveReportCSV, generateOvertimeReportCSV, generateGPSActivityReportCSV } from "@/lib/reportExport";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -49,6 +50,10 @@ import { WaypointDisplay } from "@/components/WaypointDisplay";
 import { WaypointFilter, type WaypointFilterOptions } from "@/components/WaypointFilter";
 
 export default function AdminDashboard() {
+  return <AdminDashboardEnhanced />;
+}
+
+export function AdminDashboardLegacy() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedRequest, setSelectedRequest] = useState<number | null>(null);
