@@ -31,6 +31,7 @@ import {
   User,
   CheckCheck,
   X,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ExportDialog } from "@/components/ExportDialog";
@@ -443,67 +444,88 @@ export default function AdminDashboard() {
           </TabsList>
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <TabsContent value="overview" className="space-y-6">
+            {/* Export Data Section */}
+            <div>
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <Download className="w-5 h-5 text-blue-400" />
+                Export Data
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-6 rounded-lg shadow-lg hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-105">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Timesheets
+                </Button>
+                <Button className="bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white font-semibold py-6 rounded-lg shadow-lg hover:shadow-cyan-500/50 transition-all duration-300 transform hover:scale-105">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export GPS Data
+                </Button>
+                <Button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-6 rounded-lg shadow-lg hover:shadow-red-500/50 transition-all duration-300 transform hover:scale-105">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Full Report
+                </Button>
+              </div>
+            </div>
+
+            {/* Quick Actions Section */}
+            <div>
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <Zap className="w-5 h-5 text-amber-400" />
+                Quick Actions
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 rounded-lg shadow-lg hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-105">
+                  <Users className="w-4 h-4 mr-1" />
+                  Manage Users
+                </Button>
+                <Button className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-4 rounded-lg shadow-lg hover:shadow-green-500/50 transition-all duration-300 transform hover:scale-105">
+                  <MapPin className="w-4 h-4 mr-1" />
+                  View Maps
+                </Button>
+                <Button className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold py-4 rounded-lg shadow-lg hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105">
+                  <BarChart3 className="w-4 h-4 mr-1" />
+                  Analytics
+                </Button>
+                <Button className="bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white font-semibold py-4 rounded-lg shadow-lg hover:shadow-cyan-500/50 transition-all duration-300 transform hover:scale-105">
+                  <Clock className="w-4 h-4 mr-1" />
+                  Attendance
+                </Button>
+                <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-semibold py-4 rounded-lg shadow-lg hover:shadow-orange-500/50 transition-all duration-300 transform hover:scale-105">
+                  <Shield className="w-4 h-4 mr-1" />
+                  Settings
+                </Button>
+              </div>
+            </div>
+
+            {/* Live Staff Status */}
+            <div>
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-blue-400" />
+                Recent Check-ins
+              </h3>
               <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-blue-400" />
-                    Live Staff Status & Hours Worked
-                  </CardTitle>
-                  <CardDescription className="text-slate-400">Real-time check-in/out and hours worked (updates every 3s)</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="pt-6 space-y-3">
                   {staffList?.slice(0, 5).map((staff: any) => {
                     const staffAttendance = Array.isArray(attendanceRecords) ? attendanceRecords.find((att: any) => att.userId === staff.id) : null;
                     const isCheckedIn = staffAttendance && !staffAttendance.checkOutTime;
                     return (
-                      <div key={staff.id} className="space-y-2">
-                        {staffAttendance?.isOvertime && (
-                          <OvertimeAlert
-                            hoursWorked={staffAttendance.hoursWorked}
-                            overtimeHours={staffAttendance.overtimeHours}
-                            isOvertime={staffAttendance.isOvertime}
-                            staffName={staff.name}
-                            compact={true}
-                          />
-                        )}
-                        <div className={`flex items-center justify-between p-3 rounded-lg hover:bg-slate-700 transition border ${
-                          staffAttendance?.isOvertime
-                            ? 'bg-red-950/30 border-red-500/40'
-                            : 'bg-slate-700/50 border-slate-600/50'
-                        }`}>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-2 h-2 rounded-full ${isCheckedIn ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
-                              <p className="text-white font-medium">{staff.name} (#{staffAttendance?.staffNumber || staff.id})</p>
-                            </div>
-                            <p className="text-xs text-slate-400">{staff.email}</p>
-                            {staffAttendance?.checkOutTime && (
-                              <p className={`text-xs mt-1 ${
-                                staffAttendance?.isOvertime ? 'text-red-400' : 'text-green-400'
-                              }`}>Checked out: {new Date(staffAttendance.checkOutTime).toLocaleTimeString()}</p>
-                            )}
+                      <div key={staff.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 border border-slate-600/30 hover:border-slate-500/50 transition-all duration-300">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${isCheckedIn ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
+                            <p className="text-white font-medium">{staff.name}</p>
+                            <p className="text-xs text-slate-400">ID: {staffAttendance?.staffNumber || staff.id}</p>
                           </div>
-                          <div className="text-right">
-                            <Badge className={isCheckedIn ? "bg-green-600 hover:bg-green-700" : staffAttendance?.isOvertime ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}>
-                              {isCheckedIn ? "Checked In" : staffAttendance?.isOvertime ? "Overtime" : "Checked Out"}
-                            </Badge>
-                            {staffAttendance && staffAttendance.hoursWorked > 0 && (
-                              <p className={`text-sm font-semibold mt-1 ${
-                                staffAttendance?.isOvertime ? 'text-red-400' : 'text-yellow-300'
-                              }`}>{staffAttendance?.hoursWorked}h worked</p>
-                            )}
-                            <p className="text-xs text-slate-400 mt-1">In: {staffAttendance ? new Date(staffAttendance.checkInTime).toLocaleTimeString() : "N/A"}</p>
-                          </div>
+                          <p className="text-xs text-slate-400 mt-1">{staffAttendance ? new Date(staffAttendance.checkInTime).toLocaleString() : "N/A"}</p>
                         </div>
+                        <Badge className={isCheckedIn ? "bg-green-600 hover:bg-green-700" : "bg-slate-600 hover:bg-slate-700"}>
+                          {isCheckedIn ? "Checked In" : "Checked Out"}
+                        </Badge>
                       </div>
                     );
                   })}
                 </CardContent>
               </Card>
-
-
             </div>
           </TabsContent>
 
