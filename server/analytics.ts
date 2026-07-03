@@ -1,4 +1,4 @@
-import { eq, gte, lte, sql } from "drizzle-orm";
+import { eq, gte, lte, sql, and } from "drizzle-orm";
 import { getDb } from "./db";
 import { attendance, users } from "../drizzle/schema";
 
@@ -63,7 +63,10 @@ export async function getAttendanceMetrics(
     })
     .from(attendance)
     .where(
-      sql`checkInTime >= ${startDate} AND checkInTime <= ${endDate}`
+      and(
+        sql`checkInTime >= ${startDate} AND checkInTime <= ${endDate}`,
+        eq(attendance.isSubmitted, true)
+      )
     );
 
   const avgHours = hoursResult[0]?.avgHours || 0;
@@ -73,7 +76,10 @@ export async function getAttendanceMetrics(
     .select({ count: sql<number>`COUNT(*)` })
     .from(attendance)
     .where(
-      sql`checkInTime >= ${startDate} AND checkInTime <= ${endDate}`
+      and(
+        sql`checkInTime >= ${startDate} AND checkInTime <= ${endDate}`,
+        eq(attendance.isSubmitted, true)
+      )
     );
   const totalRecords = attendanceCountResult[0]?.count || 0;
   const attendanceRate = totalStaff > 0 ? (checkedInToday / totalStaff) * 100 : 0;
