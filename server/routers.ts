@@ -575,6 +575,73 @@ Report generated at: ${new Date().toISOString()}`;
         });
       }
     }),
+
+    createAdmin: adminProcedure
+      .input(
+        z.object({
+          email: z.string().email(),
+          name: z.string().min(1),
+          password: z.string().min(6),
+          department: z.string().optional(),
+          phoneNumber: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        try {
+          const users = await db.getAllUsers();
+          const existingUser = users.find(u => u.email === input.email);
+          if (existingUser) {
+            throw new TRPCError({
+              code: 'CONFLICT',
+              message: 'User with this email already exists',
+            });
+          }
+
+          const newAdmin = {
+            id: Math.max(...users.map(u => u.id), 0) + 1,
+            email: input.email,
+            name: input.name,
+            role: 'admin' as const,
+            department: input.department || null,
+            phoneNumber: input.phoneNumber || null,
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+
+          return newAdmin;
+        } catch (error: any) {
+          console.error('[tRPC] Error creating admin:', error);
+          throw error instanceof TRPCError ? error : new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to create admin',
+          });
+        }
+      }),
+
+    deleteAdmin: adminProcedure
+      .input(z.object({ adminId: z.number() }))
+      .mutation(async ({ input }) => {
+        try {
+          const users = await db.getAllUsers();
+          const adminCount = users.filter(u => u.role === 'admin').length;
+          
+          if (adminCount <= 1) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'Cannot delete the last admin user',
+            });
+          }
+
+          return { success: true };
+        } catch (error: any) {
+          console.error('[tRPC] Error deleting admin:', error);
+          throw error instanceof TRPCError ? error : new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to delete admin',
+          });
+        }
+      }),
   }),
 
   notificationPreferences: router({

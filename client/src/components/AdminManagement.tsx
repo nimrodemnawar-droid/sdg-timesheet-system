@@ -23,9 +23,30 @@ export function AdminManagement() {
   // Fetch all admins
   const { data: admins = [], isLoading, refetch } = trpc.users.getAllAdmins.useQuery();
 
-  // TODO: Implement createAdmin and deleteAdmin mutations
-  const createAdminMutation = { mutateAsync: async () => {} } as any;
-  const deleteAdminMutation = { mutateAsync: async () => {} } as any;
+  // Create admin mutation
+  const createAdminMutation = trpc.users.createAdmin.useMutation({
+    onSuccess: () => {
+      toast.success('Admin created successfully');
+      setFormData({ email: '', name: '', password: '', department: '', phoneNumber: '' });
+      setOpen(false);
+      refetch();
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to create admin');
+    },
+  });
+
+  // Delete admin mutation
+  const deleteAdminMutation = trpc.users.deleteAdmin.useMutation({
+    onSuccess: () => {
+      toast.success('Admin deleted successfully');
+      setDeleteId(null);
+      refetch();
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete admin');
+    },
+  });
 
   const handleCreateAdmin = (e: React.FormEvent) => {
     e.preventDefault();
