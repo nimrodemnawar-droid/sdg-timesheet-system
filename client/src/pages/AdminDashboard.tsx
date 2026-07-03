@@ -395,50 +395,50 @@ export default function AdminDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="bg-slate-800/50 border border-slate-700 backdrop-blur-sm flex flex-wrap gap-2 h-auto p-2">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+          <TabsList className="bg-gradient-to-r from-slate-800 to-slate-900 border border-slate-700 backdrop-blur-sm flex flex-wrap gap-1 h-auto p-3 rounded-lg shadow-lg">
+            <TabsTrigger value="overview" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
               <Activity className="w-4 h-4 mr-2" />
               Overview
             </TabsTrigger>
-            <TabsTrigger value="staff" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+            <TabsTrigger value="staff" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
               <Users className="w-4 h-4 mr-2" />
-              Staff Management
+              Staff
             </TabsTrigger>
-            <TabsTrigger value="leave" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+            <TabsTrigger value="leave" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
               <FileText className="w-4 h-4 mr-2" />
-              Leave Requests
+              Leave
             </TabsTrigger>
-            <TabsTrigger value="attendance" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+            <TabsTrigger value="attendance" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
               <Clock className="w-4 h-4 mr-2" />
               Attendance
             </TabsTrigger>
-            <TabsTrigger value="reports" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+            <TabsTrigger value="reports" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
               <BarChart3 className="w-4 h-4 mr-2" />
               Reports
             </TabsTrigger>
-            <TabsTrigger value="overtime" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+            <TabsTrigger value="overtime" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
               <AlertCircle className="w-4 h-4 mr-2" />
               Overtime
             </TabsTrigger>
-            <TabsTrigger value="export" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+            <TabsTrigger value="export" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
               <Download className="w-4 h-4 mr-2" />
               Export
             </TabsTrigger>
-            <TabsTrigger value="gpsmap" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+            <TabsTrigger value="gpsmap" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
               <MapPin className="w-4 h-4 mr-2" />
               GPS Map
             </TabsTrigger>
-            <TabsTrigger value="scheduling" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+            <TabsTrigger value="scheduling" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
               <Calendar className="w-4 h-4 mr-2" />
-              Report Scheduling
+              Scheduling
             </TabsTrigger>
-            <TabsTrigger value="timesheet" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+            <TabsTrigger value="timesheet" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
               <FileText className="w-4 h-4 mr-2" />
               Timesheet
             </TabsTrigger>
-            <TabsTrigger value="admin-management" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+            <TabsTrigger value="admin-management" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
               <Shield className="w-4 h-4 mr-2" />
-              Admin Management
+              Admin
             </TabsTrigger>
           </TabsList>
 
@@ -503,36 +503,7 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-green-400" />
-                    Quick Actions
-                  </CardTitle>
-                  <CardDescription className="text-slate-400">Common administrative tasks</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 justify-start gap-2 text-white border-0">
-                    <Plus className="w-4 h-4" />
-                    Add New Staff
-                  </Button>
-                  <Button className="w-full bg-purple-600 hover:bg-purple-700 justify-start gap-2 text-white border-0">
-                    <Download className="w-4 h-4" />
-                    Export Attendance Report
-                  </Button>
-                  <Button 
-                    onClick={() => setShowGpsMap(true)}
-                    className="w-full bg-green-600 hover:bg-green-700 justify-start gap-2 text-white border-0"
-                  >
-                    <MapPin className="w-4 h-4" />
-                    View Live GPS Map
-                  </Button>
-                  <Button className="w-full bg-amber-600 hover:bg-amber-700 justify-start gap-2 text-white border-0">
-                    <BarChart3 className="w-4 h-4" />
-                    View Analytics
-                  </Button>
-                </CardContent>
-              </Card>
+
             </div>
           </TabsContent>
 
