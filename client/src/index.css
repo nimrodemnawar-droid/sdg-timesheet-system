@@ -349,3 +349,222 @@
     color-scheme: dark;
   }
 }
+
+/* ===== PHASE 1: ANIMATED BACKGROUND ===== */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.animated-bg {
+  background: linear-gradient(-45deg, #0f172a, #1e3a8a, #0c4a6e, #0f172a);
+  background-size: 400% 400%;
+  animation: gradient-shift 15s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.animated-bg::before {
+  content: '';
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+  animation: float 20s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ===== PHASE 2: IMPROVED TYPOGRAPHY ===== */
+@layer base {
+  h1 {
+    @apply text-3xl md:text-4xl font-bold tracking-tight;
+  }
+  
+  h2 {
+    @apply text-2xl md:text-3xl font-bold tracking-tight;
+  }
+  
+  h3 {
+    @apply text-xl md:text-2xl font-semibold tracking-tight;
+  }
+  
+  h4 {
+    @apply text-lg font-semibold tracking-tight;
+  }
+  
+  p {
+    @apply leading-relaxed text-base;
+  }
+  
+  .text-muted {
+    @apply text-sm text-muted-foreground;
+  }
+  
+  .text-label {
+    @apply text-xs font-medium uppercase tracking-wide text-muted-foreground;
+  }
+}
+
+/* ===== PHASE 4: SMOOTH TRANSITIONS & MICRO-ANIMATIONS ===== */
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Smooth transitions for interactive elements */
+@layer components {
+  .transition-smooth {
+    @apply transition-all duration-300 ease-out;
+  }
+}
+
+button, [role="button"], a, input, select, textarea {
+  @apply transition-all duration-300 ease-out;
+}
+
+/* ===== PHASE 5: LOADING STATES ===== */
+@keyframes skeleton-loading {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@layer components {
+  .skeleton {
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 1000px 100%;
+    animation: skeleton-loading 2s infinite;
+    @apply rounded-lg;
+  }
+
+  .skeleton-text {
+    @apply h-4 w-3/4 rounded-lg;
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 1000px 100%;
+    animation: skeleton-loading 2s infinite;
+  }
+
+  .skeleton-title {
+    @apply h-6 w-1/2 mb-4 rounded-lg;
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 1000px 100%;
+    animation: skeleton-loading 2s infinite;
+  }
+
+  .skeleton-card {
+    @apply h-32 w-full rounded-lg;
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 1000px 100%;
+    animation: skeleton-loading 2s infinite;
+  }
+}
+
+/* Spinner animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* ===== PHASE 6: EMPTY STATES ===== */
+@layer components {
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-12 px-4 text-center;
+  }
+
+  .empty-state-icon {
+    @apply w-16 h-16 text-muted-foreground mb-4 opacity-50;
+  }
+
+  .empty-state-title {
+    @apply text-xl font-semibold text-foreground mb-2;
+  }
+
+  .empty-state-description {
+    @apply text-muted-foreground mb-6;
+  }
+}
+
+/* ===== PHASE 7: DATA VISUALIZATIONS ===== */
+@layer components {
+  .chart-container {
+    @apply w-full h-full bg-card rounded-lg border border-border p-6;
+  }
+
+  .chart-title {
+    @apply text-lg font-semibold text-foreground mb-4;
+  }
+
+  .chart-bar {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .chart-bar:hover {
+    @apply opacity-80 scale-105;
+  }
+}
