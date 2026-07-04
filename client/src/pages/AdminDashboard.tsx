@@ -57,7 +57,11 @@ export default function AdminDashboard() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
-  const [attendanceStartDate, setAttendanceStartDate] = useState(new Date().toISOString().split("T")[0]);
+  const [attendanceStartDate, setAttendanceStartDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30); // Default to last 30 days
+    return date.toISOString().split("T")[0];
+  });
   const [attendanceEndDate, setAttendanceEndDate] = useState(new Date().toISOString().split("T")[0]);
   const [attendanceStaffFilter, setAttendanceStaffFilter] = useState("all");
   const [showExport, setShowExport] = useState<"attendance" | "overtime" | "leave" | null>(null);
@@ -91,9 +95,16 @@ export default function AdminDashboard() {
   const { data: staffList, refetch: refetchStaffList } = trpc.users.getAll.useQuery(undefined, {
     refetchInterval: 2000,
   });
-  const { data: attendanceRecords, refetch: refetchAttendance } = trpc.attendance.getTodayAllStaff.useQuery(undefined, {
-    refetchInterval: 1000,
-  });
+  // Fetch attendance records based on date range
+  const { data: attendanceRecords, refetch: refetchAttendance } = trpc.attendance.getAdminReports.useQuery(
+    {
+      startDate: attendanceStartDate,
+      endDate: attendanceEndDate,
+    },
+    {
+      refetchInterval: 5000, // Refetch every 5 seconds
+    }
+  );
   const { data: analyticsMetrics, refetch: refetchAnalytics } = trpc.analytics.metrics.useQuery({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     endDate: new Date(),

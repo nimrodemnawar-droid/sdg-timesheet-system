@@ -10,7 +10,8 @@ import {
   getAccuracyQuality,
 } from "./encryption";
 import { TRPCError } from "@trpc/server";
-import { and, gte, lte, eq, desc, asc } from "drizzle-orm";
+import { and, eq, gte, lte, desc, asc, isNotNull } from "drizzle-orm";
+import { getAllStaffAttendanceByDateRange } from "./db";
 import { attendance } from "../drizzle/schema";
 import { analyticsRouter } from "./analyticsRouter";
 import { notifyOwner } from "./_core/notification";
@@ -40,6 +41,7 @@ export const appRouter = router({
   analytics: analyticsRouter,
 
   attendance: router({
+    // Import db functions at top of file
     checkIn: protectedProcedure
       .input(
         z.object({
@@ -144,8 +146,10 @@ export const appRouter = router({
         })
       )
       .query(async ({ input }) => {
-        // TODO: Implement getAdminAttendanceReports or use getAllStaffCheckedInToday
-        return [];
+        return db.getAllStaffAttendanceByDateRange(
+          new Date(input.startDate),
+          new Date(input.endDate)
+        );
       }),
 
 

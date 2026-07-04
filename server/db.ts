@@ -1912,6 +1912,98 @@ export async function deleteUser(userId: number): Promise<boolean> {
 }
 
 
+export async function getAllStaffAttendanceByDateRange(
+  startDate: Date,
+  endDate: Date
+) {
+  try {
+    const db = await getDb();
+    if (!db) return [];
+
+    // Get all attendance records for the date range
+    const rangeRecords = await db
+      .select()
+      .from(attendance)
+      .where(
+        and(
+          gte(attendance.checkInTime, startDate),
+          lte(attendance.checkInTime, endDate)
+        )
+      )
+      .orderBy(desc(attendance.checkInTime));
+
+    // Get unique user IDs
+    const userIdSet = new Set(rangeRecords.map(r => r.userId));
+    const userIds = Array.from(userIdSet);
+
+    // Get user details
+    const staffDetails = await db
+      .select()
+      .from(users);
+
+    // Enrich attendance data with user info
+    const staffList = rangeRecords.map(record => {
+      const userInfo = staffDetails.find(u => u.id === record.userId);
+
+      // Convert DECIMAL coordinates from MySQL to numbers
+      const checkInLat = record.checkInLat ? parseFloat(String(record.checkInLat)) : null;
+      const checkInLng = record.checkInLng ? parseFloat(String(record.checkInLng)) : null;
+      const checkOutLat = record.checkOutLat ? parseFloat(String(record.checkOutLat)) : null;
+      const checkOutLng = record.checkOutLng ? parseFloat(String(record.checkOutLng)) : null;
+      const checkInAccuracy = record.checkInAccuracy ? parseFloat(String(record.checkInAccuracy)) : null;
+      const checkOutAccuracy = record.checkOutAccuracy ? parseFloat(String(record.checkOutAccuracy)) : null;
+      const distanceTraveled = record.distanceTraveled ? parseFloat(String(record.distanceTraveled)) : null;
+
+      // Calculate hours worked if both check-in and check-out times exist
+      let hoursWorked = 0;
+      if (record.checkInTime && record.checkOutTime) {
+        const checkInTime = new Date(record.checkInTime).getTime();
+        const checkOutTime = new Date(record.checkOutTime).getTime();
+        hoursWorked = parseFloat(((checkOutTime - checkInTime) / (1000 * 60 * 60)).toFixed(2));
+      }
+
+      // Calculate overtime (hours over 8)
+      const overtimeHours = hoursWorked > 8 ? parseFloat((hoursWorked - 8).toFixed(2)) : 0;
+      const isOvertime = hoursWorked > 8;
+
+      return {
+        userId: record.userId,
+        userName: userInfo?.name || `Staff ${record.userId}`,
+        staffNumber: userInfo?.staffNumber || record.userId,
+        email: userInfo?.email || null,
+        checkInTime: record.checkInTime,
+        checkInAddress: record.checkInAddress || null,
+        checkOutTime: record.checkOutTime,
+        checkOutAddress: record.checkOutAddress || null,
+        hoursWorked,
+        overtimeHours,
+        isOvertime,
+        status: record.checkOutTime ? 'Checked Out' : 'Checked In',
+        workModality: record.workModality || 'On-site',
+        checkInLat: checkInLat,
+        checkInLng: checkInLng,
+        checkInAccuracy: checkInAccuracy,
+        checkOutLat: checkOutLat,
+        checkOutLng: checkOutLng,
+        checkOutAccuracy: checkOutAccuracy,
+        distanceTraveled: distanceTraveled,
+        kpiId: record.kpiId || null,
+        activityCategoryId: record.activityCategoryId || null,
+        sdgGoalId: record.sdgGoalId || null,
+        taskDescription: record.taskDescription || null,
+        staffRemarks: record.staffRemarks || null,
+        waypointCount: 0,
+      };
+    });
+
+    console.log(`[DB] getAllStaffAttendanceByDateRange returning ${staffList.length} records`);
+    return staffList;
+  } catch (error) {
+    console.error('[Database] Error getting staff attendance by date range:', error);
+    return [];
+  }
+}
+
 export async function getAllStaffCheckedInToday() {
   try {
     const db = await getDb();
