@@ -57,6 +57,9 @@ export default function AdminDashboard() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [attendanceStartDate, setAttendanceStartDate] = useState(new Date().toISOString().split("T")[0]);
+  const [attendanceEndDate, setAttendanceEndDate] = useState(new Date().toISOString().split("T")[0]);
+  const [attendanceStaffFilter, setAttendanceStaffFilter] = useState("all");
   const [showExport, setShowExport] = useState<"attendance" | "overtime" | "leave" | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [lastAttendanceState, setLastAttendanceState] = useState<Map<number, boolean>>(new Map());
@@ -774,14 +777,25 @@ export default function AdminDashboard() {
                   filteredRecords={filteredAttendanceRecords.length}
                 />
 
-                {/* Legacy Filters (kept for export functionality) */}
+                {/* Attendance Filters */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-slate-700/30 rounded-lg">
                   <div>
                     <Label className="text-slate-300 text-sm mb-2 block">Start Date</Label>
                     <Input
                       type="date"
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
+                      value={attendanceStartDate}
+                      onChange={(e) => {
+                        setAttendanceStartDate(e.target.value);
+                        // Filter records when date changes
+                        const filtered = Array.isArray(attendanceRecords) ? attendanceRecords.filter((record: any) => {
+                          const recordDate = new Date(record.checkInTime).toISOString().split('T')[0];
+                          const startOk = !e.target.value || recordDate >= e.target.value;
+                          const endOk = !attendanceEndDate || recordDate <= attendanceEndDate;
+                          const staffOk = attendanceStaffFilter === 'all' || record.userId.toString() === attendanceStaffFilter;
+                          return startOk && endOk && staffOk;
+                        }) : [];
+                        setFilteredAttendanceRecords(filtered);
+                      }}
                       className="bg-slate-600/50 border-slate-600 text-white"
                     />
                   </div>
@@ -789,14 +803,36 @@ export default function AdminDashboard() {
                     <Label className="text-slate-300 text-sm mb-2 block">End Date</Label>
                     <Input
                       type="date"
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
+                      value={attendanceEndDate}
+                      onChange={(e) => {
+                        setAttendanceEndDate(e.target.value);
+                        // Filter records when date changes
+                        const filtered = Array.isArray(attendanceRecords) ? attendanceRecords.filter((record: any) => {
+                          const recordDate = new Date(record.checkInTime).toISOString().split('T')[0];
+                          const startOk = !attendanceStartDate || recordDate >= attendanceStartDate;
+                          const endOk = !e.target.value || recordDate <= e.target.value;
+                          const staffOk = attendanceStaffFilter === 'all' || record.userId.toString() === attendanceStaffFilter;
+                          return startOk && endOk && staffOk;
+                        }) : [];
+                        setFilteredAttendanceRecords(filtered);
+                      }}
                       className="bg-slate-600/50 border-slate-600 text-white"
                     />
                   </div>
                   <div>
                     <Label className="text-slate-300 text-sm mb-2 block">Staff Member</Label>
-                    <Select value={searchTerm} onValueChange={setSearchTerm}>
+                    <Select value={attendanceStaffFilter} onValueChange={(value) => {
+                      setAttendanceStaffFilter(value);
+                      // Filter records when staff changes
+                      const filtered = Array.isArray(attendanceRecords) ? attendanceRecords.filter((record: any) => {
+                        const recordDate = new Date(record.checkInTime).toISOString().split('T')[0];
+                        const startOk = !attendanceStartDate || recordDate >= attendanceStartDate;
+                        const endOk = !attendanceEndDate || recordDate <= attendanceEndDate;
+                        const staffOk = value === 'all' || record.userId.toString() === value;
+                        return startOk && endOk && staffOk;
+                      }) : [];
+                      setFilteredAttendanceRecords(filtered);
+                    }}>
                       <SelectTrigger className="bg-slate-600/50 border-slate-600 text-white">
                         <SelectValue placeholder="All Staff" />
                       </SelectTrigger>
@@ -813,8 +849,8 @@ export default function AdminDashboard() {
                   <div className="flex items-end">
                     <Button
                       onClick={() => {
-                        if (Array.isArray(attendanceRecords) && attendanceRecords.length > 0) {
-                          const reportData = attendanceRecords.map((record: any) => {
+                        if (filteredAttendanceRecords.length > 0) {
+                          const reportData = filteredAttendanceRecords.map((record: any) => {
                             const checkInDate = new Date(record.checkInTime);
                             const checkOutDate = record.checkOutTime ? new Date(record.checkOutTime) : null;
                             const hoursWorked = checkOutDate ? ((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60)).toFixed(2) : 0;
@@ -834,8 +870,9 @@ export default function AdminDashboard() {
                             };
                           });
                           generateAttendanceReportCSV(reportData);
+                          toast.success(`Exported ${reportData.length} records`);
                         } else {
-                          toast.error('No attendance data available');
+                          toast.error('No attendance data available for selected filters');
                         }
                       }}
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0"
