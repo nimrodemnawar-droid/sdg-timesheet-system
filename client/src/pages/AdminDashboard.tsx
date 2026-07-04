@@ -396,48 +396,48 @@ export default function AdminDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="bg-gradient-to-r from-slate-800 to-slate-900 border border-slate-700 backdrop-blur-sm flex flex-wrap gap-1 h-auto p-3 rounded-lg shadow-lg">
-            <TabsTrigger value="overview" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
+          <TabsList className="bg-gradient-to-r from-slate-800/80 via-slate-700/60 to-slate-800/80 border border-slate-600/50 backdrop-blur-sm flex flex-wrap gap-2 h-auto p-4 rounded-lg shadow-xl hover:shadow-2xl transition-all duration-300">
+            <TabsTrigger value="overview" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <Activity className="w-4 h-4 mr-2" />
               Overview
             </TabsTrigger>
-            <TabsTrigger value="staff" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
+            <TabsTrigger value="staff" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-700 data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <Users className="w-4 h-4 mr-2" />
               Staff
             </TabsTrigger>
-            <TabsTrigger value="leave" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
+            <TabsTrigger value="leave" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-amber-700 data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <FileText className="w-4 h-4 mr-2" />
               Leave
             </TabsTrigger>
-            <TabsTrigger value="attendance" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
+            <TabsTrigger value="attendance" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-cyan-700 data-[state=active]:shadow-lg data-[state=active]:shadow-cyan-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <Clock className="w-4 h-4 mr-2" />
               Attendance
             </TabsTrigger>
-            <TabsTrigger value="reports" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
+            <TabsTrigger value="reports" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-700 data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <BarChart3 className="w-4 h-4 mr-2" />
               Reports
             </TabsTrigger>
-            <TabsTrigger value="overtime" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
+            <TabsTrigger value="overtime" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-red-700 data-[state=active]:shadow-lg data-[state=active]:shadow-red-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <AlertCircle className="w-4 h-4 mr-2" />
               Overtime
             </TabsTrigger>
-            <TabsTrigger value="export" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
+            <TabsTrigger value="export" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-indigo-700 data-[state=active]:shadow-lg data-[state=active]:shadow-indigo-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <Download className="w-4 h-4 mr-2" />
               Export
             </TabsTrigger>
-            <TabsTrigger value="gpsmap" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
+            <TabsTrigger value="gpsmap" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-700 data-[state=active]:shadow-lg data-[state=active]:shadow-rose-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <MapPin className="w-4 h-4 mr-2" />
               GPS Map
             </TabsTrigger>
-            <TabsTrigger value="scheduling" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
+            <TabsTrigger value="scheduling" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-600 data-[state=active]:to-teal-700 data-[state=active]:shadow-lg data-[state=active]:shadow-teal-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <Calendar className="w-4 h-4 mr-2" />
               Scheduling
             </TabsTrigger>
-            <TabsTrigger value="timesheet" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
+            <TabsTrigger value="timesheet" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-700 data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <FileText className="w-4 h-4 mr-2" />
               Timesheet
             </TabsTrigger>
-            <TabsTrigger value="admin-management" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg text-slate-400 data-[state=active]:text-white hover:text-slate-200 transition-all">
+            <TabsTrigger value="admin-management" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-600 data-[state=active]:to-pink-700 data-[state=active]:shadow-lg data-[state=active]:shadow-pink-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <Shield className="w-4 h-4 mr-2" />
               Admin
             </TabsTrigger>
