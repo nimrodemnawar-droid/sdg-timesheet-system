@@ -341,54 +341,54 @@ export default function AdminDashboard() {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-br from-blue-900/40 via-blue-800/30 to-slate-900 border-blue-400/50 hover:border-blue-300 transition-all duration-300 shadow-lg hover:shadow-blue-500/20">
+          <Card className="bg-gradient-to-br from-slate-700/60 via-slate-600/40 to-slate-800/50 border border-slate-500/50 hover:border-slate-400 transition-all duration-300 shadow-lg hover:shadow-slate-500/30 hover:scale-105">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-300 text-sm mb-1 font-medium">Total Staff</p>
-                  <p className="text-4xl font-bold text-blue-100">{staffList?.length || 0}</p>
-                  <p className="text-xs text-blue-400/70 mt-1">Active users</p>
+                  <p className="text-slate-300 text-sm mb-1 font-medium">Total Staff</p>
+                  <p className="text-4xl font-bold text-white">{staffList?.length || 0}</p>
+                  <p className="text-xs text-slate-400 mt-1">Active users</p>
                 </div>
-                <Users className="w-12 h-12 text-blue-300 opacity-90" />
+                <Users className="w-12 h-12 text-slate-400 opacity-80" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-emerald-900/40 via-green-800/30 to-slate-900 border-emerald-400/50 hover:border-emerald-300 transition-all duration-300 shadow-lg hover:shadow-emerald-500/20">
+          <Card className="bg-gradient-to-br from-emerald-700/60 via-emerald-600/40 to-slate-800/50 border border-emerald-500/50 hover:border-emerald-400 transition-all duration-300 shadow-lg hover:shadow-emerald-500/30 hover:scale-105">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-emerald-300 text-sm mb-1 font-medium">Present Today</p>
-                  <p className="text-4xl font-bold text-emerald-100">{stats?.checkedInCount || 0}</p>
-                  <p className="text-xs text-emerald-400/70 mt-1">Checked in</p>
+                  <p className="text-4xl font-bold text-emerald-50">{stats?.checkedInCount || 0}</p>
+                  <p className="text-xs text-emerald-400/80 mt-1">Checked in</p>
                 </div>
-                <CheckCircle className="w-12 h-12 text-emerald-300 opacity-90" />
+                <CheckCircle className="w-12 h-12 text-emerald-400 opacity-90" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-amber-900/40 via-yellow-800/30 to-slate-900 border-amber-400/50 hover:border-amber-300 transition-all duration-300 shadow-lg hover:shadow-amber-500/20">
+          <Card className="bg-gradient-to-br from-amber-700/60 via-amber-600/40 to-slate-800/50 border border-amber-500/50 hover:border-amber-400 transition-all duration-300 shadow-lg hover:shadow-amber-500/30 hover:scale-105">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-amber-300 text-sm mb-1 font-medium">Avg Hrs/Day</p>
-                  <p className="text-4xl font-bold text-amber-100">{analyticsMetrics?.averageHoursPerDay || 0}h</p>
-                  <p className="text-xs text-amber-400/70 mt-1">Last 30 days</p>
+                  <p className="text-4xl font-bold text-amber-50">{analyticsMetrics?.averageHoursPerDay || 0}h</p>
+                  <p className="text-xs text-amber-400/80 mt-1">Last 30 days</p>
                 </div>
-                <Clock className="w-12 h-12 text-amber-300 opacity-90" />
+                <Clock className="w-12 h-12 text-amber-400 opacity-90" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-rose-900/40 via-red-800/30 to-slate-900 border-rose-400/50 hover:border-rose-300 transition-all duration-300 shadow-lg hover:shadow-rose-500/20">
+          <Card className="bg-gradient-to-br from-cyan-700/60 via-cyan-600/40 to-slate-800/50 border border-cyan-500/50 hover:border-cyan-400 transition-all duration-300 shadow-lg hover:shadow-cyan-500/30 hover:scale-105">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-rose-300 text-sm mb-1 font-medium">Pending</p>
-                  <p className="text-4xl font-bold text-rose-100">{pendingRequests.length}</p>
-                  <p className="text-xs text-rose-400/70 mt-1">Awaiting approval</p>
+                  <p className="text-cyan-300 text-sm mb-1 font-medium">Pending</p>
+                  <p className="text-4xl font-bold text-cyan-50">{pendingRequests.length}</p>
+                  <p className="text-xs text-cyan-400/80 mt-1">Awaiting approval</p>
                 </div>
-                <AlertCircle className="w-12 h-12 text-rose-300 opacity-90" />
+                <AlertCircle className="w-12 h-12 text-cyan-400 opacity-90" />
               </div>
             </CardContent>
           </Card>
