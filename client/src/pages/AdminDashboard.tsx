@@ -445,58 +445,6 @@ export default function AdminDashboard() {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            {/* Export Data Section */}
-            <div>
-              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <Download className="w-5 h-5 text-blue-400" />
-                Export Data
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-6 rounded-lg shadow-lg hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-105">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export Timesheets
-                </Button>
-                <Button className="bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white font-semibold py-6 rounded-lg shadow-lg hover:shadow-cyan-500/50 transition-all duration-300 transform hover:scale-105">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export GPS Data
-                </Button>
-                <Button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-6 rounded-lg shadow-lg hover:shadow-red-500/50 transition-all duration-300 transform hover:scale-105">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export Full Report
-                </Button>
-              </div>
-            </div>
-
-            {/* Quick Actions Section */}
-            <div>
-              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-amber-400" />
-                Quick Actions
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 rounded-lg shadow-lg hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-105">
-                  <Users className="w-4 h-4 mr-1" />
-                  Manage Users
-                </Button>
-                <Button className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-4 rounded-lg shadow-lg hover:shadow-green-500/50 transition-all duration-300 transform hover:scale-105">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  View Maps
-                </Button>
-                <Button className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold py-4 rounded-lg shadow-lg hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105">
-                  <BarChart3 className="w-4 h-4 mr-1" />
-                  Analytics
-                </Button>
-                <Button className="bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white font-semibold py-4 rounded-lg shadow-lg hover:shadow-cyan-500/50 transition-all duration-300 transform hover:scale-105">
-                  <Clock className="w-4 h-4 mr-1" />
-                  Attendance
-                </Button>
-                <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-semibold py-4 rounded-lg shadow-lg hover:shadow-orange-500/50 transition-all duration-300 transform hover:scale-105">
-                  <Shield className="w-4 h-4 mr-1" />
-                  Settings
-                </Button>
-              </div>
-            </div>
-
             {/* Live Staff Status */}
             <div>
               <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
