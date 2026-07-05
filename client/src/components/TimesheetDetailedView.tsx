@@ -1,4 +1,5 @@
 import { useState } from "react";
+import React from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -253,7 +254,7 @@ export function TimesheetDetailedView() {
                     const isNewDate = !prevRecord || new Date(record.date).toDateString() !== new Date(prevRecord.date).toDateString();
                     
                     return (
-                      <>
+                      <React.Fragment key={`row-${record.id}-${idx}`}>
                         {isNewDate && idx > 0 && (
                           <tr key={`date-separator-${new Date(record.date).toDateString()}`} className="bg-slate-600/30 border-b-2 border-slate-500">
                             <td colSpan={18} className="py-3 px-4 text-slate-300 font-semibold text-center">
@@ -347,7 +348,7 @@ export function TimesheetDetailedView() {
                         )}
                       </td>
                         </tr>
-                      </>
+                      </React.Fragment>
                     );
                   })}
                 </tbody>
