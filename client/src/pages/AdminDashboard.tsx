@@ -987,9 +987,11 @@ export default function AdminDashboard() {
                       filteredRecords={filteredWaypointRecords?.length || 0}
                     />
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-                      {filteredWaypointRecords.map((record: any) => (
+                      {filteredWaypointRecords.map((record: any, index: number) => {
+                        const waypointKey = `${record.userId}-${new Date(record.checkInTime).getTime()}-${index}`;
+                        return (
                         <WaypointDisplay
-                          key={record.userId}
+                          key={waypointKey}
                           waypoint={{
                             checkInTime: new Date(record.checkInTime),
                             checkInLat: parseFloat(record.checkInLat),
@@ -1005,7 +1007,8 @@ export default function AdminDashboard() {
                           staffName={record.userName || `Staff ${record.userId}`}
                           staffNumber={record.staffNumber || record.userId}
                         />
-                      ))}
+                        );
+                        })}
                     </div>
                   </div>
                 )}
