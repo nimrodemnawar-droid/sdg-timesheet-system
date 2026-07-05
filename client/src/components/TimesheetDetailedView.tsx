@@ -247,11 +247,41 @@ export function TimesheetDetailedView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedData.map((record: any, idx: number) => (
-                    <tr
-                      key={`${record.id}-${idx}`}
-                      className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors"
-                    >
+                  {sortedData.map((record: any, idx: number) => {
+                    // Check if this is a new date
+                    const prevRecord = idx > 0 ? sortedData[idx - 1] : null;
+                    const isNewDate = !prevRecord || new Date(record.date).toDateString() !== new Date(prevRecord.date).toDateString();
+                    
+                    return (
+                      <>
+                        {isNewDate && idx > 0 && (
+                          <tr className="bg-slate-600/30 border-b-2 border-slate-500">
+                            <td colSpan={18} className="py-3 px-4 text-slate-300 font-semibold text-center">
+                              📅 {new Date(record.date).toLocaleDateString("en-US", {
+                                weekday: "long",
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })}
+                            </td>
+                          </tr>
+                        )}
+                        {isNewDate && idx === 0 && (
+                          <tr className="bg-slate-600/30 border-b-2 border-slate-500">
+                            <td colSpan={18} className="py-3 px-4 text-slate-300 font-semibold text-center">
+                              📅 {new Date(record.date).toLocaleDateString("en-US", {
+                                weekday: "long",
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })}
+                            </td>
+                          </tr>
+                        )}
+                        <tr
+                          key={`${record.id}-${idx}`}
+                          className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors"
+                        >
                       <td className="py-2 px-2 text-slate-300 font-medium">{record.staffNumber}</td>
                       <td className="py-2 px-2 text-slate-300">{record.staffName}</td>
                       <td className="py-2 px-2 text-slate-400 text-xs">{record.staffEmail}</td>
@@ -265,8 +295,24 @@ export function TimesheetDetailedView() {
                       </td>
                       <td className="py-2 px-2 text-slate-300">{record.checkInTime || "N/A"}</td>
                       <td className="py-2 px-2 text-slate-300">{record.checkOutTime || "N/A"}</td>
-                      <td className="py-2 px-2 text-slate-300 text-xs font-medium">{record.checkInAddress || "N/A"}</td>
-                      <td className="py-2 px-2 text-slate-300 text-xs font-medium">{record.checkOutAddress || "N/A"}</td>
+                          <td className="py-2 px-2 text-slate-300 text-xs font-medium max-w-xs">
+                            {record.checkInAddress ? (
+                              <div className="break-words">
+                                {record.checkInAddress}
+                              </div>
+                            ) : (
+                              "N/A"
+                            )}
+                          </td>
+                          <td className="py-2 px-2 text-slate-300 text-xs font-medium max-w-xs">
+                            {record.checkOutAddress ? (
+                              <div className="break-words">
+                                {record.checkOutAddress}
+                              </div>
+                            ) : (
+                              "N/A"
+                            )}
+                          </td>
                       <td className="py-2 px-2">
                         <Badge variant="outline" className="text-xs">
                           {record.workModality || "N/A"}
@@ -300,8 +346,10 @@ export function TimesheetDetailedView() {
                           <span className="text-slate-500">None</span>
                         )}
                       </td>
-                    </tr>
-                  ))}
+                        </tr>
+                      </>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
