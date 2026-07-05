@@ -255,7 +255,7 @@ export function TimesheetDetailedView() {
                     return (
                       <>
                         {isNewDate && idx > 0 && (
-                          <tr className="bg-slate-600/30 border-b-2 border-slate-500">
+                          <tr key={`date-separator-${new Date(record.date).toDateString()}`} className="bg-slate-600/30 border-b-2 border-slate-500">
                             <td colSpan={18} className="py-3 px-4 text-slate-300 font-semibold text-center">
                               📅 {new Date(record.date).toLocaleDateString("en-US", {
                                 weekday: "long",
@@ -267,7 +267,7 @@ export function TimesheetDetailedView() {
                           </tr>
                         )}
                         {isNewDate && idx === 0 && (
-                          <tr className="bg-slate-600/30 border-b-2 border-slate-500">
+                          <tr key={`date-separator-first-${new Date(record.date).toDateString()}`} className="bg-slate-600/30 border-b-2 border-slate-500">
                             <td colSpan={18} className="py-3 px-4 text-slate-300 font-semibold text-center">
                               📅 {new Date(record.date).toLocaleDateString("en-US", {
                                 weekday: "long",
