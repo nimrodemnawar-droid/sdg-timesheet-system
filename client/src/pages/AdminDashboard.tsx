@@ -914,8 +914,11 @@ export default function AdminDashboard() {
                     </thead>
                     <tbody>
                       {filteredAttendanceRecords.length > 0 ? (
-                        filteredAttendanceRecords.map((record: any) => (
-                          <tr key={record.userId} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition">
+                        filteredAttendanceRecords.map((record: any, index: number) => {
+                          // Create unique key using userId + checkInTime to avoid duplicates
+                          const uniqueKey = `${record.userId}-${new Date(record.checkInTime).getTime()}-${index}`;
+                          return (
+                          <tr key={uniqueKey} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition">
                             <td className="py-3 px-4 text-white">{record.staffNumber || record.userId}</td>
                             <td className="py-3 px-4 text-white">{record.userName || `Staff ${record.userId}`}</td>
                             <td className="py-3 px-4 text-slate-400">{new Date(record.checkInTime).toISOString().split('T')[0]}</td>
@@ -958,7 +961,8 @@ export default function AdminDashboard() {
                               </Badge>
                             </td>
                           </tr>
-                        ))
+                        );
+                        })
                       ) : (
                         <tr>
                           <td colSpan={11} className="py-4 px-4 text-center text-slate-400">
