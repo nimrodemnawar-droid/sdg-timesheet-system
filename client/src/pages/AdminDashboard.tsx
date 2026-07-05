@@ -184,8 +184,9 @@ export default function AdminDashboard() {
 
       if (staff && isCheckedIn !== wasCheckedIn) {
         if (isCheckedIn && wasCheckedIn === false) {
+          const checkInTime = new Date(record.checkInTime).getTime();
           newNotifications.push({
-            id: `checkin-${record.id}-${Date.now()}`,
+            id: `checkin-${record.userId}-${checkInTime}`,
             type: "check-in",
             staffName: staff.name || "Unknown",
             message: "Checked in",
@@ -198,12 +199,13 @@ export default function AdminDashboard() {
           });
         } else if (!isCheckedIn && wasCheckedIn === true) {
           const hoursWorked = record.durationMinutes ? (record.durationMinutes / 60).toFixed(2) : "0";
+          const checkOutTime = record.checkOutTime ? new Date(record.checkOutTime).getTime() : Date.now();
           newNotifications.push({
-            id: `checkout-${record.id}-${Date.now()}`,
+            id: `checkout-${record.userId}-${checkOutTime}`,
             type: "check-out",
             staffName: staff.name || "Unknown",
             message: "Checked out",
-            timestamp: new Date(record.checkOutTime || new Date()),
+              timestamp: new Date(record.checkOutTime || Date.now()),
             read: false,
             details: {
               location: record.checkOutLat && record.checkOutLng ? `(${parseFloat(record.checkOutLat).toFixed(4)}, ${parseFloat(record.checkOutLng).toFixed(4)})` : null,
