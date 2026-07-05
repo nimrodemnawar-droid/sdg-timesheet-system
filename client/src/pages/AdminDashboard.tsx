@@ -221,7 +221,17 @@ export default function AdminDashboard() {
     });
 
     if (newNotifications.length > 0) {
-      setNotifications((prev) => [...newNotifications, ...prev].slice(0, 50));
+      setNotifications((prev) => {
+        // Deduplicate notifications by ID
+        const allNotifications = [...newNotifications, ...prev];
+        const seen = new Set<string>();
+        const unique = allNotifications.filter((n) => {
+          if (seen.has(n.id)) return false;
+          seen.add(n.id);
+          return true;
+        });
+        return unique.slice(0, 50);
+      });
     }
 
     setLastAttendanceState(currentState);
