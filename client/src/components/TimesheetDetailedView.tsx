@@ -93,26 +93,47 @@ export function TimesheetDetailedView() {
       "Evidence File",
     ];
 
-    const rows = filteredData.map((record: any) => [
-      record.staffNumber || "N/A",
-      record.staffName || "N/A",
-      record.staffEmail || "N/A",
-      record.date || "N/A",
-      record.checkInTime || "N/A",
-      record.checkOutTime || "N/A",
-      record.checkInAddress || "N/A",
-      record.checkOutAddress || "N/A",
-      record.workModality || "N/A",
-      record.activityCategory || "N/A",
-      record.kpi || "N/A",
-      record.taskDescription || "N/A",
-      record.staffRemarks || "N/A",
-      record.hoursWorked || "0",
-      record.distanceTraveled || "0",
-      record.isSubmitted ? "Submitted" : "Draft",
-      record.submittedAt || "N/A",
-      record.evidenceUploadKey !== "N/A" ? "Uploaded" : "None",
-    ]);
+    // Build rows with date separators
+    const rows: any[] = [];
+    let currentDate = "";
+    
+    sortedData.forEach((record: any) => {
+      const recordDate = new Date(record.date).toDateString();
+      
+      // Add date separator row if date changed
+      if (recordDate !== currentDate) {
+        currentDate = recordDate;
+        const dateStr = new Date(record.date).toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+        rows.push([`📅 ${dateStr}`, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]);
+      }
+      
+      // Add data row
+      rows.push([
+        record.staffNumber || "N/A",
+        record.staffName || "N/A",
+        record.staffEmail || "N/A",
+        new Date(record.date).toLocaleDateString("en-US"),
+        record.checkInTime || "N/A",
+        record.checkOutTime || "N/A",
+        record.checkInAddress || "N/A",
+        record.checkOutAddress || "N/A",
+        record.workModality || "N/A",
+        record.activityCategory || "N/A",
+        record.kpi || "N/A",
+        record.taskDescription || "N/A",
+        record.staffRemarks || "N/A",
+        record.hoursWorked || "0",
+        record.distanceTraveled || "0",
+        record.isSubmitted ? "Submitted" : "Draft",
+        record.submittedAt || "N/A",
+        record.evidenceUploadKey !== "N/A" ? "Uploaded" : "None",
+      ]);
+    });
 
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
