@@ -784,6 +784,37 @@ export default function AdminDashboard() {
 
           {/* Attendance Tab */}
           <TabsContent value="attendance" className="space-y-4">
+            {/* Today's Check-ins Summary */}
+            <Card className="bg-gradient-to-br from-emerald-900/30 to-emerald-900/10 border-emerald-500/30">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-emerald-400" />
+                  Today's Check-ins
+                </CardTitle>
+                <CardDescription className="text-emerald-400/80">Staff who have checked in today</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {stats?.checkedInToday && stats.checkedInToday.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {stats.checkedInToday.map((staff: any, idx: number) => (
+                      <div key={`today-checkin-${staff.userId}-${idx}`} className="bg-slate-700/50 p-3 rounded-lg border border-emerald-500/30">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-white font-semibold">{staff.userName || `Staff ${staff.userId}`}</p>
+                            <p className="text-emerald-400 text-sm">ID: {staff.staffNumber || staff.userId}</p>
+                            <p className="text-slate-400 text-xs mt-1">Check-in: {new Date(staff.checkInTime).toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi' })}</p>
+                          </div>
+                          <CheckCircle className="w-6 h-6 text-emerald-400" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-slate-400 text-center py-4">No staff have checked in today</p>
+                )}
+              </CardContent>
+            </Card>
+
             <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
