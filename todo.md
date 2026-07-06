@@ -537,6 +537,7 @@
 - [x] Add check-out time display on Staff Dashboard
 - [x] Write tests for check-out calculation logic (9 tests passing)
 - [x] Verify real-time updates between staff and admin dashboards
+- [x] Add Today's Check-outs summary section to Attendance tab
 
 ## Phase 51: Visual Overtime Alerts for Staff Exceeding 8 Hours
 - [x] Add overtime calculation logic to database helpers (hoursWorked > 8)

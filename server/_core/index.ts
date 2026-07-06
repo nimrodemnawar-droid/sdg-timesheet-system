@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { dailyTimesheetReportHandler } from "./scheduledHandlers";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -40,6 +41,9 @@ async function startServer() {
   app.get("/api/health", (req, res) => {
     res.json({ ok: true, timestamp: new Date().toISOString() });
   });
+  
+  // Scheduled task endpoints (must be before tRPC and static fallthrough)
+  app.post("/api/scheduled/dailyTimesheetReport", dailyTimesheetReportHandler);
   
   // tRPC API
   app.use(
