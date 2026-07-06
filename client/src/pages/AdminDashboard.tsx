@@ -815,6 +815,43 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
+            {/* Today's Check-outs Summary */}
+            <Card className="bg-gradient-to-br from-blue-900/30 to-blue-900/10 border-blue-500/30">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <CheckCheck className="w-5 h-5 text-blue-400" />
+                  Today's Check-outs
+                </CardTitle>
+                <CardDescription className="text-blue-400/80">Staff who have checked out today</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {stats?.checkedInToday && stats.checkedInToday.filter((s: any) => s.checkOutTime).length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {stats.checkedInToday.filter((staff: any) => staff.checkOutTime).map((staff: any, idx: number) => {
+                      const checkInTime = new Date(staff.checkInTime);
+                      const checkOutTime = new Date(staff.checkOutTime);
+                      const hoursWorked = ((checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60 * 60)).toFixed(2);
+                      return (
+                        <div key={`today-checkout-${staff.userId}-${idx}`} className="bg-slate-700/50 p-3 rounded-lg border border-blue-500/30">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-white font-semibold">{staff.userName || `Staff ${staff.userId}`}</p>
+                              <p className="text-blue-400 text-sm">ID: {staff.staffNumber || staff.userId}</p>
+                              <p className="text-slate-400 text-xs mt-1">Check-out: {checkOutTime.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi' })}</p>
+                              <p className="text-yellow-400 text-xs mt-1">Hours: {hoursWorked}h</p>
+                            </div>
+                            <CheckCheck className="w-6 h-6 text-blue-400" />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-slate-400 text-center py-4">No staff have checked out today</p>
+                )}
+              </CardContent>
+            </Card>
+
             <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
