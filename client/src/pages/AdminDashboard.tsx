@@ -367,15 +367,15 @@ export default function AdminDashboard() {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-br from-slate-700/60 via-slate-600/40 to-slate-800/50 border border-slate-500/50 hover:border-slate-400 transition-all duration-300 shadow-lg hover:shadow-slate-500/30 hover:scale-105">
+          <Card className="bg-gradient-to-br from-blue-700/60 via-blue-600/40 to-blue-800/50 border border-blue-500/50 hover:border-blue-400 transition-all duration-300 shadow-lg hover:shadow-blue-500/30 hover:scale-105">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-300 text-sm mb-1 font-medium">Total Staff</p>
-                  <p className="text-4xl font-bold text-white">{staffList?.length || 0}</p>
-                  <p className="text-xs text-slate-400 mt-1">Active users</p>
+                  <p className="text-blue-300 text-sm mb-1 font-medium">Total Staff</p>
+                  <p className="text-4xl font-bold text-blue-50">{staffList?.length || 0}</p>
+                  <p className="text-xs text-blue-400/80 mt-1">Active users</p>
                 </div>
-                <Users className="w-12 h-12 text-slate-400 opacity-80" />
+                <Users className="w-12 h-12 text-blue-400 opacity-90" />
               </div>
             </CardContent>
           </Card>
@@ -393,28 +393,28 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-amber-700/60 via-amber-600/40 to-slate-800/50 border border-amber-500/50 hover:border-amber-400 transition-all duration-300 shadow-lg hover:shadow-amber-500/30 hover:scale-105">
+          <Card className="bg-gradient-to-br from-orange-700/60 via-orange-600/40 to-orange-800/50 border border-orange-500/50 hover:border-orange-400 transition-all duration-300 shadow-lg hover:shadow-orange-500/30 hover:scale-105">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-amber-300 text-sm mb-1 font-medium">Avg Hrs/Day</p>
-                  <p className="text-4xl font-bold text-amber-50">{analyticsMetrics?.averageHoursPerDay || 0}h</p>
-                  <p className="text-xs text-amber-400/80 mt-1">Last 30 days</p>
+                  <p className="text-orange-300 text-sm mb-1 font-medium">Avg Hrs/Day</p>
+                  <p className="text-4xl font-bold text-orange-50">{analyticsMetrics?.averageHoursPerDay || 0}h</p>
+                  <p className="text-xs text-orange-400/80 mt-1">Last 30 days</p>
                 </div>
-                <Clock className="w-12 h-12 text-amber-400 opacity-90" />
+                <Clock className="w-12 h-12 text-orange-400 opacity-90" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-cyan-700/60 via-cyan-600/40 to-slate-800/50 border border-cyan-500/50 hover:border-cyan-400 transition-all duration-300 shadow-lg hover:shadow-cyan-500/30 hover:scale-105">
+          <Card className="bg-gradient-to-br from-rose-700/60 via-rose-600/40 to-rose-800/50 border border-rose-500/50 hover:border-rose-400 transition-all duration-300 shadow-lg hover:shadow-rose-500/30 hover:scale-105">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-cyan-300 text-sm mb-1 font-medium">Pending</p>
-                  <p className="text-4xl font-bold text-cyan-50">{pendingRequests.length}</p>
-                  <p className="text-xs text-cyan-400/80 mt-1">Awaiting approval</p>
+                  <p className="text-rose-300 text-sm mb-1 font-medium">Pending</p>
+                  <p className="text-4xl font-bold text-rose-50">{pendingRequests.length}</p>
+                  <p className="text-xs text-rose-400/80 mt-1">Awaiting approval</p>
                 </div>
-                <AlertCircle className="w-12 h-12 text-cyan-400 opacity-90" />
+                <AlertCircle className="w-12 h-12 text-rose-400 opacity-90" />
               </div>
             </CardContent>
           </Card>
