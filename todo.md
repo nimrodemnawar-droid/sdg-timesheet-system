@@ -404,6 +404,7 @@
 - [x] Test GPS location tracking end-to-end
 - [x] Test admin reports show latest staff data automatically
 - [x] Verify database connectivity is working (resolve TiProxy error)
+- [x] FIX: Attendance tab not showing checked-in staff (GPS is now optional)
 
 
 ## Phase 38: Verify Reports & Add Admin Management

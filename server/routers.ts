@@ -124,7 +124,11 @@ export const appRouter = router({
     }),
 
     getTodayAllStaff: adminProcedure.query(async () => {
-      return db.getAllStaffCheckedInToday();
+      const staffList = await db.getAllStaffCheckedInToday();
+      return {
+        checkedInToday: staffList,
+        checkedInCount: staffList.length,
+      };
     }),
 
     getByDateRange: protectedProcedure
