@@ -12,7 +12,7 @@ import {
 import { TRPCError } from "@trpc/server";
 import { and, eq, gte, lte, desc, asc, isNotNull } from "drizzle-orm";
 import { getAllStaffAttendanceByDateRange } from "./db";
-import { attendance } from "../drizzle/schema";
+import { attendance, waypoints, users } from "../drizzle/schema";
 import { analyticsRouter } from "./analyticsRouter";
 import { notifyOwner } from "./_core/notification";
 import { storagePut } from "./storage";
@@ -824,24 +824,26 @@ Report generated at: ${new Date().toISOString()}`;
           }
           
           const query = db_instance
-            .select()
-            .from(attendance)
+            .select({
+              id: waypoints.id,
+              latitude: waypoints.latitude,
+              longitude: waypoints.longitude,
+              accuracy: waypoints.accuracy,
+              timestamp: waypoints.timestamp,
+              cumulativeDistance: waypoints.cumulativeDistance,
+              altitude: waypoints.altitude,
+              staffId: waypoints.userId,
+              staffName: users.name,
+              staffNumber: users.staffNumber,
+            })
+            .from(waypoints)
+            .leftJoin(users, eq(waypoints.userId, users.id))
             .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-            .orderBy(desc(attendance.checkInTime));
+            .orderBy(desc(waypoints.timestamp));
           
           const records = await query.execute();
           
-          // Format waypoints from attendance records
-          const formattedWaypoints = records.map((record: any) => ({
-            id: record.id,
-            latitude: record.checkInLat || 0,
-            longitude: record.checkInLng || 0,
-            accuracy: record.checkInAccuracy || 0,
-            timestamp: record.checkInTime,
-            staffId: record.userId,
-          }));
-          
-          return formattedWaypoints;
+          return records;
         } catch (error) {
           console.error('[tRPC] Error fetching waypoint history:', error);
           throw new TRPCError({
