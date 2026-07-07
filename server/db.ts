@@ -2053,10 +2053,11 @@ export async function getAllStaffCheckedInToday() {
       const checkOutAccuracy = latestRecord.checkOutAccuracy ? parseFloat(String(latestRecord.checkOutAccuracy)) : null;
       const distanceTraveled = latestRecord.distanceTraveled ? parseFloat(String(latestRecord.distanceTraveled)) : null;
 
-      // Validate coordinates are valid numbers
-      if (!checkInLat || !checkInLng || isNaN(checkInLat) || isNaN(checkInLng)) {
+      // Validate coordinates are valid numbers - but don't skip if missing
+      const hasValidCoordinates = checkInLat && checkInLng && !isNaN(checkInLat) && !isNaN(checkInLng);
+      if (!hasValidCoordinates) {
         console.warn(`[DB] Staff ${userId} has invalid check-in coordinates:`, { checkInLat, checkInLng });
-        return null; // Skip staff without valid coordinates
+        // Continue processing - GPS is optional for display
       }
 
       // Calculate hours worked if both check-in and check-out times exist
@@ -2098,6 +2099,7 @@ export async function getAllStaffCheckedInToday() {
         taskDescription: latestRecord.taskDescription || null,
         staffRemarks: latestRecord.staffRemarks || null,
         waypointCount: 0, // TODO: Query actual waypoint count
+        hasValidCoordinates, // Flag to indicate if GPS data is available
       };
     }).filter(item => item !== null);
 
