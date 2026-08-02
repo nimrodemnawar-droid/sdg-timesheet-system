@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/mysql2";
-import { and, eq, gte, lte, desc, asc, isNotNull } from "drizzle-orm";
+import { and, eq, gte, lte, desc, asc, isNotNull, sql } from "drizzle-orm";
 import {
   InsertUser,
   users,
@@ -536,11 +536,31 @@ export async function getPendingLeaveRequests() {
   const db = await getDb();
   if (!db) return [];
 
-  return await db
-    .select()
+  const result = await db
+    .select({
+      id: leaveRequests.id,
+      userId: leaveRequests.userId,
+      staffName: users.name,
+      staffEmail: users.email,
+      staffNumber: users.staffNumber,
+      leaveType: leaveRequests.leaveType,
+      startDate: leaveRequests.startDate,
+      endDate: leaveRequests.endDate,
+      daysRequested: leaveRequests.daysRequested,
+      reason: leaveRequests.reason,
+      status: leaveRequests.status,
+      approvedBy: leaveRequests.approvedBy,
+      approvalReason: leaveRequests.approvalReason,
+      approvedAt: leaveRequests.approvedAt,
+      createdAt: leaveRequests.createdAt,
+      updatedAt: leaveRequests.updatedAt,
+    })
     .from(leaveRequests)
+    .leftJoin(users, eq(leaveRequests.userId, users.id))
     .where(eq(leaveRequests.status, "pending"))
     .orderBy(asc(leaveRequests.createdAt));
+
+  return result;
 }
 
 export async function approveLeaveRequest(
@@ -553,6 +573,9 @@ export async function approveLeaveRequest(
 
   const leaveRequest = await getLeaveRequest(leaveRequestId);
   if (!leaveRequest) return;
+
+  const user = await db.select().from(users).where(eq(users.id, leaveRequest.userId)).limit(1);
+  const staffUser = user[0];
 
   await db
     .update(leaveRequests)
@@ -572,6 +595,19 @@ export async function approveLeaveRequest(
     leaveRequest.leaveType as string,
     daysRequested
   );
+
+  // Store notification for staff
+  if (staffUser && staffUser.id) {
+    const startDate = new Date(leaveRequest.startDate).toLocaleDateString();
+    const endDate = new Date(leaveRequest.endDate).toLocaleDateString();
+    await db.insert(emailNotifications).values({
+      type: 'leave_approved',
+      userId: staffUser.id,
+      subject: 'Leave Request Approved',
+      content: `Your ${leaveRequest.leaveType} leave request from ${startDate} to ${endDate} has been approved.${reason ? ` Reason: ${reason}` : ''}`,
+      sentAt: new Date(),
+    });
+  }
 }
 
 export async function rejectLeaveRequest(
@@ -581,6 +617,12 @@ export async function rejectLeaveRequest(
 ) {
   const db = await getDb();
   if (!db) return;
+
+  const leaveRequest = await getLeaveRequest(leaveRequestId);
+  if (!leaveRequest) return;
+
+  const user = await db.select().from(users).where(eq(users.id, leaveRequest.userId)).limit(1);
+  const staffUser = user[0];
 
   await db
     .update(leaveRequests)
@@ -592,6 +634,19 @@ export async function rejectLeaveRequest(
       updatedAt: new Date(),
     })
     .where(eq(leaveRequests.id, leaveRequestId));
+
+  // Store notification for staff
+  if (staffUser && staffUser.id) {
+    const startDate = new Date(leaveRequest.startDate).toLocaleDateString();
+    const endDate = new Date(leaveRequest.endDate).toLocaleDateString();
+    await db.insert(emailNotifications).values({
+      type: 'leave_rejected',
+      userId: staffUser.id,
+      subject: 'Leave Request Rejected',
+      content: `Your ${leaveRequest.leaveType} leave request from ${startDate} to ${endDate} has been rejected.${reason ? ` Reason: ${reason}` : ''}`,
+      sentAt: new Date(),
+    });
+  }
 }
 
 export async function getLeaveBalance(

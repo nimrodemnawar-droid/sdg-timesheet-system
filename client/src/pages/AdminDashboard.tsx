@@ -69,6 +69,7 @@ export default function AdminDashboard() {
   const [lastAttendanceState, setLastAttendanceState] = useState<Map<number, boolean>>(new Map());
   const [leaveFilterStatus, setLeaveFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [leaveSearchTerm, setLeaveSearchTerm] = useState("");
+  const [leaveSortBy, setLeaveSortBy] = useState<"date-desc" | "date-asc" | "staff-name" | "leave-type">("date-desc");
   const [showGpsMap, setShowGpsMap] = useState(false);
   const mapRef = useRef<google.maps.Map | null>(null);
   const [timesheetFilters, setTimesheetFilters] = useState<TimesheetFilterOptions>({
@@ -92,6 +93,23 @@ export default function AdminDashboard() {
   const { data: leaveRequests, refetch: refetchRequests } = trpc.leave.getPending.useQuery(undefined, {
     refetchInterval: 2000,
   }) as any;
+
+  // Sort leave requests based on selected sort option
+  const sortedLeaveRequests = leaveRequests ? [...leaveRequests].sort((a: any, b: any) => {
+    switch (leaveSortBy) {
+      case 'date-asc':
+        return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+      case 'date-desc':
+        return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+      case 'staff-name':
+        return (a.staffName || '').localeCompare(b.staffName || '');
+      case 'leave-type':
+        return (a.leaveType || '').localeCompare(b.leaveType || '');
+      default:
+        return 0;
+    }
+  }) : [];
+
   const { data: staffList, refetch: refetchStaffList } = trpc.users.getAll.useQuery(undefined, {
     refetchInterval: 2000,
   });
@@ -670,6 +688,37 @@ export default function AdminDashboard() {
                       Rejected
                     </Button>
                   </div>
+                  <div className="flex gap-2 mt-3 flex-wrap">
+                    <span className="text-sm text-slate-400 self-center">Sort by:</span>
+                    <Button
+                      onClick={() => setLeaveSortBy("date-desc")}
+                      variant={leaveSortBy === "date-desc" ? "default" : "outline"}
+                      className={leaveSortBy === "date-desc" ? "bg-blue-600 hover:bg-blue-700 text-white border-0 text-xs" : "border-slate-600 text-slate-300 hover:bg-slate-700 text-xs"}
+                    >
+                      Latest Date
+                    </Button>
+                    <Button
+                      onClick={() => setLeaveSortBy("date-asc")}
+                      variant={leaveSortBy === "date-asc" ? "default" : "outline"}
+                      className={leaveSortBy === "date-asc" ? "bg-blue-600 hover:bg-blue-700 text-white border-0 text-xs" : "border-slate-600 text-slate-300 hover:bg-slate-700 text-xs"}
+                    >
+                      Earliest Date
+                    </Button>
+                    <Button
+                      onClick={() => setLeaveSortBy("staff-name")}
+                      variant={leaveSortBy === "staff-name" ? "default" : "outline"}
+                      className={leaveSortBy === "staff-name" ? "bg-blue-600 hover:bg-blue-700 text-white border-0 text-xs" : "border-slate-600 text-slate-300 hover:bg-slate-700 text-xs"}
+                    >
+                      Staff Name
+                    </Button>
+                    <Button
+                      onClick={() => setLeaveSortBy("leave-type")}
+                      variant={leaveSortBy === "leave-type" ? "default" : "outline"}
+                      className={leaveSortBy === "leave-type" ? "bg-blue-600 hover:bg-blue-700 text-white border-0 text-xs" : "border-slate-600 text-slate-300 hover:bg-slate-700 text-xs"}
+                    >
+                      Leave Type
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Leave Requests List */}
@@ -680,7 +729,7 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {leaveRequests
+                    {(sortedLeaveRequests || leaveRequests)
                       .filter((request: any) => {
                         const matchesStatus = leaveFilterStatus === "all" || request.status === leaveFilterStatus;
                         const matchesSearch = !leaveSearchTerm || 
