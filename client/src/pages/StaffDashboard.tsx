@@ -323,16 +323,16 @@ export default function StaffDashboard() {
       return;
     }
 
-    // Block check-in if GPS accuracy is too poor (>1000m = likely coarse/ISP location)
+    // Warn if GPS accuracy is poor but allow check-in (GPS is optional)
     if (gpsCoordinates.accuracy > 1000) {
-      toast.error(`GPS accuracy too low (${gpsCoordinates.accuracy.toFixed(0)}m). Please try again in an area with better GPS signal.`);
-      return;
+      toast.warning(`GPS accuracy is poor (${gpsCoordinates.accuracy.toFixed(0)}m). Check-in will proceed but location may be inaccurate. Try moving to an open area for better signal.`);
     }
 
-    if (!selectedWorkplace) {
-      toast.error("Please select a workplace");
-      return;
-    }
+    // Workplace selection is now optional - use GPS location if available
+    // if (!selectedWorkplace) {
+    //   toast.error("Please select a workplace");
+    //   return;
+    // }
 
     setIsCheckingIn(true);
     setCheckInError(false);
@@ -387,6 +387,11 @@ export default function StaffDashboard() {
     if (!todayAttendance?.id) {
       toast.error("No active check-in found");
       return;
+    }
+
+    // Warn if GPS accuracy is poor but allow check-out (GPS is optional)
+    if (gpsCoordinates.accuracy > 1000) {
+      toast.warning(`GPS accuracy is poor (${gpsCoordinates.accuracy.toFixed(0)}m). Check-out will proceed but location may be inaccurate.`);
     }
 
     setIsCheckingOut(true);

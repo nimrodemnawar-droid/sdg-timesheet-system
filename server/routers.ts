@@ -547,7 +547,38 @@ Report generated at: ${new Date().toISOString()}`;
       )
       .mutation(async ({ input, ctx }) => {
         try {
-          return { success: true, message: 'Leave request created' };
+          const startDate = new Date(input.startDate);
+          const endDate = new Date(input.endDate);
+          
+          if (startDate > endDate) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'Start date must be before end date',
+            });
+          }
+          
+          const result = await db.createLeaveRequest({
+            userId: ctx.user.id,
+            leaveType: input.leaveType,
+            startDate,
+            endDate,
+            daysRequested: input.daysRequested.toString(),
+            reason: input.reason,
+          });
+          
+          if (!result) {
+            throw new TRPCError({
+              code: 'INTERNAL_SERVER_ERROR',
+              message: 'Failed to create leave request',
+            });
+          }
+          
+          await notifyOwner({
+            title: 'New Leave Request',
+            content: `${ctx.user.name} submitted ${input.leaveType} leave for ${input.daysRequested} days`,
+          });
+          
+          return { success: true, message: 'Leave request created successfully' };
         } catch (error) {
           console.error('[tRPC] Error creating leave request:', error);
           throw new TRPCError({
