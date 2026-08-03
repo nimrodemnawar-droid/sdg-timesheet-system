@@ -888,5 +888,118 @@ Report generated at: ${new Date().toISOString()}`;
         }
       }),
   }),
+
+  manualApproval: router({
+    requestCheckIn: protectedProcedure
+      .input(
+        z.object({
+          gpsAccuracy: z.number(),
+          latitude: z.number(),
+          longitude: z.number(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        try {
+          // Create manual approval request
+          await db.createManualApprovalRequest({
+            userId: ctx.user.id,
+            requestType: "check_in",
+            gpsAccuracy: input.gpsAccuracy,
+            latitude: input.latitude,
+            longitude: input.longitude,
+          });
+
+          // Notify admin
+          await notifyOwner({
+            title: "Manual Check-in Request",
+            content: `${ctx.user.name} has requested manual check-in approval due to poor GPS accuracy (${input.gpsAccuracy.toFixed(0)}m).`,
+          });
+
+          return { success: true, message: "Check-in request submitted for admin approval" };
+        } catch (error) {
+          console.error("[Manual Approval] Error creating request:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to submit check-in request",
+          });
+        }
+      }),
+
+    getPending: adminProcedure.query(async () => {
+      try {
+        return await db.getPendingManualApprovals();
+      } catch (error) {
+        console.error("[Manual Approval] Error fetching pending:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch pending approvals",
+        });
+      }
+    }),
+
+    approve: adminProcedure
+      .input(
+        z.object({
+          requestId: z.number(),
+          reason: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const success = await db.approveManualRequest(
+            input.requestId,
+            ctx.user.id,
+            input.reason
+          );
+
+          if (!success) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Request not found",
+            });
+          }
+
+          return { success: true, message: "Check-in approved" };
+        } catch (error) {
+          console.error("[Manual Approval] Error approving:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to approve request",
+          });
+        }
+      }),
+
+    reject: adminProcedure
+      .input(
+        z.object({
+          requestId: z.number(),
+          reason: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const success = await db.rejectManualRequest(
+            input.requestId,
+            ctx.user.id,
+            input.reason
+          );
+
+          if (!success) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Request not found",
+            });
+          }
+
+          return { success: true, message: "Check-in request rejected" };
+        } catch (error) {
+          console.error("[Manual Approval] Error rejecting:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to reject request",
+          });
+        }
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

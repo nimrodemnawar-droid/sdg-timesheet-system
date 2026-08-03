@@ -71,6 +71,13 @@
       "when": 1778050462151,
       "tag": "0009_absent_misty_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1785740337054,
+      "tag": "0010_steady_loki",
+      "breakpoints": true
     }
   ]
 }

@@ -421,3 +421,26 @@ export const reportDeliveryHistory = mysqlTable("reportDeliveryHistory", {
 
 export type ReportDeliveryHistory = typeof reportDeliveryHistory.$inferSelect;
 export type InsertReportDeliveryHistory = typeof reportDeliveryHistory.$inferInsert;
+
+/**
+ * Manual Approval Requests - For staff with poor GPS accuracy who need admin approval to check in
+ */
+export const manualApprovalRequests = mysqlTable("manualApprovalRequests", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  requestType: mysqlEnum("requestType", ["check_in", "check_out"]).notNull(),
+  gpsAccuracy: decimal("gpsAccuracy", { precision: 10, scale: 2 }), // Accuracy in meters
+  latitude: decimal("latitude", { precision: 11, scale: 8 }),
+  longitude: decimal("longitude", { precision: 11, scale: 8 }),
+  requestedAt: timestamp("requestedAt").defaultNow().notNull(),
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  approvedBy: int("approvedBy").references(() => users.id, { onDelete: "set null" }),
+  approvalReason: text("approvalReason"),
+  approvedAt: timestamp("approvedAt"),
+  rejectionReason: text("rejectionReason"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ManualApprovalRequest = typeof manualApprovalRequests.$inferSelect;
+export type InsertManualApprovalRequest = typeof manualApprovalRequests.$inferInsert;

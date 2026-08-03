@@ -21,6 +21,7 @@ import {
   notificationHistory,
   reportSchedules,
   reportDeliveryHistory,
+  manualApprovalRequests,
   type ReportSchedule,
   type InsertReportSchedule,
   type InsertReportDeliveryHistory,
@@ -774,8 +775,8 @@ export async function createEmailNotification(data: {
 
   try {
     await db.insert(emailNotifications).values({
-      userId: data.userId,
       type: data.type,
+      userId: data.userId,
       subject: data.subject,
       content: data.content || "",
       sentAt: new Date(),
@@ -2599,4 +2600,186 @@ export async function generateDailyTimesheetSummary(date: Date = new Date()) {
     activitiesBySDG,
     records,
   };
+}
+
+
+// ============ MANUAL APPROVAL REQUESTS (Poor GPS) ============
+
+export async function createManualApprovalRequest(data: {
+  userId: number;
+  requestType: "check_in" | "check_out";
+  gpsAccuracy?: number;
+  latitude?: number;
+  longitude?: number;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db.insert(manualApprovalRequests).values({
+      userId: data.userId,
+      requestType: data.requestType,
+      gpsAccuracy: data.gpsAccuracy ? String(data.gpsAccuracy) : null,
+      latitude: data.latitude ? String(data.latitude) : null,
+      longitude: data.longitude ? String(data.longitude) : null,
+      requestedAt: new Date(),
+      status: "pending",
+    });
+
+    return result;
+  } catch (error) {
+    console.error("[Manual Approval] Failed to create request:", error);
+    return null;
+  }
+}
+
+export async function getPendingManualApprovals() {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    const result = await db
+      .select({
+        id: manualApprovalRequests.id,
+        userId: manualApprovalRequests.userId,
+        staffName: users.name,
+        staffEmail: users.email,
+        staffNumber: users.staffNumber,
+        requestType: manualApprovalRequests.requestType,
+        gpsAccuracy: manualApprovalRequests.gpsAccuracy,
+        latitude: manualApprovalRequests.latitude,
+        longitude: manualApprovalRequests.longitude,
+        requestedAt: manualApprovalRequests.requestedAt,
+        status: manualApprovalRequests.status,
+        approvedBy: manualApprovalRequests.approvedBy,
+        approvalReason: manualApprovalRequests.approvalReason,
+        approvedAt: manualApprovalRequests.approvedAt,
+        rejectionReason: manualApprovalRequests.rejectionReason,
+        createdAt: manualApprovalRequests.createdAt,
+      })
+      .from(manualApprovalRequests)
+      .leftJoin(users, eq(manualApprovalRequests.userId, users.id))
+      .where(eq(manualApprovalRequests.status, "pending"))
+      .orderBy(asc(manualApprovalRequests.requestedAt));
+
+    return result;
+  } catch (error) {
+    console.error("[Manual Approval] Failed to fetch pending requests:", error);
+    return [];
+  }
+}
+
+export async function approveManualRequest(
+  requestId: number,
+  approvedBy: number,
+  reason?: string
+) {
+  const db = await getDb();
+  if (!db) return false;
+
+  try {
+    const request = await db
+      .select()
+      .from(manualApprovalRequests)
+      .where(eq(manualApprovalRequests.id, requestId))
+      .limit(1);
+
+    if (!request.length) return false;
+
+    const manualRequest = request[0];
+
+    // Update request status
+    await db
+      .update(manualApprovalRequests)
+      .set({
+        status: "approved",
+        approvedBy,
+        approvalReason: reason,
+        approvedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(manualApprovalRequests.id, requestId));
+
+    // If it's a check-in request, create the attendance record
+    if (manualRequest.requestType === "check_in") {
+      const user = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, manualRequest.userId))
+        .limit(1);
+
+      if (user.length) {
+        // Create attendance record with manual approval flag
+        await db.insert(attendance).values({
+          userId: manualRequest.userId as any,
+          checkInTime: new Date(),
+          checkInLat: manualRequest.latitude ? manualRequest.latitude.toString() : null,
+          checkInLng: manualRequest.longitude ? manualRequest.longitude.toString() : null,
+          checkInAccuracy: manualRequest.gpsAccuracy ? manualRequest.gpsAccuracy.toString() : null,
+          checkInMethod: "manual_approval",
+        } as any);
+
+        // Notify staff
+        await db.insert(emailNotifications).values({
+          type: 'manual_approval_approved',
+          userId: manualRequest.userId,
+          subject: "Manual Check-in Approved",
+          content: `Your check-in request with poor GPS accuracy (${manualRequest.gpsAccuracy}m) has been approved by admin.${reason ? ` Reason: ${reason}` : ""}`,
+          sentAt: new Date(),
+        });
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error("[Manual Approval] Failed to approve request:", error);
+    return false;
+  }
+}
+
+export async function rejectManualRequest(
+  requestId: number,
+  approvedBy: number,
+  reason?: string
+) {
+  const db = await getDb();
+  if (!db) return false;
+
+  try {
+    const request = await db
+      .select()
+      .from(manualApprovalRequests)
+      .where(eq(manualApprovalRequests.id, requestId))
+      .limit(1);
+
+    if (!request.length) return false;
+
+    const manualRequest = request[0];
+
+    // Update request status
+    await db
+      .update(manualApprovalRequests)
+      .set({
+        status: "rejected",
+        approvedBy,
+        rejectionReason: reason,
+        approvedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(manualApprovalRequests.id, requestId));
+
+    // Notify staff
+    await db.insert(emailNotifications).values({
+      type: 'manual_approval_rejected',
+      userId: manualRequest.userId,
+      subject: "Manual Check-in Request Rejected",
+      content: `Your check-in request with poor GPS accuracy (${manualRequest.gpsAccuracy}m) has been rejected.${reason ? ` Reason: ${reason}` : ""}`,
+      sentAt: new Date(),
+    });
+
+    return true;
+  } catch (error) {
+    console.error("[Manual Approval] Failed to reject request:", error);
+    return false;
+  }
 }
