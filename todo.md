@@ -405,6 +405,10 @@
 - [x] Test admin reports show latest staff data automatically
 - [x] Verify database connectivity is working (resolve TiProxy error)
 - [x] FIX: Attendance tab not showing checked-in staff (GPS is now optional)
+- [x] FIX: GPS accuracy blocking check-in (now allows poor GPS with manual approval fallback)
+- [x] Implement manual approval request system for poor GPS
+- [x] Add admin interface to approve/reject manual requests
+- [x] Add notifications for manual approval decisions
 
 
 ## Phase 38: Verify Reports & Add Admin Management
