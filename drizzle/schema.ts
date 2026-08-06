@@ -10,6 +10,7 @@ import {
   datetime,
   json,
 } from "drizzle-orm/mysql-core";
+import { relations } from "drizzle-orm";
 
 /**
  * Core user table backing auth flow with role-based access control.
@@ -444,3 +445,95 @@ export const manualApprovalRequests = mysqlTable("manualApprovalRequests", {
 
 export type ManualApprovalRequest = typeof manualApprovalRequests.$inferSelect;
 export type InsertManualApprovalRequest = typeof manualApprovalRequests.$inferInsert;
+
+/**
+ * Monthly Reports - Staff submissions for previous month's activities.
+ */
+export const monthlyReports = mysqlTable("monthlyReports", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  reportingMonth: datetime("reportingMonth").notNull(), // YYYY-MM-01 for the month being reported
+  submissionStatus: mysqlEnum("submissionStatus", ["pending", "submitted", "returned", "locked"]).default("pending").notNull(),
+  reviewStatus: mysqlEnum("reviewStatus", ["pending_review", "approved", "rejected", "correction_required"]).default("pending_review").notNull(),
+  submittedAt: timestamp("submittedAt"),
+  reviewedBy: int("reviewedBy"), // User ID of supervisor/admin who reviewed
+  reviewedAt: timestamp("reviewedAt"),
+  supervisorComments: text("supervisorComments"),
+  keyActivities: text("keyActivities"),
+  challenges: text("challenges"),
+  solutions: text("solutions"),
+  plannedActivities: text("plannedActivities"),
+  supportRequired: text("supportRequired"),
+  additionalComments: text("additionalComments"),
+  confirmationStatement: boolean("confirmationStatement").default(false).notNull(),
+  isDraft: boolean("isDraft").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MonthlyReport = typeof monthlyReports.$inferSelect;
+export type InsertMonthlyReport = typeof monthlyReports.$inferInsert;
+
+/**
+ * Monthly Report Audit Log - Tracks all actions related to monthly reports.
+ */
+export const monthlyReportAuditLog = mysqlTable("monthlyReportAuditLog", {
+  id: int("id").autoincrement().primaryKey(),
+  reportId: int("reportId").notNull(),
+  userId: int("userId").notNull(), // User who performed the action
+  action: varchar("action", { length: 100 }).notNull(), // created, draft_saved, submitted, viewed, approved, returned, resubmitted, reopened, locked, admin_override
+  actionDate: timestamp("actionDate").defaultNow().notNull(),
+  reason: text("reason"), // For admin override or return
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type MonthlyReportAuditLog = typeof monthlyReportAuditLog.$inferSelect;
+export type InsertMonthlyReportAuditLog = typeof monthlyReportAuditLog.$inferInsert;
+
+export const monthlyReportsRelations = relations(monthlyReports, ({ one }) => ({
+  user: one(users, {
+    fields: [monthlyReports.userId],
+    references: [users.id],
+  }),
+}));
+
+export const monthlyReportAuditLogRelations = relations(monthlyReportAuditLog, ({ one }) => ({
+  report: one(monthlyReports, {
+    fields: [monthlyReportAuditLog.reportId],
+    references: [monthlyReports.id],
+  }),
+  user: one(users, {
+    fields: [monthlyReportAuditLog.userId],
+    references: [users.id],
+  }),
+}));
+
+export const allSchema = {
+  users,
+  sdgGoals,
+  activityCategories,
+  kpis,
+  attendance,
+  supervisorConfirmations,
+  waypoints,
+  leaveRequests,
+  leaveBalance,
+  supervisorRemarks,
+  emailNotifications,
+  documents,
+  auditLog,
+  systemConfig,
+  activityHeatmap,
+  notificationPreferences,
+  notificationHistory,
+  reportSchedules,
+  reportDeliveryHistory,
+  manualApprovalRequests,
+  monthlyReports,
+  monthlyReportAuditLog,
+  monthlyReportsRelations,
+  monthlyReportAuditLogRelations,
+};
+

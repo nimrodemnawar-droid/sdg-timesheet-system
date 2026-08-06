@@ -1001,5 +1001,197 @@ Report generated at: ${new Date().toISOString()}`;
         }
       }),
   }),
+
+  monthlyReports: router({
+    getMyReports: protectedProcedure.query(async ({ ctx }) => {
+      try {
+        return await db.getMonthlyReportsByUserId(ctx.user.id);
+      } catch (error) {
+        console.error("[Monthly Reports] Error fetching user reports:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch monthly reports",
+        });
+      }
+    }),
+
+    getAllReports: adminProcedure.query(async () => {
+      try {
+        return await db.getAllMonthlyReports();
+      } catch (error) {
+        console.error("[Monthly Reports] Error fetching all reports:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch all monthly reports",
+        });
+      }
+    }),
+
+    saveDraft: protectedProcedure
+      .input(
+        z.object({
+          reportingMonth: z.string(), // YYYY-MM-01
+          keyActivities: z.string().optional(),
+          challenges: z.string().optional(),
+          solutions: z.string().optional(),
+          plannedActivities: z.string().optional(),
+          supportRequired: z.string().optional(),
+          additionalComments: z.string().optional(),
+          confirmationStatement: z.boolean().default(false),
+          reportId: z.number().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const monthDate = new Date(input.reportingMonth);
+          if (isNaN(monthDate.getTime())) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid reporting month date" });
+          }
+
+          let report;
+          if (input.reportId) {
+            report = await db.updateMonthlyReport(input.reportId, {
+              keyActivities: input.keyActivities,
+              challenges: input.challenges,
+              solutions: input.solutions,
+              plannedActivities: input.plannedActivities,
+              supportRequired: input.supportRequired,
+              additionalComments: input.additionalComments,
+              confirmationStatement: input.confirmationStatement,
+              isDraft: true,
+            });
+          } else {
+            report = await db.createMonthlyReport({
+              userId: ctx.user.id,
+              reportingMonth: monthDate,
+              keyActivities: input.keyActivities,
+              challenges: input.challenges,
+              solutions: input.solutions,
+              plannedActivities: input.plannedActivities,
+              supportRequired: input.supportRequired,
+              additionalComments: input.additionalComments,
+              confirmationStatement: input.confirmationStatement,
+              isDraft: true,
+              submissionStatus: "pending",
+              reviewStatus: "pending_review",
+            });
+          }
+
+          // Log audit event
+          if (report && 'id' in report) {
+            await db.addMonthlyReportAuditLog({
+              reportId: report.id as number,
+              userId: ctx.user.id,
+              action: "draft_saved",
+              reason: "Staff saved monthly report draft",
+            });
+          }
+
+          return { success: true, report, message: "Draft saved successfully" };
+        } catch (error) {
+          console.error("[Monthly Reports] Error saving draft:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error instanceof Error ? error.message : "Failed to save monthly report draft",
+          });
+        }
+      }),
+
+    submitReport: protectedProcedure
+      .input(
+        z.object({
+          reportId: z.number(),
+          keyActivities: z.string(),
+          challenges: z.string().optional(),
+          solutions: z.string().optional(),
+          plannedActivities: z.string(),
+          supportRequired: z.string().optional(),
+          additionalComments: z.string().optional(),
+          confirmationStatement: z.boolean(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        try {
+          if (!input.confirmationStatement) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "You must confirm that all information provided is accurate and complete.",
+            });
+          }
+
+          const report = await db.updateMonthlyReport(input.reportId, {
+            keyActivities: input.keyActivities,
+            challenges: input.challenges,
+            solutions: input.solutions,
+            plannedActivities: input.plannedActivities,
+            supportRequired: input.supportRequired,
+            additionalComments: input.additionalComments,
+            confirmationStatement: input.confirmationStatement,
+            isDraft: false,
+            submissionStatus: "submitted",
+            reviewStatus: "pending_review",
+            submittedAt: new Date(),
+          });
+
+          await db.addMonthlyReportAuditLog({
+            reportId: input.reportId,
+            userId: ctx.user.id,
+            action: "submitted",
+            reason: "Staff submitted monthly report",
+          });
+
+          // Notify owner / admins
+          await notifyOwner({
+            title: "New Monthly Staff Report Submitted",
+            content: `Staff member ID ${ctx.user.id} has submitted their monthly activity report for review.`,
+          });
+
+          return { success: true, report, message: "Monthly report submitted successfully" };
+        } catch (error) {
+          console.error("[Monthly Reports] Error submitting report:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error instanceof Error ? error.message : "Failed to submit monthly report",
+          });
+        }
+      }),
+
+    reviewReport: adminProcedure
+      .input(
+        z.object({
+          reportId: z.number(),
+          reviewStatus: z.enum(["approved", "rejected", "correction_required"]),
+          supervisorComments: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const submissionStatus = input.reviewStatus === "approved" ? "locked" : "returned";
+
+          const report = await db.updateMonthlyReport(input.reportId, {
+            reviewStatus: input.reviewStatus,
+            submissionStatus: submissionStatus,
+            supervisorComments: input.supervisorComments,
+            reviewedBy: ctx.user.id,
+            reviewedAt: new Date(),
+          });
+
+          await db.addMonthlyReportAuditLog({
+            reportId: input.reportId,
+            userId: ctx.user.id,
+            action: `reviewed_${input.reviewStatus}`,
+            reason: input.supervisorComments,
+          });
+
+          return { success: true, report, message: `Report ${input.reviewStatus} successfully` };
+        } catch (error) {
+          console.error("[Monthly Reports] Error reviewing report:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to review monthly report",
+          });
+        }
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

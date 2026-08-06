@@ -22,9 +22,13 @@ import {
   reportSchedules,
   reportDeliveryHistory,
   manualApprovalRequests,
+  monthlyReports,
+  monthlyReportAuditLog,
   type ReportSchedule,
   type InsertReportSchedule,
   type InsertReportDeliveryHistory,
+  type InsertMonthlyReport,
+  type InsertMonthlyReportAuditLog,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -2782,4 +2786,58 @@ export async function rejectManualRequest(
     console.error("[Manual Approval] Failed to reject request:", error);
     return false;
   }
+}
+
+// Monthly Reports Functions
+
+export async function createMonthlyReport(reportData: InsertMonthlyReport) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const [newReport] = await db.insert(monthlyReports).values(reportData);
+  return newReport;
+}
+
+export async function getMonthlyReportById(reportId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const res = await db.select().from(monthlyReports).where(eq(monthlyReports.id, reportId)).limit(1);
+  return res.length > 0 ? res[0] : undefined;
+}
+
+export async function getMonthlyReportsByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(monthlyReports).where(eq(monthlyReports.userId, userId)).orderBy(desc(monthlyReports.reportingMonth));
+}
+
+export async function getAllMonthlyReports() {
+  const db = await getDb();
+  if (!db) return [];
+  const res = await db
+    .select({
+      report: monthlyReports,
+      user: users,
+    })
+    .from(monthlyReports)
+    .leftJoin(users, eq(monthlyReports.userId, users.id))
+    .orderBy(desc(monthlyReports.reportingMonth), asc(monthlyReports.userId));
+
+  return res.map(row => ({
+    ...row.report,
+    user: row.user,
+  }));
+}
+
+export async function updateMonthlyReport(reportId: number, reportData: Partial<InsertMonthlyReport>) {
+  const db = await getDb();
+  if (!db) return undefined;
+  await db.update(monthlyReports).set(reportData).where(eq(monthlyReports.id, reportId));
+  return getMonthlyReportById(reportId);
+}
+
+export async function addMonthlyReportAuditLog(logData: InsertMonthlyReportAuditLog) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const [newLog] = await db.insert(monthlyReportAuditLog).values(logData);
+  return newLog;
 }

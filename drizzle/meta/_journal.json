@@ -78,6 +78,13 @@
       "when": 1785740337054,
       "tag": "0010_steady_loki",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1785850369467,
+      "tag": "0011_giant_gamma_corps",
+      "breakpoints": true
     }
   ]
 }

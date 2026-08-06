@@ -20,6 +20,7 @@ import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import LeaveBalanceDashboard from "./pages/LeaveBalanceDashboard";
 import WaypointHistory from "./pages/WaypointHistory";
 import AdminDashboardExecutive from "./pages/AdminDashboardExecutive";
+import MonthlyReports from "./pages/MonthlyReports";
 
 
 function Navigation() {
@@ -33,6 +34,7 @@ function Navigation() {
     { label: "Leave", href: "/leave" },
     { label: "Leave Balance", href: "/leave-balance" },
     { label: "Waypoints", href: "/waypoint-history" },
+    { label: "Monthly Reports", href: "/monthly-reports" },
     ...(user.role === "admin" || user.role === "supervisor"
       ? [
           { label: "Attendance", href: "/supervisor" },
@@ -140,6 +142,7 @@ function Router() {
         <Route path="/leave" component={LeaveRequest} />
         <Route path="/leave-balance" component={LeaveBalanceDashboard} />
         <Route path="/waypoint-history" component={WaypointHistory} />
+        <Route path="/monthly-reports" component={MonthlyReports} />
         
         {/* Supervisor/Admin routes */}
         {(user.role === "admin" || user.role === "supervisor") && (
