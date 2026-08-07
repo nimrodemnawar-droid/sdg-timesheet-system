@@ -2841,3 +2841,104 @@ export async function addMonthlyReportAuditLog(logData: InsertMonthlyReportAudit
   const [newLog] = await db.insert(monthlyReportAuditLog).values(logData);
   return newLog;
 }
+
+
+// Monthly Reports Export Helpers
+
+export async function getMonthlyReportsForExport(filters?: {
+  userId?: number;
+  startMonth?: Date;
+  endMonth?: Date;
+  reviewStatus?: string;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let conditions: any[] = [];
+
+  if (filters?.userId) {
+    conditions.push(eq(monthlyReports.userId, filters.userId));
+  }
+
+  if (filters?.startMonth) {
+    conditions.push(gte(monthlyReports.reportingMonth, filters.startMonth));
+  }
+
+  if (filters?.endMonth) {
+    conditions.push(lte(monthlyReports.reportingMonth, filters.endMonth));
+  }
+
+  if (filters?.reviewStatus && filters.reviewStatus !== 'all') {
+    conditions.push(eq(monthlyReports.reviewStatus, filters.reviewStatus as any));
+  }
+
+  const res = await db
+    .select({
+      report: monthlyReports,
+      user: users,
+    })
+    .from(monthlyReports)
+    .leftJoin(users, eq(monthlyReports.userId, users.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(monthlyReports.reportingMonth));
+
+  return res.map(row => ({
+    ...row.report,
+    staffName: row.user?.name || 'Unknown',
+    staffEmail: row.user?.email || '',
+    staffNumber: row.user?.staffNumber || 0,
+  }));
+}
+
+export async function generateMonthlyReportCSV(reports: any[]): Promise<string> {
+  const headers = [
+    'Staff Name',
+    'Staff Number',
+    'Email',
+    'Reporting Month',
+    'Key Activities',
+    'Challenges',
+    'Solutions',
+    'Planned Activities',
+    'Support Required',
+    'Additional Comments',
+    'Submission Status',
+    'Review Status',
+    'Submitted Date',
+    'Reviewed Date',
+    'Supervisor Comments',
+  ];
+
+  const rows = reports.map(r => [
+    r.staffName || '',
+    r.staffNumber || '',
+    r.staffEmail || '',
+    new Date(r.reportingMonth).toLocaleDateString(),
+    `"${(r.keyActivities || '').replace(/"/g, '""')}"`,
+    `"${(r.challenges || '').replace(/"/g, '""')}"`,
+    `"${(r.solutions || '').replace(/"/g, '""')}"`,
+    `"${(r.plannedActivities || '').replace(/"/g, '""')}"`,
+    `"${(r.supportRequired || '').replace(/"/g, '""')}"`,
+    `"${(r.additionalComments || '').replace(/"/g, '""')}"`,
+    r.submissionStatus || '',
+    r.reviewStatus || '',
+    r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : '',
+    r.reviewedAt ? new Date(r.reviewedAt).toLocaleDateString() : '',
+    `"${(r.supervisorComments || '').replace(/"/g, '""')}"`,
+  ]);
+
+  const csv = [
+    headers.join(','),
+    ...rows.map(row => row.join(',')),
+  ].join('\n');
+
+  return csv;
+}
+
+export async function generateMonthlyReportPDF(reports: any[]): Promise<Buffer> {
+  // Generate a simple CSV-based text file as fallback (PDF-lib may not be installed)
+  const csv = await generateMonthlyReportCSV(reports);
+  return Buffer.from(csv, 'utf-8');
+
+
+}

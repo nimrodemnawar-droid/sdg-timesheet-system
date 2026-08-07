@@ -727,3 +727,19 @@
 - [ ] Add retry button on failure
 - [ ] Test animations on mobile devices
 - [ ] Test with slow network conditions
+
+
+## Monthly Reports - Export & Filtering Features
+
+- [ ] Add export to PDF functionality for approved monthly reports
+- [ ] Add export to CSV functionality for monthly reports
+- [ ] Implement search by staff name in admin dashboard
+- [ ] Implement filter by reporting month/date range
+- [ ] Implement filter by review status (approved, pending, rejected, correction_required)
+- [ ] Add combined search + filter UI with real-time results
+- [ ] Create backend helper to generate PDF from monthly report data
+- [ ] Create backend helper to generate CSV from monthly report data
+- [ ] Add export button to individual report rows
+- [ ] Add bulk export feature for multiple reports
+- [ ] Test export functionality with various data
+- [ ] Test filter and search accuracy

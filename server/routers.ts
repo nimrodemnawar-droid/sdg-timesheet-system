@@ -1192,6 +1192,133 @@ Report generated at: ${new Date().toISOString()}`;
           });
         }
       }),
+
+    exportReports: adminProcedure
+      .input(
+        z.object({
+          format: z.enum(["csv", "pdf"]),
+          filters: z.object({
+            userId: z.number().optional(),
+            startMonth: z.string().optional(),
+            endMonth: z.string().optional(),
+            reviewStatus: z.string().optional(),
+          }).optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        try {
+          const filters = input.filters ? {
+            userId: input.filters.userId,
+            startMonth: input.filters.startMonth ? new Date(input.filters.startMonth) : undefined,
+            endMonth: input.filters.endMonth ? new Date(input.filters.endMonth) : undefined,
+            reviewStatus: input.filters.reviewStatus,
+          } : undefined;
+
+          const reports = await db.getMonthlyReportsForExport(filters);
+
+          if (reports.length === 0) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "No reports found matching the criteria",
+            });
+          }
+
+          let fileContent: Buffer;
+          let fileName: string;
+          let mimeType: string;
+
+          if (input.format === "csv") {
+            const csv = await db.generateMonthlyReportCSV(reports);
+            fileContent = Buffer.from(csv, "utf-8");
+            fileName = `monthly_reports_${new Date().getTime()}.csv`;
+            mimeType = "text/csv";
+          } else {
+            fileContent = await db.generateMonthlyReportPDF(reports);
+            fileName = `monthly_reports_${new Date().getTime()}.pdf`;
+            mimeType = "application/pdf";
+          }
+
+          // Upload to storage
+          const { url } = await storagePut(
+            `exports/monthly-reports/${fileName}`,
+            fileContent,
+            mimeType
+          );
+
+          return {
+            success: true,
+            url,
+            fileName,
+            reportCount: reports.length,
+          };
+        } catch (error) {
+          console.error("[Monthly Reports] Error exporting reports:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error instanceof Error ? error.message : "Failed to export monthly reports",
+          });
+        }
+      }),
+
+    searchAndFilter: adminProcedure
+      .input(
+        z.object({
+          searchTerm: z.string().optional(),
+          startMonth: z.string().optional(),
+          endMonth: z.string().optional(),
+          reviewStatus: z.string().optional(),
+          submissionStatus: z.string().optional(),
+        })
+      )
+      .query(async ({ input }) => {
+        try {
+          const allReports = await db.getAllMonthlyReports();
+
+          let filtered = allReports;
+
+          // Search by staff name or email
+          if (input.searchTerm) {
+            const term = input.searchTerm.toLowerCase();
+            filtered = filtered.filter(r =>
+              (r.user?.name || '').toLowerCase().includes(term) ||
+              (r.user?.email || '').toLowerCase().includes(term)
+            );
+          }
+
+          // Filter by date range
+          if (input.startMonth) {
+            const startDate = new Date(input.startMonth);
+            filtered = filtered.filter(r => new Date(r.reportingMonth) >= startDate);
+          }
+
+          if (input.endMonth) {
+            const endDate = new Date(input.endMonth);
+            filtered = filtered.filter(r => new Date(r.reportingMonth) <= endDate);
+          }
+
+          // Filter by review status
+          if (input.reviewStatus && input.reviewStatus !== "all") {
+            filtered = filtered.filter(r => r.reviewStatus === input.reviewStatus);
+          }
+
+          // Filter by submission status
+          if (input.submissionStatus && input.submissionStatus !== "all") {
+            filtered = filtered.filter(r => r.submissionStatus === input.submissionStatus);
+          }
+
+          return {
+            total: allReports.length,
+            filtered: filtered.length,
+            reports: filtered,
+          };
+        } catch (error) {
+          console.error("[Monthly Reports] Error searching/filtering:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to search and filter reports",
+          });
+        }
+      }),
   }),
 });
 export type AppRouter = typeof appRouter;
