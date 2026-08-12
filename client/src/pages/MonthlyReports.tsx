@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { FileText, Calendar, CheckCircle2, AlertCircle, Clock, ShieldCheck, Send, ArrowLeft, Download, Search, SlidersHorizontal, X } from "lucide-react";
 import { useLocation } from "wouter";
+import { getMonthlyReportMode } from "../../../shared/monthlyReportRole";
 
 export default function MonthlyReports() {
   const { user } = useAuth();
@@ -17,7 +18,8 @@ export default function MonthlyReports() {
   const utils = trpc.useUtils();
 
   const [selectedMonth, setSelectedMonth] = useState("2026-08-01");
-  const [activeTab, setActiveTab] = useState<"my-reports" | "admin-review">(user?.role === "admin" ? "admin-review" : "my-reports");
+  const reportMode = getMonthlyReportMode(user?.role);
+  const isAdmin = reportMode === "admin";
 
   const [keyActivities, setKeyActivities] = useState("");
   const [challenges, setChallenges] = useState("");
@@ -57,6 +59,9 @@ export default function MonthlyReports() {
   });
   const allReports = reportSearchResults?.reports ?? [];
   const totalReportCount = reportSearchResults?.total ?? allReports.length;
+  const pendingReviewCount = allReports.filter((report) => report.reviewStatus === "pending_review").length;
+  const approvedReportCount = allReports.filter((report) => report.reviewStatus === "approved").length;
+  const needsActionCount = allReports.filter((report) => report.reviewStatus === "rejected" || report.reviewStatus === "correction_required").length;
 
   const saveDraftMutation = trpc.monthlyReports.saveDraft.useMutation({
     onSuccess: (data) => {
@@ -183,25 +188,20 @@ export default function MonthlyReports() {
             </p>
           </div>
 
-          {user?.role === "admin" && (
-            <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
-              <button
-                onClick={() => setActiveTab("my-reports")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === "my-reports" ? "bg-blue-600 text-white" : "text-slate-300 hover:text-white"}`}
-              >
-                My Reports
-              </button>
-              <button
-                onClick={() => setActiveTab("admin-review")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === "admin-review" ? "bg-blue-600 text-white" : "text-slate-300 hover:text-white"}`}
-              >
-                Admin Review ({allReports.length})
-              </button>
+          {isAdmin ? (
+            <div className="rounded-lg border border-violet-700/60 bg-violet-950/40 px-4 py-3 text-right">
+              <p className="text-xs font-semibold uppercase tracking-wide text-violet-300">Admin workspace</p>
+              <p className="text-sm text-slate-200">Review, decide, and export reports</p>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-blue-700/60 bg-blue-950/40 px-4 py-3 text-right">
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-300">Staff workspace</p>
+              <p className="text-sm text-slate-200">Submit and track your own report</p>
             </div>
           )}
         </div>
 
-        {activeTab === "my-reports" ? (
+        {!isAdmin ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Form Column */}
             <div className="lg:col-span-2 space-y-6">
@@ -387,7 +387,43 @@ export default function MonthlyReports() {
             </div>
           </div>
         ) : (
-          /* Admin Review Tab */
+          <div className="space-y-6">
+            <div className="rounded-xl border border-violet-800/60 bg-gradient-to-r from-violet-950/70 via-slate-900 to-slate-900 p-5 shadow-xl">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300">Admin control center</p>
+                  <h2 className="mt-1 text-2xl font-bold text-white">Monthly report review queue</h2>
+                  <p className="mt-1 max-w-2xl text-sm text-slate-400">Start with reports needing a decision, then use the table actions to review or export. Staff members cannot see this workspace or its exports.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" size="sm" onClick={() => setReportReviewStatus("pending_review")} className="bg-violet-600 hover:bg-violet-700 text-white">
+                    <ShieldCheck className="w-4 h-4 mr-2" /> Review queue ({pendingReviewCount})
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setReportReviewStatus("all")} className="border-slate-600 text-slate-300 hover:bg-slate-800">
+                    View all ({totalReportCount})
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button type="button" onClick={() => setReportReviewStatus("pending_review")} className="rounded-xl border border-violet-800/70 bg-violet-950/30 p-4 text-left hover:bg-violet-950/50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
+                <p className="text-xs uppercase tracking-wide text-violet-300">Needs review</p>
+                <p className="mt-1 text-2xl font-bold text-white">{pendingReviewCount}</p>
+                <p className="text-xs text-slate-400">Awaiting admin decision</p>
+              </button>
+              <button type="button" onClick={() => setReportReviewStatus("approved")} className="rounded-xl border border-emerald-800/70 bg-emerald-950/30 p-4 text-left hover:bg-emerald-950/50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400">
+                <p className="text-xs uppercase tracking-wide text-emerald-300">Approved</p>
+                <p className="mt-1 text-2xl font-bold text-white">{approvedReportCount}</p>
+                <p className="text-xs text-slate-400">Ready for export</p>
+              </button>
+              <button type="button" onClick={() => setReportReviewStatus("correction_required")} className="rounded-xl border border-amber-800/70 bg-amber-950/30 p-4 text-left hover:bg-amber-950/50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+                <p className="text-xs uppercase tracking-wide text-amber-300">Needs action</p>
+                <p className="mt-1 text-2xl font-bold text-white">{needsActionCount}</p>
+                <p className="text-xs text-slate-400">Returned or correction requested</p>
+              </button>
+            </div>
+
           <Card className="bg-slate-900 border-slate-800 shadow-xl">
             <CardHeader>
               <CardTitle className="text-xl text-blue-300 flex items-center gap-2">
@@ -593,6 +629,7 @@ export default function MonthlyReports() {
               </div>
             </CardContent>
           </Card>
+          </div>
         )}
 
         {/* Review Modal */}

@@ -761,3 +761,9 @@
 ## Bug Fix: Admin Dashboard Maximum Update Depth
 - [x] Trace and fix the Maximum update depth exceeded error on `/admin`
 - [x] Verify Admin Dashboard rendering, type checks, and tests after the fix
+
+## Monthly Reports Role-Specific UX Enhancement
+- [x] Create a clearly distinct staff Monthly Reports submission and personal-status view
+- [x] Create a simplified admin Monthly Reports review workspace with obvious review actions
+- [x] Keep admin-only filters, bulk actions, and PDF/CSV exports out of the staff experience
+- [x] Add role-specific Monthly Reports UI tests and verify mobile/tablet behavior
