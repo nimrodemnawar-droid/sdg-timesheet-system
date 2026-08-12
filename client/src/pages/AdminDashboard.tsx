@@ -51,6 +51,8 @@ import { WaypointFilter, type WaypointFilterOptions } from "@/components/Waypoin
 import MonthlyReports from "@/pages/MonthlyReports";
 import { filterWaypointRecords } from "../../../shared/waypointUtils";
 
+const EMPTY_WAYPOINT_RECORDS: any[] = [];
+
 export default function AdminDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
@@ -127,9 +129,10 @@ export default function AdminDashboard() {
       refetchInterval: 5000, // Refetch every 5 seconds
     }
   );
-  const { data: waypointRecords = [], isLoading: waypointsLoading } = trpc.waypoints.getHistory.useQuery(waypointQueryInput, {
+  const { data: waypointRecordsData, isLoading: waypointsLoading } = trpc.waypoints.getHistory.useQuery(waypointQueryInput, {
     refetchInterval: 5000,
   });
+  const waypointRecords = waypointRecordsData ?? EMPTY_WAYPOINT_RECORDS;
   const { data: analyticsMetrics, refetch: refetchAnalytics } = trpc.analytics.metrics.useQuery({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     endDate: new Date(),

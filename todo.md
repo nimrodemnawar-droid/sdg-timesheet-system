@@ -757,3 +757,7 @@
 - [x] Register weekly status report endpoint in server/_core/index.ts
 - [x] Integrate `notifyOwner` executive summary delivery for weekly status reports
 - [x] Verify authentication and error handling for cron triggers
+
+## Bug Fix: Admin Dashboard Maximum Update Depth
+- [x] Trace and fix the Maximum update depth exceeded error on `/admin`
+- [x] Verify Admin Dashboard rendering, type checks, and tests after the fix
