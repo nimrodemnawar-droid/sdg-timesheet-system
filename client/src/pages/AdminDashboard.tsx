@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
+import { useLocation } from "wouter";
 import { generateAttendanceReportCSV, generateLeaveReportCSV, generateOvertimeReportCSV, generateGPSActivityReportCSV } from "@/lib/reportExport";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -52,10 +53,17 @@ import MonthlyReports from "@/pages/MonthlyReports";
 import { filterWaypointRecords } from "../../../shared/waypointUtils";
 
 const EMPTY_WAYPOINT_RECORDS: any[] = [];
+const ADMIN_TAB_VALUES = new Set(["overview", "staff", "leave", "attendance", "reports", "overtime", "export", "gpsmap", "scheduling", "timesheet", "admin-management", "monthly-reports"]);
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [location] = useLocation();
+  const requestedTab = useMemo(() => {
+    const query = location.split("?")[1] ?? "";
+    const tab = new URLSearchParams(query).get("tab");
+    return tab && ADMIN_TAB_VALUES.has(tab) ? tab : "overview";
+  }, [location]);
+  const [activeTab, setActiveTab] = useState(requestedTab);
   const [selectedRequest, setSelectedRequest] = useState<number | null>(null);
   const [approvalReason, setApprovalReason] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -89,6 +97,10 @@ export default function AdminDashboard() {
     staffName: '',
   });
   const [filteredWaypointRecords, setFilteredWaypointRecords] = useState<any[]>([]);
+
+  useEffect(() => {
+    setActiveTab(requestedTab);
+  }, [requestedTab]);
 
   const waypointQueryInput = useMemo(() => ({}), []);
 

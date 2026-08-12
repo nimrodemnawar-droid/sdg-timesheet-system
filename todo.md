@@ -781,3 +781,9 @@
 - [x] Remove Leave, Waypoints, Attendance, and GPS Map from the top navigation
 - [x] Preserve the underlying routes and appropriate dashboard access paths
 - [x] Verify the cleaned navigation on desktop, tablet, and mobile widths
+
+## Executive Dashboard Data and Button Verification
+- [x] Replace hardcoded executive KPI values with live database-backed metrics
+- [x] Replace hardcoded attendance, leave, and performance chart data with live data
+- [x] Wire View All Staff and View GPS Map actions to working destinations
+- [x] Verify every Executive Dashboard button, data state, and responsive layout

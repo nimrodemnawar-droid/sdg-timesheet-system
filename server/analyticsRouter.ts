@@ -5,6 +5,7 @@ import {
   getOvertimeLeaderboard,
   getAttendanceTrend,
   getDepartmentMetrics,
+  getLeaveDistribution,
 } from "./analytics";
 import * as db from "./db";
 
@@ -52,6 +53,27 @@ export const analyticsRouter = router({
     )
     .query(async ({ input }) => {
       return await getDepartmentMetrics(input.startDate, input.endDate);
+    }),
+
+  executiveSummary: adminProcedure
+    .input(
+      z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const [metrics, trend, leaveDistribution] = await Promise.all([
+        getAttendanceMetrics(input.startDate, input.endDate),
+        getAttendanceTrend(input.startDate, input.endDate),
+        getLeaveDistribution(input.startDate, input.endDate),
+      ]);
+
+      return {
+        metrics,
+        trend,
+        leaveDistribution,
+      };
     }),
 
   // Export procedures for reports
