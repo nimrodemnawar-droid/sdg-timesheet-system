@@ -1198,20 +1198,24 @@ Report generated at: ${new Date().toISOString()}`;
         z.object({
           format: z.enum(["csv", "pdf"]),
           filters: z.object({
+            reportId: z.number().optional(),
             userId: z.number().optional(),
             startMonth: z.string().optional(),
             endMonth: z.string().optional(),
             reviewStatus: z.string().optional(),
+            searchTerm: z.string().optional(),
           }).optional(),
         })
       )
       .mutation(async ({ input }) => {
         try {
           const filters = input.filters ? {
+            reportId: input.filters.reportId,
             userId: input.filters.userId,
             startMonth: input.filters.startMonth ? new Date(input.filters.startMonth) : undefined,
             endMonth: input.filters.endMonth ? new Date(input.filters.endMonth) : undefined,
             reviewStatus: input.filters.reviewStatus,
+            searchTerm: input.filters.searchTerm,
           } : undefined;
 
           const reports = await db.getMonthlyReportsForExport(filters);
@@ -1273,38 +1277,7 @@ Report generated at: ${new Date().toISOString()}`;
       .query(async ({ input }) => {
         try {
           const allReports = await db.getAllMonthlyReports();
-
-          let filtered = allReports;
-
-          // Search by staff name or email
-          if (input.searchTerm) {
-            const term = input.searchTerm.toLowerCase();
-            filtered = filtered.filter(r =>
-              (r.user?.name || '').toLowerCase().includes(term) ||
-              (r.user?.email || '').toLowerCase().includes(term)
-            );
-          }
-
-          // Filter by date range
-          if (input.startMonth) {
-            const startDate = new Date(input.startMonth);
-            filtered = filtered.filter(r => new Date(r.reportingMonth) >= startDate);
-          }
-
-          if (input.endMonth) {
-            const endDate = new Date(input.endMonth);
-            filtered = filtered.filter(r => new Date(r.reportingMonth) <= endDate);
-          }
-
-          // Filter by review status
-          if (input.reviewStatus && input.reviewStatus !== "all") {
-            filtered = filtered.filter(r => r.reviewStatus === input.reviewStatus);
-          }
-
-          // Filter by submission status
-          if (input.submissionStatus && input.submissionStatus !== "all") {
-            filtered = filtered.filter(r => r.submissionStatus === input.submissionStatus);
-          }
+          const filtered = db.filterMonthlyReports(allReports, input);
 
           return {
             total: allReports.length,

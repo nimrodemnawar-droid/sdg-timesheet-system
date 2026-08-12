@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateMonthlyReportCSV, generateMonthlyReportPDF } from "./db";
+import { filterMonthlyReports, generateMonthlyReportCSV, generateMonthlyReportPDF } from "./db";
 
 describe("Monthly Reports Admin Features", () => {
   const sampleReport = {
@@ -43,5 +43,33 @@ describe("Monthly Reports Admin Features", () => {
 
     expect(Buffer.isBuffer(pdf)).toBe(true);
     expect(pdf.length).toBeGreaterThan(0);
+    expect(pdf.subarray(0, 5).toString()).toBe("%PDF-");
+  });
+
+  it("filters reports by staff search, month range, and review status", () => {
+    const reports = [
+      { ...sampleReport, id: 1, reportingMonth: new Date("2026-08-01"), user: { name: "Amina Staff", email: "amina@example.com" } },
+      { ...sampleReport, id: 2, reportingMonth: new Date("2026-09-01"), reviewStatus: "pending_review", user: { name: "Brian Staff", email: "brian@example.com" } },
+      { ...sampleReport, id: 3, reportingMonth: new Date("2026-08-01"), reviewStatus: "rejected", user: { name: "Caroline Staff", email: "caroline@example.com" } },
+    ];
+
+    const filtered = filterMonthlyReports(reports, {
+      searchTerm: "amina",
+      startMonth: "2026-08-01",
+      endMonth: "2026-08-31",
+      reviewStatus: "approved",
+    });
+
+    expect(filtered.map(report => report.id)).toEqual([1]);
+  });
+
+  it("supports submission status filtering and returns all reports by default", () => {
+    const reports = [
+      { ...sampleReport, id: 1, submissionStatus: "locked" },
+      { ...sampleReport, id: 2, submissionStatus: "submitted" },
+    ];
+
+    expect(filterMonthlyReports(reports)).toHaveLength(2);
+    expect(filterMonthlyReports(reports, { submissionStatus: "submitted" }).map(report => report.id)).toEqual([2]);
   });
 });

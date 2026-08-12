@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { FileText, Calendar, CheckCircle2, AlertCircle, Clock, ShieldCheck, Send, ArrowLeft } from "lucide-react";
+import { FileText, Calendar, CheckCircle2, AlertCircle, Clock, ShieldCheck, Send, ArrowLeft, Download, Search, SlidersHorizontal, X } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function MonthlyReports() {
@@ -28,15 +28,35 @@ export default function MonthlyReports() {
   const [confirmationStatement, setConfirmationStatement] = useState(false);
   const [currentReportId, setCurrentReportId] = useState<number | undefined>(undefined);
 
-  // Review modal state for admin
+  // Review and admin search/filter state
   const [reviewingReportId, setReviewingReportId] = useState<number | null>(null);
   const [reviewStatus, setReviewStatus] = useState<"approved" | "rejected" | "correction_required">("approved");
   const [supervisorComments, setSupervisorComments] = useState("");
+  const [reportSearchTerm, setReportSearchTerm] = useState("");
+  const [reportStartMonth, setReportStartMonth] = useState("");
+  const [reportEndMonth, setReportEndMonth] = useState("");
+  const [reportReviewStatus, setReportReviewStatus] = useState("all");
+  const [reportSubmissionStatus, setReportSubmissionStatus] = useState("all");
+  const [exportingFormat, setExportingFormat] = useState<"csv" | "pdf" | null>(null);
+
+  const reportSearchInput = useMemo(() => ({
+    searchTerm: reportSearchTerm.trim() || undefined,
+    startMonth: reportStartMonth || undefined,
+    endMonth: reportEndMonth || undefined,
+    reviewStatus: reportReviewStatus,
+    submissionStatus: reportSubmissionStatus,
+  }), [reportSearchTerm, reportStartMonth, reportEndMonth, reportReviewStatus, reportSubmissionStatus]);
 
   const { data: myReports = [], refetch: refetchMyReports } = trpc.monthlyReports.getMyReports.useQuery();
-  const { data: allReports = [], refetch: refetchAllReports } = trpc.monthlyReports.getAllReports.useQuery(undefined, {
+  const {
+    data: reportSearchResults,
+    refetch: refetchAllReports,
+    isLoading: reportsLoading,
+  } = trpc.monthlyReports.searchAndFilter.useQuery(reportSearchInput, {
     enabled: user?.role === "admin",
   });
+  const allReports = reportSearchResults?.reports ?? [];
+  const totalReportCount = reportSearchResults?.total ?? allReports.length;
 
   const saveDraftMutation = trpc.monthlyReports.saveDraft.useMutation({
     onSuccess: (data) => {
@@ -80,6 +100,39 @@ export default function MonthlyReports() {
       toast.error(err.message);
     },
   });
+
+  const exportReportsMutation = trpc.monthlyReports.exportReports.useMutation({
+    onSuccess: (data) => {
+      window.open(data.url, "_blank", "noopener,noreferrer");
+      toast.success(`${data.reportCount} report${data.reportCount === 1 ? "" : "s"} exported as ${exportingFormat?.toUpperCase()}`);
+    },
+    onError: (err) => {
+      toast.error(err.message);
+    },
+    onSettled: () => setExportingFormat(null),
+  });
+
+  const clearReportFilters = () => {
+    setReportSearchTerm("");
+    setReportStartMonth("");
+    setReportEndMonth("");
+    setReportReviewStatus("all");
+    setReportSubmissionStatus("all");
+  };
+
+  const handleExport = (format: "csv" | "pdf", reportId?: number) => {
+    setExportingFormat(format);
+    exportReportsMutation.mutate({
+      format,
+      filters: {
+        reportId,
+        searchTerm: reportId ? undefined : reportSearchTerm.trim() || undefined,
+        startMonth: reportId ? undefined : reportStartMonth || undefined,
+        endMonth: reportId ? undefined : reportEndMonth || undefined,
+        reviewStatus: reportId ? undefined : reportReviewStatus === "all" ? undefined : reportReviewStatus,
+      },
+    });
+  };
 
   const handleSaveDraft = () => {
     saveDraftMutation.mutate({
@@ -346,8 +399,122 @@ export default function MonthlyReports() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {allReports.length === 0 ? (
-                  <p className="text-slate-400 text-sm">No monthly reports found in the system.</p>
+                <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-blue-500/15 p-2 text-blue-300">
+                        <SlidersHorizontal className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-100">Search and filter reports</p>
+                        <p className="text-xs text-slate-400">
+                          Showing {allReports.length} of {totalReportCount} report{totalReportCount === 1 ? "" : "s"}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={clearReportFilters}
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                    >
+                      <X className="w-4 h-4 mr-2" /> Clear filters
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+                    <div className="relative md:col-span-2 xl:col-span-2">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                      <Input
+                        aria-label="Search monthly reports by staff name or email"
+                        value={reportSearchTerm}
+                        onChange={(e) => setReportSearchTerm(e.target.value)}
+                        placeholder="Search staff name or email"
+                        className="pl-9 bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500"
+                      />
+                    </div>
+                    <Input
+                      aria-label="Filter monthly reports from month"
+                      type="date"
+                      value={reportStartMonth}
+                      onChange={(e) => setReportStartMonth(e.target.value)}
+                      className="bg-slate-900 border-slate-700 text-slate-100"
+                    />
+                    <Input
+                      aria-label="Filter monthly reports to month"
+                      type="date"
+                      value={reportEndMonth}
+                      onChange={(e) => setReportEndMonth(e.target.value)}
+                      className="bg-slate-900 border-slate-700 text-slate-100"
+                    />
+                    <select
+                      aria-label="Filter monthly reports by review status"
+                      value={reportReviewStatus}
+                      onChange={(e) => setReportReviewStatus(e.target.value)}
+                      className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+                    >
+                      <option value="all">All review statuses</option>
+                      <option value="approved">Approved</option>
+                      <option value="pending_review">Pending review</option>
+                      <option value="rejected">Rejected</option>
+                      <option value="correction_required">Correction required</option>
+                    </select>
+                    <select
+                      aria-label="Filter monthly reports by submission status"
+                      value={reportSubmissionStatus}
+                      onChange={(e) => setReportSubmissionStatus(e.target.value)}
+                      className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+                    >
+                      <option value="all">All submission statuses</option>
+                      <option value="submitted">Submitted</option>
+                      <option value="locked">Locked</option>
+                      <option value="returned">Returned</option>
+                      <option value="pending">Draft / pending</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-700 pt-3">
+                    <p className="text-xs text-slate-400">Select Approved above to export only approved reports.</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleExport("csv")}
+                        disabled={allReports.length === 0 || exportingFormat !== null}
+                        className="border-emerald-700 text-emerald-300 hover:bg-emerald-950/40"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        {exportingFormat === "csv" ? "Preparing CSV..." : "Export CSV"}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => handleExport("pdf")}
+                        disabled={allReports.length === 0 || exportingFormat !== null}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        {exportingFormat === "pdf" ? "Preparing PDF..." : "Export PDF"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {reportsLoading ? (
+                  <p className="text-slate-400 text-sm py-6 text-center">Loading monthly reports...</p>
+                ) : allReports.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-slate-700 p-8 text-center">
+                    <p className="text-slate-300 font-medium">
+                      {totalReportCount === 0 ? "No monthly reports found in the system." : "No reports match the selected filters."}
+                    </p>
+                    {totalReportCount > 0 && (
+                      <Button type="button" variant="outline" size="sm" onClick={clearReportFilters} className="mt-3 border-slate-600 text-slate-300 hover:bg-slate-700">
+                        Clear filters
+                      </Button>
+                    )}
+                  </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm text-slate-300">
@@ -388,14 +555,34 @@ export default function MonthlyReports() {
                               {item.submittedAt ? new Date(item.submittedAt).toLocaleDateString() : "Draft"}
                             </td>
                             <td className="p-3 text-right">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setReviewingReportId(item.id)}
-                                className="border-slate-700 text-slate-300 hover:bg-slate-800"
-                              >
-                                Review
-                              </Button>
+                              <div className="flex flex-wrap justify-end gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleExport("csv", item.id)}
+                                  disabled={exportingFormat !== null}
+                                  className="border-emerald-700 text-emerald-300 hover:bg-emerald-950/40"
+                                >
+                                  CSV
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleExport("pdf", item.id)}
+                                  disabled={exportingFormat !== null}
+                                  className="border-blue-700 text-blue-300 hover:bg-blue-950/40"
+                                >
+                                  PDF
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setReviewingReportId(item.id)}
+                                  className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                                >
+                                  Review
+                                </Button>
+                              </div>
                             </td>
                           </tr>
                         ))}

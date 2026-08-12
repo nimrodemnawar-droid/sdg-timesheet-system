@@ -731,18 +731,18 @@
 
 ## Monthly Reports - Export & Filtering Features
 
-- [ ] Add export to PDF functionality for approved monthly reports
-- [ ] Add export to CSV functionality for monthly reports
-- [ ] Implement search by staff name in admin dashboard
-- [ ] Implement filter by reporting month/date range
-- [ ] Implement filter by review status (approved, pending, rejected, correction_required)
-- [ ] Add combined search + filter UI with real-time results
-- [ ] Create backend helper to generate PDF from monthly report data
-- [ ] Create backend helper to generate CSV from monthly report data
-- [ ] Add export button to individual report rows
-- [ ] Add bulk export feature for multiple reports
-- [ ] Test export functionality with various data
-- [ ] Test filter and search accuracy
+- [x] Add export to PDF functionality for approved monthly reports
+- [x] Add export to CSV functionality for monthly reports
+- [x] Implement search by staff name in admin dashboard
+- [x] Implement filter by reporting month/date range
+- [x] Implement filter by review status (approved, pending, rejected, correction_required)
+- [x] Add combined search + filter UI with real-time results
+- [x] Create backend helper to generate PDF from monthly report data
+- [x] Create backend helper to generate CSV from monthly report data
+- [x] Add export button to individual report rows
+- [x] Add bulk export feature for multiple reports
+- [x] Test export functionality with various data
+- [x] Test filter and search accuracy
 
 
 ## Monthly Reports Admin Visibility Fix

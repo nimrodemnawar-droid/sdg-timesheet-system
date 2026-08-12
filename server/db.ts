@@ -31,6 +31,7 @@ import {
   type InsertMonthlyReportAuditLog,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -2845,16 +2846,68 @@ export async function addMonthlyReportAuditLog(logData: InsertMonthlyReportAudit
 
 // Monthly Reports Export Helpers
 
+export function filterMonthlyReports<T extends {
+  reportingMonth: Date | string;
+  reviewStatus?: string | null;
+  submissionStatus?: string | null;
+  user?: { name?: string | null; email?: string | null } | null;
+  staffName?: string | null;
+  staffEmail?: string | null;
+}>(reports: T[], filters: {
+  searchTerm?: string;
+  startMonth?: string;
+  endMonth?: string;
+  reviewStatus?: string;
+  submissionStatus?: string;
+} = {}): T[] {
+  let filtered = reports;
+  const term = filters.searchTerm?.trim().toLowerCase();
+
+  if (term) {
+    filtered = filtered.filter(report => {
+      const name = report.staffName || report.user?.name || "";
+      const email = report.staffEmail || report.user?.email || "";
+      return name.toLowerCase().includes(term) || email.toLowerCase().includes(term);
+    });
+  }
+
+  if (filters.startMonth) {
+    const startDate = new Date(filters.startMonth);
+    filtered = filtered.filter(report => new Date(report.reportingMonth) >= startDate);
+  }
+
+  if (filters.endMonth) {
+    const endDate = new Date(filters.endMonth);
+    filtered = filtered.filter(report => new Date(report.reportingMonth) <= endDate);
+  }
+
+  if (filters.reviewStatus && filters.reviewStatus !== "all") {
+    filtered = filtered.filter(report => report.reviewStatus === filters.reviewStatus);
+  }
+
+  if (filters.submissionStatus && filters.submissionStatus !== "all") {
+    filtered = filtered.filter(report => report.submissionStatus === filters.submissionStatus);
+  }
+
+  return filtered;
+}
+
 export async function getMonthlyReportsForExport(filters?: {
+  reportId?: number;
   userId?: number;
   startMonth?: Date;
   endMonth?: Date;
   reviewStatus?: string;
+  searchTerm?: string;
 }) {
   const db = await getDb();
   if (!db) return [];
 
   let conditions: any[] = [];
+
+  if (filters?.reportId) {
+    conditions.push(eq(monthlyReports.id, filters.reportId));
+  }
 
   if (filters?.userId) {
     conditions.push(eq(monthlyReports.userId, filters.userId));
@@ -2882,12 +2935,19 @@ export async function getMonthlyReportsForExport(filters?: {
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(monthlyReports.reportingMonth));
 
-  return res.map(row => ({
+  const reports = res.map(row => ({
     ...row.report,
     staffName: row.user?.name || 'Unknown',
     staffEmail: row.user?.email || '',
     staffNumber: row.user?.staffNumber || 0,
   }));
+
+  if (!filters?.searchTerm?.trim()) return reports;
+  const term = filters.searchTerm.trim().toLowerCase();
+  return reports.filter(report =>
+    report.staffName.toLowerCase().includes(term) ||
+    report.staffEmail.toLowerCase().includes(term)
+  );
 }
 
 export async function generateMonthlyReportCSV(reports: any[]): Promise<string> {
@@ -2936,9 +2996,118 @@ export async function generateMonthlyReportCSV(reports: any[]): Promise<string> 
 }
 
 export async function generateMonthlyReportPDF(reports: any[]): Promise<Buffer> {
-  // Generate a simple CSV-based text file as fallback (PDF-lib may not be installed)
-  const csv = await generateMonthlyReportCSV(reports);
-  return Buffer.from(csv, 'utf-8');
+  const pdf = await PDFDocument.create();
+  const regularFont = await pdf.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const pageWidth = 595.28;
+  const pageHeight = 841.89;
+  const margin = 40;
+  const bodySize = 9;
+  const lineHeight = 13;
+  const maxLineWidth = pageWidth - margin * 2;
+  let page = pdf.addPage([pageWidth, pageHeight]);
+  let y = pageHeight - margin;
 
+  const addPage = () => {
+    page = pdf.addPage([pageWidth, pageHeight]);
+    y = pageHeight - margin;
+  };
 
+  const wrapText = (value: string, font = regularFont, size = bodySize) => {
+    const words = value.replace(/\s+/g, " ").trim().split(" ");
+    if (words.length === 1 && words[0] === "") return [""];
+    const lines: string[] = [];
+    let line = "";
+    for (const word of words) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (font.widthOfTextAtSize(candidate, size) <= maxLineWidth) {
+        line = candidate;
+      } else {
+        if (line) lines.push(line);
+        line = word;
+      }
+    }
+    if (line) lines.push(line);
+    return lines;
+  };
+
+  const writeLine = (text: string, options?: { bold?: boolean; size?: number; color?: ReturnType<typeof rgb> }) => {
+    const font = options?.bold ? boldFont : regularFont;
+    const size = options?.size ?? bodySize;
+    const lines = wrapText(text, font, size);
+    for (const line of lines) {
+      if (y < margin + lineHeight) addPage();
+      page.drawText(line, { x: margin, y, size, font, color: options?.color ?? rgb(0.12, 0.15, 0.2) });
+      y -= lineHeight;
+    }
+  };
+
+  page.drawText("SDG Timesheet System", {
+    x: margin,
+    y,
+    size: 18,
+    font: boldFont,
+    color: rgb(0.05, 0.25, 0.55),
+  });
+  y -= 24;
+  page.drawText("Approved Monthly Staff Reports", {
+    x: margin,
+    y,
+    size: 13,
+    font: boldFont,
+    color: rgb(0.15, 0.18, 0.24),
+  });
+  y -= 18;
+  page.drawText(`Generated ${new Date().toLocaleString()} • ${reports.length} report${reports.length === 1 ? "" : "s"}`, {
+    x: margin,
+    y,
+    size: 8,
+    font: regularFont,
+    color: rgb(0.35, 0.38, 0.42),
+  });
+  y -= 22;
+
+  reports.forEach((report, index) => {
+    if (y < margin + 150) addPage();
+    page.drawRectangle({
+      x: margin,
+      y: y - 5,
+      width: maxLineWidth,
+      height: 18,
+      color: rgb(0.91, 0.95, 0.99),
+    });
+    page.drawText(`${index + 1}. ${report.staffName || "Unknown staff"}`, {
+      x: margin + 6,
+      y,
+      size: 11,
+      font: boldFont,
+      color: rgb(0.05, 0.25, 0.55),
+    });
+    y -= 25;
+
+    const fields = [
+      ["Staff number", String(report.staffNumber || "—")],
+      ["Email", report.staffEmail || "—"],
+      ["Reporting month", report.reportingMonth ? new Date(report.reportingMonth).toLocaleDateString() : "—"],
+      ["Submission status", report.submissionStatus || "—"],
+      ["Review status", report.reviewStatus || "—"],
+      ["Submitted", report.submittedAt ? new Date(report.submittedAt).toLocaleString() : "—"],
+      ["Reviewed", report.reviewedAt ? new Date(report.reviewedAt).toLocaleString() : "—"],
+      ["Key activities", report.keyActivities || "—"],
+      ["Challenges", report.challenges || "—"],
+      ["Solutions", report.solutions || "—"],
+      ["Planned activities", report.plannedActivities || "—"],
+      ["Support required", report.supportRequired || "—"],
+      ["Additional comments", report.additionalComments || "—"],
+      ["Supervisor comments", report.supervisorComments || "—"],
+    ];
+
+    fields.forEach(([label, value]) => {
+      writeLine(`${label}: ${value}`, { bold: label === "Review status" && value === "approved" });
+    });
+    y -= 10;
+  });
+
+  const bytes = await pdf.save();
+  return Buffer.from(bytes);
 }
