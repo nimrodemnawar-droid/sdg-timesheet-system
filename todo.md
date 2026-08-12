@@ -772,3 +772,7 @@
 - [x] Hide the Monthly Reports Admin Control Center from staff users
 - [x] Prevent staff access to admin-only report queries, review actions, and exports
 - [x] Verify staff see only personal submission/history content while admins retain the control center
+
+## Bug Fix: Leave Balance Dashboard React Keys
+- [x] Fix missing or unstable React keys in LeaveBalanceDashboard mapped lists
+- [x] Verify LeaveBalanceDashboard key warnings are resolved with type checks and tests

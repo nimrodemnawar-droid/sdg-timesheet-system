@@ -15,6 +15,7 @@ import {
   FileText,
 } from "lucide-react";
 import { toast } from "sonner";
+import { getLeaveBalanceKey, getLeaveRequestKey } from "../../../shared/leaveBalanceKeys";
 
 interface LeaveBalance {
   id: number;
@@ -224,7 +225,7 @@ export default function LeaveBalanceDashboard() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {balances.map((balance) => {
+            {balances.map((balance, index) => {
               const config = leaveTypeConfig[balance.leaveType] || leaveTypeConfig.other;
               const usedDays = typeof balance.usedDays === 'string' ? parseFloat(balance.usedDays) : balance.usedDays || 0;
               const allocatedDays = typeof balance.allocatedDays === 'string' ? parseFloat(balance.allocatedDays) : balance.allocatedDays || 0;
@@ -233,7 +234,7 @@ export default function LeaveBalanceDashboard() {
               const progressColor = getProgressColor(percentage);
 
               return (
-                <Card key={balance.id} className="bg-slate-800/50 border-slate-700 hover:border-slate-600 transition">
+                <Card key={getLeaveBalanceKey(balance, index)} className="bg-slate-800/50 border-slate-700 hover:border-slate-600 transition">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -310,9 +311,9 @@ export default function LeaveBalanceDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {myRequests.slice(0, 5).map((request: any) => (
+                {myRequests.slice(0, 5).map((request: any, index: number) => (
                   <div
-                    key={request.id}
+                    key={getLeaveRequestKey(request, index)}
                     className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg border border-slate-600/30 hover:border-slate-500/50 transition"
                   >
                     <div className="flex-1">
