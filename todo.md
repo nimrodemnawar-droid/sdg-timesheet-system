@@ -743,3 +743,11 @@
 - [ ] Add bulk export feature for multiple reports
 - [ ] Test export functionality with various data
 - [ ] Test filter and search accuracy
+
+
+## Monthly Reports Admin Visibility Fix
+
+- [x] Add a clearly visible Monthly Reports tab inside the Admin Dashboard
+- [x] Ensure the admin tab loads the monthly report review page and data
+- [x] Verify the Monthly Reports route remains available to staff and admins
+- [x] Test the admin Monthly Reports view after deployment

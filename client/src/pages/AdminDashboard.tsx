@@ -48,6 +48,7 @@ import { OvertimeAlert, OvertimeStatistics } from "@/components/OvertimeAlert";
 import { TimesheetFilter, type TimesheetFilterOptions } from "@/components/TimesheetFilter";
 import { WaypointDisplay } from "@/components/WaypointDisplay";
 import { WaypointFilter, type WaypointFilterOptions } from "@/components/WaypointFilter";
+import MonthlyReports from "@/pages/MonthlyReports";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -485,7 +486,16 @@ export default function AdminDashboard() {
               <Shield className="w-4 h-4 mr-2" />
               Admin
             </TabsTrigger>
+            <TabsTrigger value="monthly-reports" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-violet-700 data-[state=active]:shadow-lg data-[state=active]:shadow-violet-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
+              <FileText className="w-4 h-4 mr-2" />
+              Monthly Reports
+            </TabsTrigger>
           </TabsList>
+
+          {/* Monthly Reports Tab */}
+          <TabsContent value="monthly-reports" className="space-y-6">
+            <MonthlyReports />
+          </TabsContent>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
