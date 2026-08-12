@@ -21,6 +21,7 @@ import LeaveBalanceDashboard from "./pages/LeaveBalanceDashboard";
 import WaypointHistory from "./pages/WaypointHistory";
 import AdminDashboardExecutive from "./pages/AdminDashboardExecutive";
 import MonthlyReports from "./pages/MonthlyReports";
+import { getNavigationItems } from "../../shared/navigation";
 
 const StaffMonthlyReportsRoute = () => <MonthlyReports mode="staff" />;
 
@@ -31,25 +32,7 @@ function Navigation() {
 
   if (!user) return null;
 
-  const navItems = [
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "Leave", href: "/leave" },
-    { label: "Leave Balance", href: "/leave-balance" },
-    { label: "Waypoints", href: "/waypoint-history" },
-    { label: "Monthly Reports", href: "/monthly-reports" },
-    ...(user.role === "admin" || user.role === "supervisor"
-      ? [
-          { label: "Attendance", href: "/supervisor" },
-          { label: "GPS Map", href: "/map" },
-        ]
-      : []),
-    ...(user.role === "admin" ? [
-      { label: "Executive", href: "/executive" },
-      { label: "Admin", href: "/admin" },
-      { label: "Analytics", href: "/analytics" },
-
-    ] : []),
-  ];
+  const navItems = getNavigationItems(user.role);
 
   return (
     <nav className="bg-slate-900 border-b border-slate-700 shadow-lg">

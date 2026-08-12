@@ -776,3 +776,8 @@
 ## Bug Fix: Leave Balance Dashboard React Keys
 - [x] Fix missing or unstable React keys in LeaveBalanceDashboard mapped lists
 - [x] Verify LeaveBalanceDashboard key warnings are resolved with type checks and tests
+
+## Navigation Cleanup: Remove Repeated Links
+- [x] Remove Leave, Waypoints, Attendance, and GPS Map from the top navigation
+- [x] Preserve the underlying routes and appropriate dashboard access paths
+- [x] Verify the cleaned navigation on desktop, tablet, and mobile widths
