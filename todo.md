@@ -767,3 +767,8 @@
 - [x] Create a simplified admin Monthly Reports review workspace with obvious review actions
 - [x] Keep admin-only filters, bulk actions, and PDF/CSV exports out of the staff experience
 - [x] Add role-specific Monthly Reports UI tests and verify mobile/tablet behavior
+
+## Bug Fix: Staff Seeing Admin Monthly Reports Control Center
+- [x] Hide the Monthly Reports Admin Control Center from staff users
+- [x] Prevent staff access to admin-only report queries, review actions, and exports
+- [x] Verify staff see only personal submission/history content while admins retain the control center

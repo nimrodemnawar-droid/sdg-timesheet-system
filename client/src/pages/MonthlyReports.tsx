@@ -12,13 +12,17 @@ import { FileText, Calendar, CheckCircle2, AlertCircle, Clock, ShieldCheck, Send
 import { useLocation } from "wouter";
 import { getMonthlyReportMode } from "../../../shared/monthlyReportRole";
 
-export default function MonthlyReports() {
+interface MonthlyReportsProps {
+  mode?: "staff" | "admin";
+}
+
+export default function MonthlyReports({ mode = "staff" }: MonthlyReportsProps) {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
 
   const [selectedMonth, setSelectedMonth] = useState("2026-08-01");
-  const reportMode = getMonthlyReportMode(user?.role);
+  const reportMode = getMonthlyReportMode(user?.role, mode);
   const isAdmin = reportMode === "admin";
 
   const [keyActivities, setKeyActivities] = useState("");
@@ -55,7 +59,7 @@ export default function MonthlyReports() {
     refetch: refetchAllReports,
     isLoading: reportsLoading,
   } = trpc.monthlyReports.searchAndFilter.useQuery(reportSearchInput, {
-    enabled: user?.role === "admin",
+    enabled: isAdmin,
   });
   const allReports = reportSearchResults?.reports ?? [];
   const totalReportCount = reportSearchResults?.total ?? allReports.length;

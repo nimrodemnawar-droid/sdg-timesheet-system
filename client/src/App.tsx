@@ -22,6 +22,8 @@ import WaypointHistory from "./pages/WaypointHistory";
 import AdminDashboardExecutive from "./pages/AdminDashboardExecutive";
 import MonthlyReports from "./pages/MonthlyReports";
 
+const StaffMonthlyReportsRoute = () => <MonthlyReports mode="staff" />;
+
 
 function Navigation() {
   const { user, logout } = useAuth();
@@ -142,7 +144,7 @@ function Router() {
         <Route path="/leave" component={LeaveRequest} />
         <Route path="/leave-balance" component={LeaveBalanceDashboard} />
         <Route path="/waypoint-history" component={WaypointHistory} />
-        <Route path="/monthly-reports" component={MonthlyReports} />
+        <Route path="/monthly-reports" component={StaffMonthlyReportsRoute} />
         
         {/* Supervisor/Admin routes */}
         {(user.role === "admin" || user.role === "supervisor") && (

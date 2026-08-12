@@ -478,7 +478,7 @@ export default function AdminDashboard() {
 
           {/* Monthly Reports Tab */}
           <TabsContent value="monthly-reports" className="space-y-6">
-            <MonthlyReports />
+            <MonthlyReports mode="admin" />
           </TabsContent>
 
           {/* Overview Tab */}
