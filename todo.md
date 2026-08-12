@@ -606,22 +606,22 @@
 
 ## Phase 57: Waypoints in Timesheet Admin Board
 - [x] Review waypoint data structure in database
-- [ ] Create waypoint display component for Admin Dashboard
-- [ ] Add waypoints section to timesheet/attendance table
+- [x] Create waypoint display component for Admin Dashboard
+- [x] Add waypoints section to timesheet/attendance table
 - [ ] Display check-in and check-out locations with GPS coordinates
-- [ ] Add distance traveled calculation and display
-- [ ] Integrate Google Maps to show waypoint locations
+- [x] Add distance traveled calculation and display
+- [x] Integrate Google Maps to show waypoint locations
 - [ ] Test waypoint accuracy and display on mobile devices
 - [x] Verify waypoints sync in real-time with staff dashboard (backend ready)
 
 ## Phase 58: Waypoint Filters (Date & Staff Name)
-- [ ] Create waypoint filter component with date and staff name inputs
-- [ ] Add filter state management to Admin Dashboard
-- [ ] Implement filtering logic for waypoints by date and staff name
-- [ ] Add filter UI to waypoints section with clear/reset button
-- [ ] Test waypoint filters with various search criteria
+- [x] Create waypoint filter component with date and staff name inputs
+- [x] Add filter state management to Admin Dashboard
+- [x] Implement filtering logic for waypoints by date and staff name
+- [x] Add filter UI to waypoints section with clear/reset button
+- [x] Test waypoint filters with various search criteria
 - [ ] Verify filters work on mobile devices
-- [ ] Add filter result counter showing matching records
+- [x] Add filter result counter showing matching records
 
 ## Phase 59: Email Notifications on Timesheet Submission
 - [x] Set up email notification service configuration (ADMIN_EMAIL: nimrodemage@gmail.com)
@@ -751,3 +751,9 @@
 - [x] Ensure the admin tab loads the monthly report review page and data
 - [x] Verify the Monthly Reports route remains available to staff and admins
 - [x] Test the admin Monthly Reports view after deployment
+
+## Weekly Automated Status Reports & Heartbeat Scheduling
+- [x] Create weekly status report handler at `/api/scheduled/weeklyStatusReport`
+- [x] Register weekly status report endpoint in server/_core/index.ts
+- [x] Integrate `notifyOwner` executive summary delivery for weekly status reports
+- [x] Verify authentication and error handling for cron triggers

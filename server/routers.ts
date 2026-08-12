@@ -846,17 +846,17 @@ Report generated at: ${new Date().toISOString()}`;
           
           let whereConditions: any[] = [];
           
-          if (input.staffId) {
-            whereConditions.push(eq(attendance.userId, input.staffId));
-          }
-          
-          if (input.startDate) {
-            whereConditions.push(gte(attendance.checkInTime, new Date(input.startDate)));
-          }
-          
-          if (input.endDate) {
-            whereConditions.push(lte(attendance.checkInTime, new Date(input.endDate)));
-          }
+              if (input.staffId) {
+                whereConditions.push(eq(waypoints.userId, input.staffId));
+              }
+              
+              if (input.startDate) {
+                whereConditions.push(gte(waypoints.timestamp, new Date(input.startDate)));
+              }
+              
+              if (input.endDate) {
+                whereConditions.push(lte(waypoints.timestamp, new Date(input.endDate)));
+              }
           
           const query = db_instance
             .select({

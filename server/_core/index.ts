@@ -7,7 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { dailyTimesheetReportHandler } from "./scheduledHandlers";
+import { dailyTimesheetReportHandler, weeklyStatusReportHandler } from "./scheduledHandlers";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -44,6 +44,7 @@ async function startServer() {
   
   // Scheduled task endpoints (must be before tRPC and static fallthrough)
   app.post("/api/scheduled/dailyTimesheetReport", dailyTimesheetReportHandler);
+  app.post("/api/scheduled/weeklyStatusReport", weeklyStatusReportHandler);
   
   // tRPC API
   app.use(

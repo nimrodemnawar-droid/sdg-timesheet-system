@@ -1,166 +1,97 @@
 import React from 'react';
-import { MapPin, Navigation, Clock } from 'lucide-react';
+import { MapPin, Navigation, Clock, Mountain } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-interface WaypointData {
-  checkInTime: Date;
-  checkInLat: number;
-  checkInLng: number;
-  checkInAccuracy: number;
-  checkOutTime?: Date;
-  checkOutLat?: number;
-  checkOutLng?: number;
-  checkOutAccuracy?: number;
-  distanceTraveled?: number;
-  durationMinutes?: number;
+export interface WaypointData {
+  id?: number;
+  timestamp: Date;
+  latitude: number;
+  longitude: number;
+  accuracy?: number | null;
+  cumulativeDistance?: number | null;
+  altitude?: number | null;
 }
 
 interface WaypointDisplayProps {
   waypoint: WaypointData;
   staffName: string;
-  staffNumber: string;
+  staffNumber: string | number;
 }
 
-export const WaypointDisplay: React.FC<WaypointDisplayProps> = ({
-  waypoint,
-  staffName,
-  staffNumber,
-}) => {
-  const formatCoordinates = (lat: number, lng: number) => {
-    return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-  };
+const formatTimestamp = (value: Date) => new Date(value).toLocaleString('en-KE', {
+  timeZone: 'Africa/Nairobi',
+  dateStyle: 'medium',
+  timeStyle: 'short',
+});
 
-  const formatTime = (date: Date | undefined) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true,
-    });
-  };
+const formatNumber = (value: number | null | undefined, digits = 2) => (
+  typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) : '—'
+);
 
-  const formatDistance = (meters: number | undefined) => {
-    if (!meters) return '0 m';
-    if (meters >= 1000) {
-      return `${(meters / 1000).toFixed(2)} km`;
-    }
-    return `${Math.round(meters)} m`;
-  };
-
-  const formatDuration = (minutes: number | undefined) => {
-    if (!minutes) return '0h 0m';
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
-  };
+export const WaypointDisplay: React.FC<WaypointDisplayProps> = ({ waypoint, staffName, staffNumber }) => {
+  const accuracy = typeof waypoint.accuracy === 'number' ? waypoint.accuracy : null;
+  const accuracyClass = accuracy === null
+    ? 'bg-slate-700 text-slate-300 border-slate-600'
+    : accuracy <= 100 ? 'bg-emerald-950/60 text-emerald-300 border-emerald-700'
+      : accuracy <= 1000 ? 'bg-amber-950/60 text-amber-300 border-amber-700'
+        : 'bg-red-950/60 text-red-300 border-red-700';
 
   return (
-    <Card className="w-full border-l-4 border-l-blue-500">
+    <Card className="w-full bg-slate-900/80 border-slate-700 border-l-4 border-l-blue-500 shadow-lg">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-lg">{staffName}</CardTitle>
-            <CardDescription>Staff #{staffNumber}</CardDescription>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <CardTitle className="text-base text-white truncate">{staffName}</CardTitle>
+            <CardDescription className="text-slate-400">Staff #{staffNumber}</CardDescription>
           </div>
-          <Badge variant="outline" className="bg-blue-50">
-            Waypoint Data
+          <Badge variant="outline" className="shrink-0 border-blue-700 bg-blue-950/40 text-blue-300">
+            Waypoint {waypoint.id ? `#${waypoint.id}` : ''}
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Check-In Location */}
-        <div className="space-y-2 p-3 bg-green-50 rounded-lg border border-green-200">
-          <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-green-600" />
-            <h4 className="font-semibold text-green-900">Check-In Location</h4>
-          </div>
-          <div className="space-y-1 text-sm ml-6">
-            <p className="text-gray-700">
-              <span className="font-medium">Time:</span> {formatTime(waypoint.checkInTime)}
-            </p>
-            <p className="text-gray-700">
-              <span className="font-medium">Coordinates:</span>{' '}
-              <code className="bg-white px-2 py-1 rounded text-xs">
-                {formatCoordinates(waypoint.checkInLat, waypoint.checkInLng)}
-              </code>
-            </p>
-            <p className="text-gray-700">
-              <span className="font-medium">Accuracy:</span> ±{waypoint.checkInAccuracy.toFixed(1)}m
-            </p>
-          </div>
+      <CardContent className="space-y-3 text-sm">
+        <div className="flex items-center gap-2 text-slate-300">
+          <Clock className="w-4 h-4 text-blue-400 shrink-0" />
+          <span>{formatTimestamp(waypoint.timestamp)}</span>
         </div>
 
-        {/* Check-Out Location */}
-        {waypoint.checkOutTime && waypoint.checkOutLat && waypoint.checkOutLng ? (
-          <div className="space-y-2 p-3 bg-red-50 rounded-lg border border-red-200">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-red-600" />
-              <h4 className="font-semibold text-red-900">Check-Out Location</h4>
-            </div>
-            <div className="space-y-1 text-sm ml-6">
-              <p className="text-gray-700">
-                <span className="font-medium">Time:</span> {formatTime(waypoint.checkOutTime)}
-              </p>
-              <p className="text-gray-700">
-                <span className="font-medium">Coordinates:</span>{' '}
-                <code className="bg-white px-2 py-1 rounded text-xs">
-                  {formatCoordinates(waypoint.checkOutLat, waypoint.checkOutLng)}
-                </code>
-              </p>
-              <p className="text-gray-700">
-                <span className="font-medium">Accuracy:</span> ±
-                {waypoint.checkOutAccuracy?.toFixed(1) || 'N/A'}m
-              </p>
-            </div>
+        <div className="rounded-lg border border-slate-700 bg-slate-800/70 p-3 space-y-2">
+          <div className="flex items-center gap-2 text-slate-200">
+            <MapPin className="w-4 h-4 text-rose-400 shrink-0" />
+            <span className="font-medium">GPS location</span>
           </div>
-        ) : (
-          <div className="space-y-2 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-yellow-600" />
-              <h4 className="font-semibold text-yellow-900">Still Checked In</h4>
-            </div>
-            <p className="text-sm text-gray-700 ml-6">No check-out recorded yet</p>
-          </div>
-        )}
-
-        {/* Distance & Duration Summary */}
-        {waypoint.checkOutTime && (
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex items-center gap-2 mb-1">
-                <Navigation className="w-4 h-4 text-blue-600" />
-                <span className="text-xs font-medium text-blue-900">Distance</span>
-              </div>
-              <p className="text-lg font-semibold text-blue-900">
-                {formatDistance((waypoint.distanceTraveled || 0) * 1000)}
-              </p>
-            </div>
-            <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-              <div className="flex items-center gap-2 mb-1">
-                <Clock className="w-4 h-4 text-purple-600" />
-                <span className="text-xs font-medium text-purple-900">Duration</span>
-              </div>
-              <p className="text-lg font-semibold text-purple-900">
-                {formatDuration(waypoint.durationMinutes)}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Map Link */}
-        <div className="pt-2 border-t">
+          <code className="block break-all text-xs text-slate-300">
+            {formatNumber(waypoint.latitude, 6)}, {formatNumber(waypoint.longitude, 6)}
+          </code>
           <a
-            href={`https://maps.google.com/?q=${waypoint.checkInLat},${waypoint.checkInLng}`}
+            href={`https://maps.google.com/?q=${waypoint.latitude},${waypoint.longitude}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2"
+            className="inline-flex items-center gap-1 text-xs font-medium text-blue-300 hover:text-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
           >
-            <MapPin className="w-4 h-4" />
-            View on Google Maps
+            <MapPin className="w-3.5 h-3.5" /> View on Google Maps
           </a>
         </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-3">
+            <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
+              <Navigation className="w-3.5 h-3.5 text-cyan-400" /> Cumulative distance
+            </div>
+            <p className="font-semibold text-slate-100">{formatNumber(waypoint.cumulativeDistance)} km</p>
+          </div>
+          <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-3">
+            <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
+              <Mountain className="w-3.5 h-3.5 text-violet-400" /> Altitude
+            </div>
+            <p className="font-semibold text-slate-100">{formatNumber(waypoint.altitude)} m</p>
+          </div>
+        </div>
+
+        <Badge variant="outline" className={`w-fit ${accuracyClass}`}>
+          Accuracy: {accuracy === null ? 'Unavailable' : `±${accuracy.toFixed(1)} m`}
+        </Badge>
       </CardContent>
     </Card>
   );

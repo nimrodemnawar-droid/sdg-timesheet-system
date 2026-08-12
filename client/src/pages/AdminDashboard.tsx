@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import { generateAttendanceReportCSV, generateLeaveReportCSV, generateOvertimeReportCSV, generateGPSActivityReportCSV } from "@/lib/reportExport";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -49,6 +49,7 @@ import { TimesheetFilter, type TimesheetFilterOptions } from "@/components/Times
 import { WaypointDisplay } from "@/components/WaypointDisplay";
 import { WaypointFilter, type WaypointFilterOptions } from "@/components/WaypointFilter";
 import MonthlyReports from "@/pages/MonthlyReports";
+import { filterWaypointRecords } from "../../../shared/waypointUtils";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -87,6 +88,8 @@ export default function AdminDashboard() {
   });
   const [filteredWaypointRecords, setFilteredWaypointRecords] = useState<any[]>([]);
 
+  const waypointQueryInput = useMemo(() => ({}), []);
+
   // Queries with real-time polling for live updates
   const { data: stats, refetch: refetchStats } = trpc.attendance.getTodayAllStaff.useQuery(undefined, {
     refetchInterval: 1000,
@@ -124,6 +127,9 @@ export default function AdminDashboard() {
       refetchInterval: 5000, // Refetch every 5 seconds
     }
   );
+  const { data: waypointRecords = [], isLoading: waypointsLoading } = trpc.waypoints.getHistory.useQuery(waypointQueryInput, {
+    refetchInterval: 5000,
+  });
   const { data: analyticsMetrics, refetch: refetchAnalytics } = trpc.analytics.metrics.useQuery({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     endDate: new Date(),
@@ -324,35 +330,10 @@ export default function AdminDashboard() {
     setFilteredAttendanceRecords(filtered);
   }, [attendanceRecords, timesheetFilters]);
 
-  // Apply filters to waypoint records
+  // Apply filters to actual waypoint records
   useEffect(() => {
-    if (!Array.isArray(attendanceRecords)) {
-      setFilteredWaypointRecords([]);
-      return;
-    }
-
-    let filtered = [...attendanceRecords];
-
-    // Filter by date
-    if (waypointFilters.date) {
-      const filterDate = new Date(waypointFilters.date).toISOString().split('T')[0];
-      filtered = filtered.filter((record: any) => {
-        const recordDate = new Date(record.checkInTime).toISOString().split('T')[0];
-        return recordDate === filterDate;
-      });
-    }
-
-    // Filter by staff name
-    if (waypointFilters.staffName) {
-      const searchLower = waypointFilters.staffName.toLowerCase();
-      filtered = filtered.filter((record: any) => {
-        const name = (record.userName || `Staff ${record.userId}`).toLowerCase();
-        return name.includes(searchLower);
-      });
-    }
-
-    setFilteredWaypointRecords(filtered);
-  }, [attendanceRecords, waypointFilters]);
+    setFilteredWaypointRecords(filterWaypointRecords(Array.isArray(waypointRecords) ? waypointRecords : [], waypointFilters));
+  }, [waypointRecords, waypointFilters]);
 
   const handleClearNotification = (id: string) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
@@ -1114,43 +1095,50 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Waypoints Display Section */}
-                {filteredAttendanceRecords.length > 0 && (
-                  <div className="mt-6 pt-6 border-t border-slate-600">
-                    <h3 className="flex items-center gap-2 text-lg font-semibold text-white mb-4">
+                <div className="mt-6 pt-6 border-t border-slate-600">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                    <h3 className="flex items-center gap-2 text-lg font-semibold text-white">
                       <MapPin className="w-5 h-5 text-blue-400" />
                       Location Waypoints
                     </h3>
-                    <WaypointFilter
-                      onFilterChange={setWaypointFilters}
-                      totalRecords={attendanceRecords?.length || 0}
-                      filteredRecords={filteredWaypointRecords?.length || 0}
-                    />
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-                      {filteredWaypointRecords.map((record: any, index: number) => {
-                        const waypointKey = `${record.userId}-${new Date(record.checkInTime).getTime()}-${index}`;
-                        return (
-                        <WaypointDisplay
-                          key={waypointKey}
-                          waypoint={{
-                            checkInTime: new Date(record.checkInTime),
-                            checkInLat: parseFloat(record.checkInLat),
-                            checkInLng: parseFloat(record.checkInLng),
-                            checkInAccuracy: parseFloat(record.checkInAccuracy || 0),
-                            checkOutTime: record.checkOutTime ? new Date(record.checkOutTime) : undefined,
-                            checkOutLat: record.checkOutLat ? parseFloat(record.checkOutLat) : undefined,
-                            checkOutLng: record.checkOutLng ? parseFloat(record.checkOutLng) : undefined,
-                            checkOutAccuracy: record.checkOutAccuracy ? parseFloat(record.checkOutAccuracy) : undefined,
-                            distanceTraveled: record.distanceTraveled ? parseFloat(record.distanceTraveled) : undefined,
-                            durationMinutes: record.durationMinutes,
-                          }}
-                          staffName={record.userName || `Staff ${record.userId}`}
-                          staffNumber={record.staffNumber || record.userId}
-                        />
-                        );
-                        })}
-                    </div>
+                    <span className="text-xs text-slate-400">Live updates every 5 seconds</span>
                   </div>
-                )}
+                  <WaypointFilter
+                    onFilterChange={setWaypointFilters}
+                    totalRecords={waypointRecords?.length || 0}
+                    filteredRecords={filteredWaypointRecords?.length || 0}
+                  />
+                  {waypointsLoading ? (
+                    <p className="py-8 text-center text-slate-400">Loading waypoint history...</p>
+                  ) : filteredWaypointRecords.length === 0 ? (
+                    <div className="mt-4 rounded-lg border border-dashed border-slate-700 p-8 text-center">
+                      <MapPin className="mx-auto mb-2 h-8 w-8 text-slate-600" />
+                      <p className="text-slate-300 font-medium">
+                        {waypointRecords.length === 0 ? 'No waypoint history has been recorded.' : 'No waypoints match the selected filters.'}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">Waypoint records appear here as staff move during field work.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                      {filteredWaypointRecords.map((record: any) => (
+                        <WaypointDisplay
+                          key={record.id}
+                          waypoint={{
+                            id: record.id,
+                            timestamp: new Date(record.timestamp),
+                            latitude: Number(record.latitude),
+                            longitude: Number(record.longitude),
+                            accuracy: record.accuracy === null || record.accuracy === undefined ? null : Number(record.accuracy),
+                            cumulativeDistance: record.cumulativeDistance === null || record.cumulativeDistance === undefined ? null : Number(record.cumulativeDistance),
+                            altitude: record.altitude === null || record.altitude === undefined ? null : Number(record.altitude),
+                          }}
+                          staffName={record.staffName || `Staff ${record.staffId}`}
+                          staffNumber={record.staffNumber || record.staffId}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
