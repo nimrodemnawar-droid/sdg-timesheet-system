@@ -33,6 +33,7 @@ import {
   CheckCheck,
   X,
   Zap,
+  Database,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ExportDialog } from "@/components/ExportDialog";
@@ -50,10 +51,11 @@ import { TimesheetFilter, type TimesheetFilterOptions } from "@/components/Times
 import { WaypointDisplay } from "@/components/WaypointDisplay";
 import { WaypointFilter, type WaypointFilterOptions } from "@/components/WaypointFilter";
 import MonthlyReports from "@/pages/MonthlyReports";
+import { DataManagementTab } from "@/components/DataManagementTab";
 import { filterWaypointRecords } from "../../../shared/waypointUtils";
 
 const EMPTY_WAYPOINT_RECORDS: any[] = [];
-const ADMIN_TAB_VALUES = new Set(["overview", "staff", "leave", "attendance", "reports", "overtime", "export", "gpsmap", "scheduling", "timesheet", "admin-management", "monthly-reports"]);
+const ADMIN_TAB_VALUES = new Set(["overview", "staff", "leave", "attendance", "reports", "overtime", "export", "gpsmap", "scheduling", "timesheet", "admin-management", "monthly-reports", "data-management"]);
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -486,11 +488,20 @@ export default function AdminDashboard() {
               <FileText className="w-4 h-4 mr-2" />
               Monthly Reports
             </TabsTrigger>
+            <TabsTrigger value="data-management" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-700 data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
+              <Database className="w-4 h-4 mr-2" />
+              Data Management
+            </TabsTrigger>
           </TabsList>
 
           {/* Monthly Reports Tab */}
           <TabsContent value="monthly-reports" className="space-y-6">
             <MonthlyReports mode="admin" />
+          </TabsContent>
+
+          {/* Data Management Tab */}
+          <TabsContent value="data-management" className="space-y-6">
+            <DataManagementTab />
           </TabsContent>
 
           {/* Overview Tab */}

@@ -787,3 +787,10 @@
 - [x] Replace hardcoded attendance, leave, and performance chart data with live data
 - [x] Wire View All Staff and View GPS Map actions to working destinations
 - [x] Verify every Executive Dashboard button, data state, and responsive layout
+
+## Admin Data Management, Backup, and Restore
+- [x] Add admin-only database export procedure and helper
+- [x] Add staff and attendance CSV export procedures
+- [x] Implement secure JSON/SQL backup file import and restoration endpoint with safeguards
+- [x] Create Data Management tab in Admin Dashboard
+- [x] Add unit tests for database export, CSV generation, and backup restoration

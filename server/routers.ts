@@ -19,6 +19,14 @@ import { storagePut } from "./storage";
 import { generateCSVContent, generateExcelContent } from "./db";
 import { logAuditEvent } from "./db";
 import { getTimesheetDataForExport } from "./db";
+import {
+  createDatabaseBackup,
+  serializeBackup,
+  generateStaffCsv,
+  generateAttendanceCsv,
+  getBackupPreview,
+  restoreDatabaseBackup,
+} from "./dataManagement";
 
 // Helper to ensure admin role
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -39,6 +47,64 @@ export const appRouter = router({
 
   system: systemRouter,
   analytics: analyticsRouter,
+
+  dataManagement: router({
+    exportDatabase: adminProcedure.mutation(async () => {
+      const snapshot = await createDatabaseBackup();
+      const content = serializeBackup(snapshot);
+      return {
+        filename: `sdg-timesheet-backup-${new Date().toISOString().replace(/[:.]/g, "-")}.json`,
+        content,
+        generatedAt: snapshot.generatedAt,
+        recordCounts: snapshot.recordCounts,
+        totalRecords: Object.values(snapshot.recordCounts).reduce((total, count) => total + count, 0),
+      };
+    }),
+
+    exportCsv: adminProcedure
+      .input(z.object({
+        type: z.enum(["staff", "attendance"]),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const content = input.type === "staff"
+          ? await generateStaffCsv()
+          : await generateAttendanceCsv(input.startDate, input.endDate);
+        return {
+          filename: `sdg-${input.type}-export-${new Date().toISOString().replace(/[:.]/g, "-")}.csv`,
+          content,
+          recordCount: Math.max(0, content.trim().split("\\n").length - 1),
+        };
+      }),
+
+    previewRestore: adminProcedure
+      .input(z.object({ backupJson: z.string().min(1).max(20 * 1024 * 1024) }))
+      .mutation(async ({ input }) => getBackupPreview(input.backupJson)),
+
+    restore: adminProcedure
+      .input(z.object({
+        backupJson: z.string().min(1).max(20 * 1024 * 1024),
+        confirmation: z.literal("RESTORE DATABASE"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const preRestoreSnapshot = await createDatabaseBackup();
+        const preRestoreContent = serializeBackup(preRestoreSnapshot);
+        const preRestoreKey = `backups/pre-restore-${ctx.user.id}-${Date.now()}.json`;
+        const { url: preRestoreBackupUrl } = await storagePut(preRestoreKey, Buffer.from(preRestoreContent, "utf8"), "application/json");
+        const result = await restoreDatabaseBackup(input.backupJson);
+        await logAuditEvent({
+          userId: ctx.user.id,
+          action: "DATABASE_RESTORE",
+          entityType: "database",
+          details: {
+            restoredRecords: result.totalRecords,
+            preRestoreBackupKey: preRestoreKey,
+          },
+        });
+        return { ...result, preRestoreBackupUrl };
+      }),
+  }),
 
   attendance: router({
     // Import db functions at top of file
