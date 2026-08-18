@@ -799,3 +799,8 @@
 - [x] Diagnose why one staff member cannot submit a monthly report
 - [x] Fix the affected validation, mutation, or permission path without losing draft data
 - [x] Verify draft save, submit, status update, and admin visibility for the affected flow
+
+## Bug Fix: Admin Email Notification Query Failure
+- [x] Diagnose the emailNotifications query failure on `/admin`
+- [x] Fix the notification query or schema mismatch without breaking existing notifications
+- [x] Verify Admin Dashboard notification loading and notification-related tests
