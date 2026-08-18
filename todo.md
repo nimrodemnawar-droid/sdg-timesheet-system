@@ -809,3 +809,8 @@
 - [x] Diagnose the documents query failure on `/admin`
 - [x] Repair documents schema drift without losing existing file metadata
 - [x] Verify Admin Dashboard document loading and document-related tests
+
+## Admin Dashboard Tab Cleanup
+- [x] Remove Overview, Overtime, and Scheduling from the Admin Dashboard tab strip
+- [x] Preserve any underlying routes and deep-link behavior that remain necessary
+- [x] Verify the cleaned Admin Dashboard navigation and responsive layout

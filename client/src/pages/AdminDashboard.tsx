@@ -53,9 +53,9 @@ import { WaypointFilter, type WaypointFilterOptions } from "@/components/Waypoin
 import MonthlyReports from "@/pages/MonthlyReports";
 import { DataManagementTab } from "@/components/DataManagementTab";
 import { filterWaypointRecords } from "../../../shared/waypointUtils";
+import { ADMIN_TAB_VALUES, resolveAdminDashboardTab } from "../../../shared/adminDashboardTabs";
 
 const EMPTY_WAYPOINT_RECORDS: any[] = [];
-const ADMIN_TAB_VALUES = new Set(["overview", "staff", "leave", "attendance", "reports", "overtime", "export", "gpsmap", "scheduling", "timesheet", "admin-management", "monthly-reports", "data-management"]);
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -63,7 +63,7 @@ export default function AdminDashboard() {
   const requestedTab = useMemo(() => {
     const query = location.split("?")[1] ?? "";
     const tab = new URLSearchParams(query).get("tab");
-    return tab && ADMIN_TAB_VALUES.has(tab) ? tab : "overview";
+    return resolveAdminDashboardTab(tab);
   }, [location]);
   const [activeTab, setActiveTab] = useState(requestedTab);
   const [selectedRequest, setSelectedRequest] = useState<number | null>(null);
@@ -440,10 +440,6 @@ export default function AdminDashboard() {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="bg-gradient-to-r from-slate-800/80 via-slate-700/60 to-slate-800/80 border border-slate-600/50 backdrop-blur-sm flex flex-wrap gap-2 h-auto p-4 rounded-lg shadow-xl hover:shadow-2xl transition-all duration-300">
-            <TabsTrigger value="overview" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
-              <Activity className="w-4 h-4 mr-2" />
-              Overview
-            </TabsTrigger>
             <TabsTrigger value="staff" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-700 data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <Users className="w-4 h-4 mr-2" />
               Staff
@@ -460,10 +456,6 @@ export default function AdminDashboard() {
               <BarChart3 className="w-4 h-4 mr-2" />
               Reports
             </TabsTrigger>
-            <TabsTrigger value="overtime" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-red-700 data-[state=active]:shadow-lg data-[state=active]:shadow-red-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
-              <AlertCircle className="w-4 h-4 mr-2" />
-              Overtime
-            </TabsTrigger>
             <TabsTrigger value="export" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-indigo-700 data-[state=active]:shadow-lg data-[state=active]:shadow-indigo-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <Download className="w-4 h-4 mr-2" />
               Export
@@ -471,10 +463,6 @@ export default function AdminDashboard() {
             <TabsTrigger value="gpsmap" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-700 data-[state=active]:shadow-lg data-[state=active]:shadow-rose-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <MapPin className="w-4 h-4 mr-2" />
               GPS Map
-            </TabsTrigger>
-            <TabsTrigger value="scheduling" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-600 data-[state=active]:to-teal-700 data-[state=active]:shadow-lg data-[state=active]:shadow-teal-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
-              <Calendar className="w-4 h-4 mr-2" />
-              Scheduling
             </TabsTrigger>
             <TabsTrigger value="timesheet" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-700 data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <FileText className="w-4 h-4 mr-2" />
