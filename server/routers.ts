@@ -1116,6 +1116,16 @@ Report generated at: ${new Date().toISOString()}`;
 
           let report;
           if (input.reportId) {
+            const existingReport = await db.getMonthlyReportById(input.reportId);
+            if (!existingReport) {
+              throw new TRPCError({ code: "NOT_FOUND", message: "Monthly report not found" });
+            }
+            if (existingReport.userId !== ctx.user.id) {
+              throw new TRPCError({ code: "FORBIDDEN", message: "You can only edit your own monthly report" });
+            }
+            if (existingReport.reviewStatus === "approved" || existingReport.submissionStatus === "locked") {
+              throw new TRPCError({ code: "BAD_REQUEST", message: "This monthly report is finalized and cannot be edited" });
+            }
             report = await db.updateMonthlyReport(input.reportId, {
               keyActivities: input.keyActivities,
               challenges: input.challenges,
@@ -1183,6 +1193,20 @@ Report generated at: ${new Date().toISOString()}`;
               code: "BAD_REQUEST",
               message: "You must confirm that all information provided is accurate and complete.",
             });
+          }
+
+          const existingReport = await db.getMonthlyReportById(input.reportId);
+          if (!existingReport) {
+            throw new TRPCError({ code: "NOT_FOUND", message: "Monthly report not found" });
+          }
+          if (existingReport.userId !== ctx.user.id) {
+            throw new TRPCError({ code: "FORBIDDEN", message: "You can only submit your own monthly report" });
+          }
+          if (existingReport.reviewStatus === "approved" || existingReport.submissionStatus === "locked") {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "This monthly report is already finalized" });
+          }
+          if (existingReport.submissionStatus === "submitted" && existingReport.reviewStatus !== "correction_required") {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "This monthly report has already been submitted for review" });
           }
 
           const report = await db.updateMonthlyReport(input.reportId, {

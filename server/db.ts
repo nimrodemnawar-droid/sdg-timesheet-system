@@ -2791,11 +2791,19 @@ export async function rejectManualRequest(
 
 // Monthly Reports Functions
 
+export function getMonthlyReportInsertId(insertResult: unknown): number {
+  const insertId = Number((insertResult as any)?.insertId);
+  if (!Number.isInteger(insertId) || insertId <= 0) {
+    throw new Error("Monthly report was saved but its ID could not be determined");
+  }
+  return insertId;
+}
+
 export async function createMonthlyReport(reportData: InsertMonthlyReport) {
   const db = await getDb();
   if (!db) return undefined;
-  const [newReport] = await db.insert(monthlyReports).values(reportData);
-  return newReport;
+  const [insertResult] = await db.insert(monthlyReports).values(reportData);
+  return getMonthlyReportById(getMonthlyReportInsertId(insertResult));
 }
 
 export async function getMonthlyReportById(reportId: number) {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,26 @@ export default function MonthlyReports({ mode = "staff" }: MonthlyReportsProps) 
   }), [reportSearchTerm, reportStartMonth, reportEndMonth, reportReviewStatus, reportSubmissionStatus]);
 
   const { data: myReports = [], refetch: refetchMyReports } = trpc.monthlyReports.getMyReports.useQuery();
+
+  useEffect(() => {
+    if (isAdmin || currentReportId || myReports.length === 0) return;
+    const selectedMonthKey = selectedMonth.slice(0, 7);
+    const editableReport = myReports.find((report) => {
+      const reportMonth = new Date(report.reportingMonth).toISOString().slice(0, 7);
+      return reportMonth === selectedMonthKey && (report.isDraft || report.reviewStatus === "correction_required");
+    });
+    if (!editableReport) return;
+
+    setCurrentReportId(editableReport.id);
+    setKeyActivities(editableReport.keyActivities || "");
+    setChallenges(editableReport.challenges || "");
+    setSolutions(editableReport.solutions || "");
+    setPlannedActivities(editableReport.plannedActivities || "");
+    setSupportRequired(editableReport.supportRequired || "");
+    setAdditionalComments(editableReport.additionalComments || "");
+    setConfirmationStatement(editableReport.confirmationStatement);
+  }, [currentReportId, isAdmin, myReports, selectedMonth]);
+
   const {
     data: reportSearchResults,
     refetch: refetchAllReports,

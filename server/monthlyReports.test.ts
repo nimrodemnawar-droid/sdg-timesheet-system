@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { filterMonthlyReports, generateMonthlyReportCSV, generateMonthlyReportPDF } from "./db";
+import { filterMonthlyReports, generateMonthlyReportCSV, generateMonthlyReportPDF, getMonthlyReportInsertId } from "./db";
 
 describe("Monthly Reports Admin Features", () => {
+  it("returns the inserted report ID needed to submit a saved draft", () => {
+    expect(getMonthlyReportInsertId({ insertId: 321 })).toBe(321);
+    expect(() => getMonthlyReportInsertId({ insertId: 0 })).toThrow(/ID could not be determined/);
+  });
   const sampleReport = {
     staffName: "Amina Staff",
     staffNumber: 12,

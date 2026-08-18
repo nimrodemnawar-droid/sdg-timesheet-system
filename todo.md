@@ -794,3 +794,8 @@
 - [x] Implement secure JSON/SQL backup file import and restoration endpoint with safeguards
 - [x] Create Data Management tab in Admin Dashboard
 - [x] Add unit tests for database export, CSV generation, and backup restoration
+
+## Bug Fix: Staff Monthly Report Submission Failure
+- [x] Diagnose why one staff member cannot submit a monthly report
+- [x] Fix the affected validation, mutation, or permission path without losing draft data
+- [x] Verify draft save, submit, status update, and admin visibility for the affected flow
