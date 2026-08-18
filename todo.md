@@ -804,3 +804,8 @@
 - [x] Diagnose the emailNotifications query failure on `/admin`
 - [x] Fix the notification query or schema mismatch without breaking existing notifications
 - [x] Verify Admin Dashboard notification loading and notification-related tests
+
+## Bug Fix: Admin Documents Query Failure
+- [x] Diagnose the documents query failure on `/admin`
+- [x] Repair documents schema drift without losing existing file metadata
+- [x] Verify Admin Dashboard document loading and document-related tests
