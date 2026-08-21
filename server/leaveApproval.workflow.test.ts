@@ -103,3 +103,18 @@ describe("Admin leave approval workflow regression", () => {
     expect(notifications[0]?.content).toContain(approvalReason);
   });
 });
+
+  it("returns all leave statuses and consistent analytics to admins", async () => {
+    const caller = appRouter.createCaller(createAdminContext(1));
+    const [requests, analytics] = await Promise.all([
+      caller.leave.getAll(),
+      caller.leave.analytics(),
+    ]);
+
+    expect(Array.isArray(requests)).toBe(true);
+    expect(analytics.totalRequests).toBe(requests.length);
+    expect(analytics.pendingRequests + analytics.approvedRequests + analytics.rejectedRequests).toBeLessThanOrEqual(analytics.totalRequests);
+    expect(Array.isArray(analytics.byLeaveType)).toBe(true);
+    expect(analytics.approvalRate).toBeGreaterThanOrEqual(0);
+    expect(analytics.approvalRate).toBeLessThanOrEqual(100);
+  });

@@ -538,35 +538,100 @@ export async function getUserLeaveRequests(userId: number) {
     .orderBy(desc(leaveRequests.createdAt));
 }
 
+const leaveRequestSelect = {
+  id: leaveRequests.id,
+  userId: leaveRequests.userId,
+  staffName: users.name,
+  staffEmail: users.email,
+  staffNumber: users.staffNumber,
+  leaveType: leaveRequests.leaveType,
+  startDate: leaveRequests.startDate,
+  endDate: leaveRequests.endDate,
+  daysRequested: leaveRequests.daysRequested,
+  reason: leaveRequests.reason,
+  status: leaveRequests.status,
+  approvedBy: leaveRequests.approvedBy,
+  approvalReason: leaveRequests.approvalReason,
+  approvedAt: leaveRequests.approvedAt,
+  createdAt: leaveRequests.createdAt,
+  updatedAt: leaveRequests.updatedAt,
+};
+
+export async function getAllLeaveRequests() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select(leaveRequestSelect)
+    .from(leaveRequests)
+    .leftJoin(users, eq(leaveRequests.userId, users.id))
+    .orderBy(desc(leaveRequests.createdAt));
+}
+
 export async function getPendingLeaveRequests() {
   const db = await getDb();
   if (!db) return [];
 
-  const result = await db
-    .select({
-      id: leaveRequests.id,
-      userId: leaveRequests.userId,
-      staffName: users.name,
-      staffEmail: users.email,
-      staffNumber: users.staffNumber,
-      leaveType: leaveRequests.leaveType,
-      startDate: leaveRequests.startDate,
-      endDate: leaveRequests.endDate,
-      daysRequested: leaveRequests.daysRequested,
-      reason: leaveRequests.reason,
-      status: leaveRequests.status,
-      approvedBy: leaveRequests.approvedBy,
-      approvalReason: leaveRequests.approvalReason,
-      approvedAt: leaveRequests.approvedAt,
-      createdAt: leaveRequests.createdAt,
-      updatedAt: leaveRequests.updatedAt,
-    })
+  return await db
+    .select(leaveRequestSelect)
     .from(leaveRequests)
     .leftJoin(users, eq(leaveRequests.userId, users.id))
     .where(eq(leaveRequests.status, "pending"))
     .orderBy(asc(leaveRequests.createdAt));
+}
 
-  return result;
+export async function getLeaveAnalytics() {
+  const requests = await getAllLeaveRequests();
+  const byLeaveType = new Map<string, {
+    leaveType: string;
+    totalRequests: number;
+    pendingRequests: number;
+    approvedRequests: number;
+    rejectedRequests: number;
+    requestedDays: number;
+    approvedDays: number;
+  }>();
+
+  let totalRequestedDays = 0;
+  let approvedDays = 0;
+  for (const request of requests) {
+    const requestedDays = Number(request.daysRequested) || 0;
+    const type = request.leaveType || "other";
+    const bucket = byLeaveType.get(type) ?? {
+      leaveType: type,
+      totalRequests: 0,
+      pendingRequests: 0,
+      approvedRequests: 0,
+      rejectedRequests: 0,
+      requestedDays: 0,
+      approvedDays: 0,
+    };
+
+    bucket.totalRequests += 1;
+    bucket.requestedDays += requestedDays;
+    totalRequestedDays += requestedDays;
+    if (request.status === "pending") bucket.pendingRequests += 1;
+    if (request.status === "approved") {
+      bucket.approvedRequests += 1;
+      bucket.approvedDays += requestedDays;
+      approvedDays += requestedDays;
+    }
+    if (request.status === "rejected") bucket.rejectedRequests += 1;
+    byLeaveType.set(type, bucket);
+  }
+
+  const totalRequests = requests.length;
+  const approvedRequests = requests.filter((request) => request.status === "approved").length;
+  return {
+    totalRequests,
+    pendingRequests: requests.filter((request) => request.status === "pending").length,
+    approvedRequests,
+    rejectedRequests: requests.filter((request) => request.status === "rejected").length,
+    totalRequestedDays,
+    approvedDays,
+    approvalRate: totalRequests === 0 ? 0 : Math.round((approvedRequests / totalRequests) * 100),
+    byLeaveType: Array.from(byLeaveType.values()).sort((a, b) => a.leaveType.localeCompare(b.leaveType)),
+  };
 }
 
 export async function approveLeaveRequest(

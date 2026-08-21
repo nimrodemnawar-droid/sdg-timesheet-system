@@ -601,6 +601,30 @@ Report generated at: ${new Date().toISOString()}`;
       }
     }),
 
+    getAll: adminProcedure.query(async () => {
+      try {
+        return await db.getAllLeaveRequests();
+      } catch (error) {
+        console.error('[tRPC] Error fetching all leave requests:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch all leave requests',
+        });
+      }
+    }),
+
+    analytics: adminProcedure.query(async () => {
+      try {
+        return await db.getLeaveAnalytics();
+      } catch (error) {
+        console.error('[tRPC] Error fetching leave analytics:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch leave analytics',
+        });
+      }
+    }),
+
     approve: adminProcedure
       .input(
         z.object({

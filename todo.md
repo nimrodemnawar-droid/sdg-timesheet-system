@@ -98,7 +98,7 @@
 - [x] Implement real-time notifications to staff when requests are approved/declined
 - [x] Add leave request status history tracking
 - [x] Create notification delivery confirmation
-- [ ] Add leave request analytics and reporting
+- [x] Add leave request analytics and reporting
 
 
 ## Phase 11: Leave Balance Dashboard for Staff

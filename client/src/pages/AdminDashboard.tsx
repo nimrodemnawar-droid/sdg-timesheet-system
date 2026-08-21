@@ -110,8 +110,11 @@ export default function AdminDashboard() {
   const { data: stats, refetch: refetchStats } = trpc.attendance.getTodayAllStaff.useQuery(undefined, {
     refetchInterval: 1000,
   }) as any;
-  const { data: leaveRequests, refetch: refetchRequests } = trpc.leave.getPending.useQuery(undefined, {
+  const { data: leaveRequests, refetch: refetchRequests } = trpc.leave.getAll.useQuery(undefined, {
     refetchInterval: 2000,
+  }) as any;
+  const { data: leaveAnalytics } = trpc.leave.analytics.useQuery(undefined, {
+    refetchInterval: 5000,
   }) as any;
 
   // Sort leave requests based on selected sort option
@@ -600,7 +603,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-amber-300 text-sm font-medium">Pending</p>
-                      <p className="text-2xl font-bold text-white">{leaveRequests?.filter((r: any) => r.status === "pending").length || 0}</p>
+                      <p className="text-2xl font-bold text-white">{leaveAnalytics?.pendingRequests ?? leaveRequests?.filter((r: any) => r.status === "pending").length ?? 0}</p>
                     </div>
                     <AlertCircle className="w-8 h-8 text-amber-400" />
                   </div>
@@ -611,7 +614,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-green-300 text-sm font-medium">Approved</p>
-                      <p className="text-2xl font-bold text-white">{leaveRequests?.filter((r: any) => r.status === "approved").length || 0}</p>
+                      <p className="text-2xl font-bold text-white">{leaveAnalytics?.approvedRequests ?? leaveRequests?.filter((r: any) => r.status === "approved").length ?? 0}</p>
                     </div>
                     <CheckCheck className="w-8 h-8 text-green-400" />
                   </div>
@@ -622,7 +625,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-red-300 text-sm font-medium">Rejected</p>
-                      <p className="text-2xl font-bold text-white">{leaveRequests?.filter((r: any) => r.status === "rejected").length || 0}</p>
+                      <p className="text-2xl font-bold text-white">{leaveAnalytics?.rejectedRequests ?? leaveRequests?.filter((r: any) => r.status === "rejected").length ?? 0}</p>
                     </div>
                     <X className="w-8 h-8 text-red-400" />
                   </div>
@@ -633,13 +636,64 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-blue-300 text-sm font-medium">Total</p>
-                      <p className="text-2xl font-bold text-white">{leaveRequests?.length || 0}</p>
+                      <p className="text-2xl font-bold text-white">{leaveAnalytics?.totalRequests ?? leaveRequests?.length ?? 0}</p>
                     </div>
                     <FileText className="w-8 h-8 text-blue-400" />
                   </div>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Leave Analytics */}
+            <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-cyan-400" />
+                  Leave Analytics
+                </CardTitle>
+                <CardDescription className="text-slate-400">Live totals across all submitted leave requests</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="rounded-lg bg-slate-700/40 p-3">
+                    <p className="text-xs text-slate-400">Requested days</p>
+                    <p className="text-xl font-semibold text-white">{Number(leaveAnalytics?.totalRequestedDays ?? 0).toFixed(1)}</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-700/40 p-3">
+                    <p className="text-xs text-slate-400">Approved days</p>
+                    <p className="text-xl font-semibold text-green-300">{Number(leaveAnalytics?.approvedDays ?? 0).toFixed(1)}</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-700/40 p-3">
+                    <p className="text-xs text-slate-400">Approval rate</p>
+                    <p className="text-xl font-semibold text-blue-300">{leaveAnalytics?.approvalRate ?? 0}%</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-700/40 p-3">
+                    <p className="text-xs text-slate-400">Leave types</p>
+                    <p className="text-xl font-semibold text-cyan-300">{leaveAnalytics?.byLeaveType?.length ?? 0}</p>
+                  </div>
+                </div>
+                {leaveAnalytics?.byLeaveType?.length ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+                    {leaveAnalytics.byLeaveType.map((item: any) => (
+                      <div key={item.leaveType} className="rounded-lg border border-slate-700 bg-slate-900/30 p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="capitalize text-sm font-medium text-white">{item.leaveType}</p>
+                          <Badge className="bg-slate-700 text-slate-200">{item.totalRequests} requests</Badge>
+                        </div>
+                        <p className="mt-2 text-xs text-slate-400">
+                          {Number(item.requestedDays).toFixed(1)} days requested · {Number(item.approvedDays).toFixed(1)} approved
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {item.pendingRequests} pending · {item.rejectedRequests} rejected
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500">Analytics will appear after staff submit leave requests.</p>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Leave Requests Card */}
             <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
@@ -771,7 +825,7 @@ export default function AdminDashboard() {
                             </div>
                             <div className="bg-slate-600/30 p-2 rounded">
                               <p className="text-slate-400 text-xs">Days</p>
-                              <p className="text-white font-medium">{request.numberOfDays || "N/A"}</p>
+                              <p className="text-white font-medium">{request.daysRequested ?? "N/A"}</p>
                             </div>
                           </div>
 
