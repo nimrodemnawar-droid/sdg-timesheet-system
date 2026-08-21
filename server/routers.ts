@@ -601,6 +601,46 @@ Report generated at: ${new Date().toISOString()}`;
       }
     }),
 
+    approve: adminProcedure
+      .input(
+        z.object({
+          leaveRequestId: z.number().int().positive(),
+          reason: z.string().trim().min(1).max(1000),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const request = await db.getLeaveRequest(input.leaveRequestId);
+        if (!request) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Leave request not found" });
+        }
+        if (request.status !== "pending") {
+          throw new TRPCError({ code: "CONFLICT", message: "Leave request has already been decided" });
+        }
+
+        await db.approveLeaveRequest(input.leaveRequestId, ctx.user.id, input.reason);
+        return { success: true, status: "approved" as const, leaveRequestId: input.leaveRequestId };
+      }),
+
+    reject: adminProcedure
+      .input(
+        z.object({
+          leaveRequestId: z.number().int().positive(),
+          reason: z.string().trim().min(1).max(1000),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const request = await db.getLeaveRequest(input.leaveRequestId);
+        if (!request) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Leave request not found" });
+        }
+        if (request.status !== "pending") {
+          throw new TRPCError({ code: "CONFLICT", message: "Leave request has already been decided" });
+        }
+
+        await db.rejectLeaveRequest(input.leaveRequestId, ctx.user.id, input.reason);
+        return { success: true, status: "rejected" as const, leaveRequestId: input.leaveRequestId };
+      }),
+
     createRequest: protectedProcedure
       .input(
         z.object({

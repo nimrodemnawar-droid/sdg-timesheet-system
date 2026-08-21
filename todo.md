@@ -814,3 +814,8 @@
 - [x] Remove Overview, Overtime, and Scheduling from the Admin Dashboard tab strip
 - [x] Preserve any underlying routes and deep-link behavior that remain necessary
 - [x] Verify the cleaned Admin Dashboard navigation and responsive layout
+
+## Bug Fix: Admin Leave Approval Stuck on Pending
+- [x] Diagnose why approving a leave request does not change its status from pending
+- [x] Fix the approval mutation and refresh behavior without losing existing leave data
+- [x] Verify approved status, staff notification, and admin/staff synchronization

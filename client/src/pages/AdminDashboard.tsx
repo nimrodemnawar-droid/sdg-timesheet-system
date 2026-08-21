@@ -155,9 +155,8 @@ export default function AdminDashboard() {
   }) as any;
 
   // Mutations
-  // TODO: Implement approve and reject mutations in leave router
-  const approveRequestMutation = { mutateAsync: async () => {} } as any;
-  const rejectRequestMutation = { mutateAsync: async () => {} } as any;
+  const approveRequestMutation = trpc.leave.approve.useMutation();
+  const rejectRequestMutation = trpc.leave.reject.useMutation();
 
   const handleApproveRequest = async (requestId: number) => {
     if (!approvalReason.trim()) {
