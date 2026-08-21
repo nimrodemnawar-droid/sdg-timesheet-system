@@ -54,6 +54,7 @@ import MonthlyReports from "@/pages/MonthlyReports";
 import { DataManagementTab } from "@/components/DataManagementTab";
 import { filterWaypointRecords } from "../../../shared/waypointUtils";
 import { ADMIN_TAB_VALUES, resolveAdminDashboardTab } from "../../../shared/adminDashboardTabs";
+import { toLeaveReportRows } from "../../../shared/leaveReport";
 
 const EMPTY_WAYPOINT_RECORDS: any[] = [];
 
@@ -1215,6 +1216,54 @@ export default function AdminDashboard() {
             <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-green-400" />
+                  Leave Reporting
+                </CardTitle>
+                <CardDescription className="text-slate-400">Review live leave totals and export every request by status.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <div className="rounded-lg bg-amber-900/20 border border-amber-500/20 p-3">
+                    <p className="text-xs text-amber-300">Pending</p>
+                    <p className="text-xl font-semibold text-white">{leaveAnalytics?.pendingRequests ?? 0}</p>
+                  </div>
+                  <div className="rounded-lg bg-green-900/20 border border-green-500/20 p-3">
+                    <p className="text-xs text-green-300">Approved</p>
+                    <p className="text-xl font-semibold text-white">{leaveAnalytics?.approvedRequests ?? 0}</p>
+                  </div>
+                  <div className="rounded-lg bg-red-900/20 border border-red-500/20 p-3">
+                    <p className="text-xs text-red-300">Rejected</p>
+                    <p className="text-xl font-semibold text-white">{leaveAnalytics?.rejectedRequests ?? 0}</p>
+                  </div>
+                  <div className="rounded-lg bg-blue-900/20 border border-blue-500/20 p-3">
+                    <p className="text-xs text-blue-300">Requested days</p>
+                    <p className="text-xl font-semibold text-white">{Number(leaveAnalytics?.totalRequestedDays ?? 0).toFixed(1)}</p>
+                  </div>
+                  <div className="rounded-lg bg-cyan-900/20 border border-cyan-500/20 p-3">
+                    <p className="text-xs text-cyan-300">Approval rate</p>
+                    <p className="text-xl font-semibold text-white">{leaveAnalytics?.approvalRate ?? 0}%</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => {
+                    if (leaveRequests?.length) {
+                      generateLeaveReportCSV(toLeaveReportRows(leaveRequests));
+                      toast.success(`Exported ${leaveRequests.length} leave requests`);
+                    } else {
+                      toast.error("No leave request data available to export");
+                    }
+                  }}
+                  className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white border-0 gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Export Leave Report CSV
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
                   <BarChart3 className="w-5 h-5 text-blue-400" />
                   System Reports
                 </CardTitle>
@@ -1274,15 +1323,7 @@ export default function AdminDashboard() {
                   </Button>
                   <Button onClick={() => {
                     if (leaveRequests && leaveRequests.length > 0) {
-                      const reportData = leaveRequests.map((req: any) => ({
-                        staffId: req.userId || 1,
-                        name: `Staff ${req.userId}`,
-                        leaveType: req.leaveType || 'N/A',
-                        startDate: new Date(req.startDate).toISOString().split('T')[0],
-                        endDate: new Date(req.endDate).toISOString().split('T')[0],
-                        days: req.numberOfDays || 1,
-                        status: req.status || 'Pending',
-                      }));
+                      const reportData = toLeaveReportRows(leaveRequests);
                       generateLeaveReportCSV(reportData);
                     } else {
                       toast.error('No leave request data available to export');

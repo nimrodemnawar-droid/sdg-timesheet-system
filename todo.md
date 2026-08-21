@@ -33,14 +33,14 @@
 - [ ] Implement department/team management
 
 ## Phase 4: Admin Dashboard - Leave Management
-- [ ] Create leave requests panel
-- [ ] Build approval/rejection interface
+- [x] Create leave requests panel
+- [x] Build approval/rejection interface
 - [ ] Add encrypted remarks field
 - [ ] Implement bulk approval
 - [ ] Create leave balance editor
 - [ ] Add leave type management
-- [ ] Build leave analytics
-- [ ] Create leave reports
+- [x] Build leave analytics
+- [x] Create leave reports
 
 ## Phase 5: Admin Dashboard - Attendance & Reports
 - [ ] Build attendance report interface
@@ -819,3 +819,7 @@
 - [x] Diagnose why approving a leave request does not change its status from pending
 - [x] Fix the approval mutation and refresh behavior without losing existing leave data
 - [x] Verify approved status, staff notification, and admin/staff synchronization
+
+## Leave Reporting Gap Follow-up
+- [x] Add a dedicated Admin leave reporting section that surfaces analytics and export actions together
+- [x] Add regression coverage proving leave exports use staff name/email fallback, actual daysRequested, and real statuses
