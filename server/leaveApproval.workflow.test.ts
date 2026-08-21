@@ -118,3 +118,75 @@ describe("Admin leave approval workflow regression", () => {
     expect(analytics.approvalRate).toBeGreaterThanOrEqual(0);
     expect(analytics.approvalRate).toBeLessThanOrEqual(100);
   });
+
+it("bulk approves pending requests and notifies the requesting staff member", async () => {
+  const unique = Date.now();
+  const staffOpenId = `leave-bulk-approval-regression-${unique}`;
+  const staffEmail = `leave-bulk-approval-regression-${unique}@example.com`;
+  const approvalReason = "Bulk approval regression test";
+
+  await db.upsertUser({
+    openId: staffOpenId,
+    email: staffEmail,
+    name: "Bulk Leave Approval Staff",
+    loginMethod: "test",
+    role: "staff",
+  });
+  const staff = await db.getUserByOpenId(staffOpenId);
+  expect(staff).toBeDefined();
+
+  const year = new Date().getFullYear();
+  await db.initializeLeaveBalance(staff!.id, "annual", year, 20);
+  await db.createLeaveRequest({
+    userId: staff!.id,
+    leaveType: "annual",
+    startDate: new Date(year, 11, 1),
+    endDate: new Date(year, 11, 1),
+    daysRequested: "1",
+    reason: `Bulk request one ${unique}`,
+  });
+  await db.createLeaveRequest({
+    userId: staff!.id,
+    leaveType: "annual",
+    startDate: new Date(year, 11, 2),
+    endDate: new Date(year, 11, 2),
+    daysRequested: "1",
+    reason: `Bulk request two ${unique}`,
+  });
+
+  const requests = (await db.getUserLeaveRequests(staff!.id)).filter(
+    (item) => item.reason?.includes(`${unique}`) && item.status === "pending"
+  );
+  expect(requests).toHaveLength(2);
+
+  const caller = appRouter.createCaller(createAdminContext(1));
+  const result = await caller.leave.approveMany({
+    leaveRequestIds: requests.map((request) => request.id),
+    reason: approvalReason,
+  });
+
+  expect(result).toMatchObject({
+    success: true,
+    status: "approved",
+    approvedCount: 2,
+  });
+  for (const request of requests) {
+    expect(await db.getLeaveRequest(request.id)).toMatchObject({
+      status: "approved",
+      approvedBy: 1,
+      approvalReason,
+    });
+  }
+
+  const database = await db.getDb();
+  const notifications = await database!
+    .select()
+    .from(emailNotifications)
+    .where(
+      and(
+        eq(emailNotifications.userId, staff!.id),
+        eq(emailNotifications.type, "leave_approved")
+      )
+    );
+  expect(notifications.filter((notification) => notification.content.includes(approvalReason))).toHaveLength(2);
+});

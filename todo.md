@@ -36,7 +36,7 @@
 - [x] Create leave requests panel
 - [x] Build approval/rejection interface
 - [ ] Add encrypted remarks field
-- [ ] Implement bulk approval
+- [x] Implement bulk approval
 - [ ] Create leave balance editor
 - [ ] Add leave type management
 - [x] Build leave analytics

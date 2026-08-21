@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Users,
@@ -68,7 +69,9 @@ export default function AdminDashboard() {
   }, [location]);
   const [activeTab, setActiveTab] = useState(requestedTab);
   const [selectedRequest, setSelectedRequest] = useState<number | null>(null);
+  const [selectedLeaveRequestIds, setSelectedLeaveRequestIds] = useState<number[]>([]);
   const [approvalReason, setApprovalReason] = useState("");
+  const [bulkApprovalReason, setBulkApprovalReason] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
@@ -114,7 +117,7 @@ export default function AdminDashboard() {
   const { data: leaveRequests, refetch: refetchRequests } = trpc.leave.getAll.useQuery(undefined, {
     refetchInterval: 2000,
   }) as any;
-  const { data: leaveAnalytics } = trpc.leave.analytics.useQuery(undefined, {
+  const { data: leaveAnalytics, refetch: refetchLeaveAnalytics } = trpc.leave.analytics.useQuery(undefined, {
     refetchInterval: 5000,
   }) as any;
 
@@ -161,6 +164,7 @@ export default function AdminDashboard() {
   // Mutations
   const approveRequestMutation = trpc.leave.approve.useMutation();
   const rejectRequestMutation = trpc.leave.reject.useMutation();
+  const approveManyRequestMutation = trpc.leave.approveMany.useMutation();
 
   const handleApproveRequest = async (requestId: number) => {
     if (!approvalReason.trim()) {
@@ -203,6 +207,33 @@ export default function AdminDashboard() {
       await refetchRequests();
     } catch (error) {
       toast.error("Failed to reject request");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleBulkApprove = async () => {
+    if (selectedLeaveRequestIds.length === 0) {
+      toast.error("Select at least one pending leave request");
+      return;
+    }
+    if (!bulkApprovalReason.trim()) {
+      toast.error("Enter a reason for the bulk approval");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const result = await approveManyRequestMutation.mutateAsync({
+        leaveRequestIds: selectedLeaveRequestIds,
+        reason: bulkApprovalReason,
+      });
+      toast.success(`${result.approvedCount} leave request${result.approvedCount === 1 ? "" : "s"} approved and staff notified`);
+      setSelectedLeaveRequestIds([]);
+      setBulkApprovalReason("");
+      await Promise.all([refetchRequests(), refetchLeaveAnalytics()]);
+    } catch (error) {
+      toast.error("Failed to approve selected leave requests");
     } finally {
       setIsProcessing(false);
     }
@@ -780,6 +811,55 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
+                {pendingRequests.length > 0 && (
+                  <div className="rounded-lg border border-amber-500/20 bg-amber-900/10 p-3 space-y-3">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-amber-200">Bulk approval</p>
+                        <p className="text-xs text-slate-400">Select pending requests to approve and notify together.</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedLeaveRequestIds(pendingRequests.map((request: any) => request.id))}
+                          className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                        >
+                          Select all pending
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedLeaveRequestIds([])}
+                          className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                        >
+                          Clear selection
+                        </Button>
+                      </div>
+                    </div>
+                    {selectedLeaveRequestIds.length > 0 && (
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <Input
+                          value={bulkApprovalReason}
+                          onChange={(event) => setBulkApprovalReason(event.target.value)}
+                          placeholder="Reason for approving selected requests"
+                          className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400"
+                        />
+                        <Button
+                          type="button"
+                          onClick={handleBulkApprove}
+                          disabled={isProcessing}
+                          className="bg-green-600 hover:bg-green-700 text-white border-0 whitespace-nowrap"
+                        >
+                          Approve {selectedLeaveRequestIds.length} selected
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Leave Requests List */}
                 {!leaveRequests || leaveRequests.length === 0 ? (
                   <div className="text-center py-12">
@@ -798,13 +878,29 @@ export default function AdminDashboard() {
                       })
                       .map((request: any) => (
                         <div key={request.id} className="p-4 bg-slate-700/50 rounded-lg border border-slate-600/50 hover:border-blue-500/50 transition">
-                          <div className="flex justify-between items-start mb-3">
+                          <div className="flex justify-between items-start mb-3 gap-3">
+                            <div className="flex items-start gap-3 flex-1 min-w-0">
+                              {request.status === "pending" && (
+                                <Checkbox
+                                  checked={selectedLeaveRequestIds.includes(request.id)}
+                                  onCheckedChange={(checked) => {
+                                    setSelectedLeaveRequestIds((current) =>
+                                      checked
+                                        ? Array.from(new Set([...current, request.id]))
+                                        : current.filter((id) => id !== request.id)
+                                    );
+                                  }}
+                                  aria-label={`Select leave request from ${request.staffName || request.staffEmail || "staff member"}`}
+                                  className="mt-1 border-slate-400 data-[state=checked]:bg-blue-600"
+                                />
+                              )}
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
                                 <User className="w-4 h-4 text-slate-400" />
                                 <p className="text-white font-semibold">{request.staffName || "Staff Member"}</p>
                               </div>
                               <p className="text-xs text-slate-400 ml-6">{request.staffEmail || "No email"}</p>
+                            </div>
                             </div>
                             <Badge className={request.status === "pending" ? "bg-amber-600" : request.status === "approved" ? "bg-green-600" : "bg-red-600"}>
                               {request.status?.charAt(0).toUpperCase() + request.status?.slice(1) || "Pending"}

@@ -645,6 +645,34 @@ Report generated at: ${new Date().toISOString()}`;
         return { success: true, status: "approved" as const, leaveRequestId: input.leaveRequestId };
       }),
 
+    approveMany: adminProcedure
+      .input(
+        z.object({
+          leaveRequestIds: z.array(z.number().int().positive()).min(1).max(100),
+          reason: z.string().trim().min(1).max(1000),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const leaveRequestIds = Array.from(new Set(input.leaveRequestIds));
+        const requests = await Promise.all(leaveRequestIds.map((id) => db.getLeaveRequest(id)));
+        const missingId = leaveRequestIds[requests.findIndex((request) => !request)];
+        if (missingId) {
+          throw new TRPCError({ code: "NOT_FOUND", message: `Leave request ${missingId} not found` });
+        }
+        const decidedRequest = requests.find((request) => request?.status !== "pending");
+        if (decidedRequest) {
+          throw new TRPCError({ code: "CONFLICT", message: "All selected leave requests must still be pending" });
+        }
+
+        await Promise.all(leaveRequestIds.map((id) => db.approveLeaveRequest(id, ctx.user.id, input.reason)));
+        return {
+          success: true,
+          status: "approved" as const,
+          approvedCount: leaveRequestIds.length,
+          leaveRequestIds,
+        };
+      }),
+
     reject: adminProcedure
       .input(
         z.object({
