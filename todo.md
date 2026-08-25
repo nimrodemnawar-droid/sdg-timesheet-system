@@ -851,3 +851,7 @@
 ## Structured Task Export Fidelity Follow-up
 - [x] Add structured Task 1..N details, challenges, countries, and participant counts to CSV and Excel exports
 - [x] Update export regression expectations and verify legacy rows remain lossless
+
+## Scheduled Daily Summary Compatibility Follow-up
+- [x] Calculate daily scheduled-report hours from completed attendance duration when structured timesheet session fields are absent
+- [x] Add regression coverage for structured-timesheet daily summary totals and cron report delivery behavior

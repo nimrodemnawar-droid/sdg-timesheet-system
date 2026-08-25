@@ -2839,6 +2839,31 @@ export async function getKPIs() {
 }
 
 
+export function calculateDailySummaryHours(records: Array<{
+  amStartTime?: Date | null;
+  amEndTime?: Date | null;
+  pmStartTime?: Date | null;
+  pmEndTime?: Date | null;
+  durationMinutes?: number | null;
+}>): number {
+  let totalHours = 0;
+  records.forEach((record) => {
+    const hasLegacySessionTimes = Boolean(
+      (record.amStartTime && record.amEndTime) || (record.pmStartTime && record.pmEndTime)
+    );
+    if (record.amStartTime && record.amEndTime) {
+      totalHours += (record.amEndTime.getTime() - record.amStartTime.getTime()) / (1000 * 60 * 60);
+    }
+    if (record.pmStartTime && record.pmEndTime) {
+      totalHours += (record.pmEndTime.getTime() - record.pmStartTime.getTime()) / (1000 * 60 * 60);
+    }
+    if (!hasLegacySessionTimes && record.durationMinutes != null) {
+      totalHours += Number(record.durationMinutes) / 60;
+    }
+  });
+  return Math.round(totalHours * 100) / 100;
+}
+
 // Generate daily timesheet summary report
 export async function generateDailyTimesheetSummary(date: Date = new Date()) {
   const dbInstance = await getDb();
@@ -2861,6 +2886,7 @@ export async function generateDailyTimesheetSummary(date: Date = new Date()) {
       amEndTime: attendance.amEndTime,
       pmStartTime: attendance.pmStartTime,
       pmEndTime: attendance.pmEndTime,
+      durationMinutes: attendance.durationMinutes,
       workModality: attendance.workModality,
       activityCategoryName: activityCategories.name,
       sdgGoalName: sdgGoals.title,
@@ -2886,18 +2912,8 @@ export async function generateDailyTimesheetSummary(date: Date = new Date()) {
   const submittedCount = records.filter(r => r.isSubmitted).length;
   const pendingCount = records.filter(r => !r.isSubmitted).length;
 
-  // Calculate total hours
-  let totalHours = 0;
-  records.forEach(record => {
-    if (record.amStartTime && record.amEndTime) {
-      const amHours = (record.amEndTime.getTime() - record.amStartTime.getTime()) / (1000 * 60 * 60);
-      totalHours += amHours;
-    }
-    if (record.pmStartTime && record.pmEndTime) {
-      const pmHours = (record.pmEndTime.getTime() - record.pmStartTime.getTime()) / (1000 * 60 * 60);
-      totalHours += pmHours;
-    }
-  });
+  // Calculate total hours from legacy sessions or persisted checkout duration.
+  const totalHours = calculateDailySummaryHours(records);
 
   // Group by activity category
   const activitiesByCategory: Record<string, number> = {};
