@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { countKenyaWorkingDays } from "../../../shared/leave";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, MapPin, Clock, AlertCircle, CheckCircle2, FileUp, Activity, Briefcase, Target, Plus, Trash2, Navigation, Calendar } from "lucide-react";
+import { Loader2, MapPin, Clock, AlertCircle, CheckCircle2, FileUp, Activity, Briefcase, Target, Plus, Trash2, Navigation, Calendar, History } from "lucide-react";
 import { LoadingAnimationButton, SuccessToastContent, ErrorToastContent } from "@/components/LoadingAnimationButton";
 import { toast } from "sonner";
 import { NotificationBanner } from "@/components/NotificationBanner";
@@ -56,11 +57,58 @@ const WORK_MODALITIES = [
   { label: "Remote", value: "remote" },
 ];
 
-const SDG_GOALS = Array.from({ length: 17 }, (_, i) => ({
-  id: i + 1,
-  title: `SDG ${i + 1}`,
-  color: `hsl(${(i * 21) % 360}, 70%, 50%)`,
-}));
+const TASK_DURATIONS = [
+  { label: "0–1 hour", value: "0_1_hour" },
+  { label: "2 hours", value: "2_hours" },
+  { label: "3 hours", value: "3_hours" },
+  { label: "4 hours", value: "4_hours" },
+  { label: "5–8 hours", value: "5_8_hours" },
+] as const;
+
+const COUNTRIES = [
+  "Kenya",
+  "Uganda",
+  "Tanzania",
+  "Rwanda",
+  "Burundi",
+  "South Sudan",
+  "Ethiopia",
+  "Somalia",
+  "Democratic Republic of the Congo",
+  "Ghana",
+  "Nigeria",
+  "South Africa",
+  "Other",
+] as const;
+
+type TaskDuration = (typeof TASK_DURATIONS)[number]["value"];
+type CountryCoordinationDraft = { country: string; participantsAttended: string };
+type TimesheetTaskDraft = {
+  estimatedDuration: TaskDuration;
+  taskDescription: string;
+  challenges: string;
+  includesCoordination: boolean;
+  countries: CountryCoordinationDraft[];
+};
+
+const createTaskDraft = (): TimesheetTaskDraft => ({
+  estimatedDuration: "0_1_hour",
+  taskDescription: "",
+  challenges: "",
+  includesCoordination: false,
+  countries: [{ country: "", participantsAttended: "" }],
+});
+
+const createInitialTimesheetData = () => ({
+  date: new Date().toISOString().split("T")[0],
+  workModality: "field",
+  activityCategory: "",
+  program: "",
+  kpi: "none",
+  staffRemarks: "",
+  evidenceFile: null as File | null,
+  tasks: [createTaskDraft()],
+});
 
 interface Waypoint {
   id: number;
@@ -87,21 +135,7 @@ export default function StaffDashboard() {
   const submitTimesheetMutation = trpc.attendance.submitTimesheet.useMutation({
     onSuccess: () => {
       toast.success('Timesheet submitted successfully!');
-      setTimesheetData({
-        date: new Date().toISOString().split('T')[0],
-        workModality: 'field',
-        activityCategory: '',
-        sdgGoal: '',
-        program: '',
-        kpi: 'none',
-        amStartTime: '',
-        amEndTime: '',
-        pmStartTime: '',
-        pmEndTime: '',
-        taskDescription: '',
-        staffRemarks: '',
-        evidenceFile: null,
-      });
+      setTimesheetData(createInitialTimesheetData());
     },
     onError: (error) => {
       toast.error(`Failed to submit timesheet: ${error.message}`);
@@ -114,27 +148,57 @@ export default function StaffDashboard() {
   const watchIdRef = useRef<number | null>(null);
   const watchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Timesheet form state
-  // Fetch activity categories, SDG goals, and KPIs
+  // Timesheet form state. Tasks are repeatable and remain separate from the attendance record.
   const { data: activityCategoriesData } = trpc.system.getActivityCategories.useQuery();
-  const { data: sdgGoalsData } = trpc.system.getSDGGoals.useQuery();
-  const { data: kpisData } = trpc.system.getKPIs.useQuery();
+  const [timesheetData, setTimesheetData] = useState(createInitialTimesheetData);
 
-  const [timesheetData, setTimesheetData] = useState({
-    date: new Date().toISOString().split("T")[0],
-    amStartTime: "",
-    amEndTime: "",
-    pmStartTime: "",
-    pmEndTime: "",
-    workModality: "field",
-    activityCategory: activityCategoriesData && activityCategoriesData.length > 0 ? activityCategoriesData[0].id.toString() : "",
-    sdgGoal: sdgGoalsData && sdgGoalsData.length > 0 ? sdgGoalsData[0].id.toString() : "1",
-    program: "",
-    kpi: "none",
-    taskDescription: "",
-    staffRemarks: "",
-    evidenceFile: null as File | null,
-  });
+  const updateTask = (taskIndex: number, patch: Partial<TimesheetTaskDraft>) => {
+    setTimesheetData((current) => ({
+      ...current,
+      tasks: current.tasks.map((task, index) => index === taskIndex ? { ...task, ...patch } : task),
+    }));
+  };
+
+  const addTask = () => {
+    setTimesheetData((current) => ({ ...current, tasks: [...current.tasks, createTaskDraft()] }));
+  };
+
+  const removeTask = (taskIndex: number) => {
+    setTimesheetData((current) => ({
+      ...current,
+      tasks: current.tasks.length === 1 ? current.tasks : current.tasks.filter((_, index) => index !== taskIndex),
+    }));
+  };
+
+  const updateCountry = (taskIndex: number, countryIndex: number, patch: Partial<CountryCoordinationDraft>) => {
+    setTimesheetData((current) => ({
+      ...current,
+      tasks: current.tasks.map((task, index) => index !== taskIndex ? task : {
+        ...task,
+        countries: task.countries.map((country, index) => index === countryIndex ? { ...country, ...patch } : country),
+      }),
+    }));
+  };
+
+  const addCountry = (taskIndex: number) => {
+    setTimesheetData((current) => ({
+      ...current,
+      tasks: current.tasks.map((task, index) => index !== taskIndex ? task : {
+        ...task,
+        countries: [...task.countries, { country: "", participantsAttended: "" }],
+      }),
+    }));
+  };
+
+  const removeCountry = (taskIndex: number, countryIndex: number) => {
+    setTimesheetData((current) => ({
+      ...current,
+      tasks: current.tasks.map((task, index) => index !== taskIndex ? task : {
+        ...task,
+        countries: task.countries.length === 1 ? task.countries : task.countries.filter((_, index) => index !== countryIndex),
+      }),
+    }));
+  };
 
   // Waypoint state
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
@@ -154,6 +218,14 @@ export default function StaffDashboard() {
   const [selectedWorkplace, setSelectedWorkplace] = useState<string>("field");
 
   const { data: todayAttendance, refetch: refetchAttendance } = trpc.attendance.getToday.useQuery();
+  const currentMonthKey = new Date().toISOString().slice(0, 7);
+  const [historyMonth, setHistoryMonth] = useState(currentMonthKey);
+  const historyRange = useMemo(() => {
+    const [year, month] = historyMonth.split("-").map(Number);
+    const lastDay = new Date(year, month, 0).getDate();
+    return { startDate: `${historyMonth}-01`, endDate: `${historyMonth}-${String(lastDay).padStart(2, "0")}` };
+  }, [historyMonth]);
+  const { data: monthlyTimesheetHistory, isLoading: isLoadingTimesheetHistory } = trpc.timesheet.getMyComplete.useQuery(historyRange);
   const { data: allLeaveBalances } = trpc.leave.getAllBalances.useQuery();
   const { data: myLeaveRequests, isLoading: isLoadingLeaveRequests } = trpc.leave.getMyRequests.useQuery();
   const { data: kpiList, isLoading: isLoadingKPIs } = trpc.kpi.getKPIs.useQuery();
@@ -389,6 +461,12 @@ export default function StaffDashboard() {
       return;
     }
 
+    if (!todayAttendance.isSubmitted) {
+      toast.error("Submit your timesheet before checking out");
+      setActiveTab("timesheet");
+      return;
+    }
+
     // Warn if GPS accuracy is poor but allow check-out (GPS is optional)
     if (gpsCoordinates.accuracy > 1000) {
       toast.warning(`GPS accuracy is poor (${gpsCoordinates.accuracy.toFixed(0)}m). Check-out will proceed but location may be inaccurate.`);
@@ -440,6 +518,7 @@ export default function StaffDashboard() {
   };
 
   const isCheckedIn = todayAttendance?.checkInTime && !todayAttendance?.checkOutTime;
+  const hasSubmittedTimesheet = !!todayAttendance?.isSubmitted;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-2 sm:p-4 md:p-8">
@@ -581,28 +660,29 @@ export default function StaffDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="bg-slate-800/50 border border-slate-700 backdrop-blur-sm">
-            <TabsTrigger value="check-in" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+          <TabsList className="flex w-full max-w-full justify-start gap-1 overflow-x-auto whitespace-nowrap bg-slate-800/50 border border-slate-700 backdrop-blur-sm p-1">
+            <TabsTrigger value="check-in" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white shrink-0 text-xs sm:text-sm">
               <MapPin className="w-4 h-4 mr-2" />
               Check In/Out
             </TabsTrigger>
-            <TabsTrigger value="timesheet" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+            <TabsTrigger value="timesheet" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white shrink-0 text-xs sm:text-sm">
               <Briefcase className="w-4 h-4 mr-2" />
               Timesheet
             </TabsTrigger>
-            <TabsTrigger value="activities" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+            <TabsTrigger value="history" className="data-[state=active]:bg-cyan-600 text-slate-300 data-[state=active]:text-white shrink-0 text-xs sm:text-sm"><History className="w-4 h-4 mr-2" />Monthly History</TabsTrigger>
+            <TabsTrigger value="activities" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white shrink-0 text-xs sm:text-sm">
               <Activity className="w-4 h-4 mr-2" />
               Activities
             </TabsTrigger>
-            <TabsTrigger value="waypoints" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white">
+            <TabsTrigger value="waypoints" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white shrink-0 text-xs sm:text-sm">
               <Navigation className="w-4 h-4 mr-2" />
               Waypoints
             </TabsTrigger>
-            <TabsTrigger value="leave" className="data-[state=active]:bg-purple-600 text-slate-300 data-[state=active]:text-white">
+            <TabsTrigger value="leave" className="data-[state=active]:bg-purple-600 text-slate-300 data-[state=active]:text-white shrink-0 text-xs sm:text-sm">
               <AlertCircle className="w-4 h-4 mr-2" />
               Request Leave
             </TabsTrigger>
-            <TabsTrigger value="calendar" className="data-[state=active]:bg-indigo-600 text-slate-300 data-[state=active]:text-white">
+            <TabsTrigger value="calendar" className="data-[state=active]:bg-indigo-600 text-slate-300 data-[state=active]:text-white shrink-0 text-xs sm:text-sm">
               <Calendar className="w-4 h-4 mr-2" />
               Leave Calendar
             </TabsTrigger>
@@ -721,13 +801,13 @@ export default function StaffDashboard() {
 
                     <Button
                       onClick={handleCheckOut}
-                      disabled={!gpsCoordinates || isCheckingOut || !isCheckedIn}
+                      disabled={!gpsCoordinates || isCheckingOut || !isCheckedIn || !hasSubmittedTimesheet}
                       className={`h-12 text-white border-0 font-semibold text-base ${
                         !isCheckedIn
                           ? 'bg-gray-500 cursor-not-allowed opacity-50'
                           : 'bg-red-600 hover:bg-red-700'
                       }`}
-                      title={!gpsCoordinates ? 'Acquire GPS coordinates first' : !isCheckedIn ? 'Check in first to enable check out' : ''}
+                      title={!gpsCoordinates ? 'Acquire GPS coordinates first' : !isCheckedIn ? 'Check in first to enable check out' : !hasSubmittedTimesheet ? 'Submit your timesheet before checking out' : ''}
                     >
                       {isCheckingOut ? (
                         <>
@@ -754,9 +834,14 @@ export default function StaffDashboard() {
                       <p className="text-sm text-blue-200">✓ <strong>Ready to Check In:</strong> Click the Check In button to start your day</p>
                     </div>
                   )}
-                  {isCheckedIn && (
+                  {isCheckedIn && !hasSubmittedTimesheet && (
+                    <div className="p-3 bg-amber-900/30 border border-amber-600/50 rounded-lg">
+                      <p className="text-sm text-amber-200">Before checking out, open the Timesheet tab, complete every task, and press <strong>Submit Timesheet</strong>.</p>
+                    </div>
+                  )}
+                  {isCheckedIn && hasSubmittedTimesheet && (
                     <div className="p-3 bg-green-900/30 border border-green-600/50 rounded-lg">
-                      <p className="text-sm text-green-200">✓ <strong>You are Checked In:</strong> Click Check Out when you finish your day</p>
+                      <p className="text-sm text-green-200">✓ <strong>Timesheet submitted:</strong> Check Out is ready when you finish your day.</p>
                     </div>
                   )}
                 </div>
@@ -820,15 +905,9 @@ export default function StaffDashboard() {
                   <div className="space-y-2">
                     <Label className="text-slate-300">Work Modality</Label>
                     <Select value={timesheetData.workModality} onValueChange={(value) => setTimesheetData({ ...timesheetData, workModality: value })}>
-                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
+                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue /></SelectTrigger>
                       <SelectContent className="bg-slate-800 border-slate-700">
-                        {WORK_MODALITIES.map((modality) => (
-                          <SelectItem key={modality.value} value={modality.value} className="text-white">
-                            {modality.label}
-                          </SelectItem>
-                        ))}
+                        {WORK_MODALITIES.map((modality) => <SelectItem key={modality.value} value={modality.value} className="text-white">{modality.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -836,121 +915,74 @@ export default function StaffDashboard() {
                   <div className="space-y-2">
                     <Label className="text-slate-300">Activity Category</Label>
                     <Select value={timesheetData.activityCategory} onValueChange={(value) => setTimesheetData({ ...timesheetData, activityCategory: value })}>
-                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
+                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Select a category" /></SelectTrigger>
                       <SelectContent className="bg-slate-800 border-slate-700 max-h-60">
-                        {activityCategoriesData && activityCategoriesData.map((category) => (
-                          <SelectItem key={category.id} value={category.id.toString()} className="text-white">
-                            {category.name}
-                          </SelectItem>
-                        ))}
+                        {activityCategoriesData?.map((category) => <SelectItem key={category.id} value={category.id.toString()} className="text-white">{category.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-300">SDG Goal</Label>
-                    <Select value={timesheetData.sdgGoal} onValueChange={(value) => setTimesheetData({ ...timesheetData, sdgGoal: value })}>
-                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-800 border-slate-700 max-h-60">
-                        {SDG_GOALS && SDG_GOALS.map((goal) => (
-                          <SelectItem key={goal.id} value={goal.id.toString()} className="text-white">
-                            {goal.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-slate-300 flex items-center gap-2">
-                      <Target className="w-4 h-4" />
-                      Linked Output / KPI
-                    </Label>
+                    <Label className="text-slate-300 flex items-center gap-2"><Target className="w-4 h-4" />Linked Output / KPI</Label>
                     <Select value={timesheetData.kpi} onValueChange={(value) => setTimesheetData({ ...timesheetData, kpi: value })}>
-                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
-                        <SelectValue placeholder="Select a KPI (optional)" />
-                      </SelectTrigger>
+                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Select a KPI (optional)" /></SelectTrigger>
                       <SelectContent className="bg-slate-800 border-slate-700 max-h-60">
                         <SelectItem value="none" className="text-slate-400">None</SelectItem>
-                        {isLoadingKPIs ? (
-                          <div className="p-2 text-slate-400 text-sm">Loading KPIs...</div>
-                        ) : kpiList && kpiList.length > 0 ? (
-                          kpiList && kpiList.map((kpi) => (
-                            <SelectItem key={kpi.id} value={kpi.id.toString()} className="text-white">
-                              {kpi.name} {kpi.unit ? `(${kpi.unit})` : ''}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <div className="p-2 text-slate-400 text-sm">No KPIs available</div>
-                        )}
+                        {isLoadingKPIs ? <div className="p-2 text-slate-400 text-sm">Loading KPIs...</div> : kpiList?.map((kpi) => <SelectItem key={kpi.id} value={kpi.id.toString()} className="text-white">{kpi.name} {kpi.unit ? `(${kpi.unit})` : ''}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-slate-300">AM Start Time</Label>
-                    <Input
-                      type="time"
-                      value={timesheetData.amStartTime}
-                      onChange={(e) => setTimesheetData({ ...timesheetData, amStartTime: e.target.value })}
-                      className="bg-slate-700/50 border-slate-600 text-white"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-slate-300">AM End Time</Label>
-                    <Input
-                      type="time"
-                      value={timesheetData.amEndTime}
-                      onChange={(e) => setTimesheetData({ ...timesheetData, amEndTime: e.target.value })}
-                      className="bg-slate-700/50 border-slate-600 text-white"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-slate-300">PM Start Time</Label>
-                    <Input
-                      type="time"
-                      value={timesheetData.pmStartTime}
-                      onChange={(e) => setTimesheetData({ ...timesheetData, pmStartTime: e.target.value })}
-                      className="bg-slate-700/50 border-slate-600 text-white"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-slate-300">PM End Time</Label>
-                    <Input
-                      type="time"
-                      value={timesheetData.pmEndTime}
-                      onChange={(e) => setTimesheetData({ ...timesheetData, pmEndTime: e.target.value })}
-                      className="bg-slate-700/50 border-slate-600 text-white"
-                    />
-                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-slate-300">Task Description</Label>
-                  <Textarea
-                    placeholder="Describe your work activities..."
-                    value={timesheetData.taskDescription}
-                    onChange={(e) => setTimesheetData({ ...timesheetData, taskDescription: e.target.value })}
-                    className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 min-h-24"
-                  />
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <Label className="text-white text-base">Work Tasks</Label>
+                      <p className="text-xs text-slate-400 mt-1">Add every task you worked on today. Each task needs a duration, description, and any challenges.</p>
+                    </div>
+                    <Button type="button" onClick={addTask} variant="outline" className="border-blue-500/50 text-blue-300 hover:bg-blue-900/30"><Plus className="w-4 h-4 mr-2" />Add Task</Button>
+                  </div>
+
+                  {timesheetData.tasks.map((task, taskIndex) => (
+                    <div key={`task-${taskIndex}`} className="rounded-xl border border-slate-600 bg-slate-700/30 p-4 space-y-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-white font-semibold">Task {taskIndex + 1}</h3>
+                        {timesheetData.tasks.length > 1 && <Button type="button" size="sm" variant="ghost" onClick={() => removeTask(taskIndex)} className="text-red-300 hover:text-red-200 hover:bg-red-900/20"><Trash2 className="w-4 h-4 mr-1" />Remove</Button>}
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-300">Estimated Time *</Label>
+                          <Select value={task.estimatedDuration} onValueChange={(value) => updateTask(taskIndex, { estimatedDuration: value as TaskDuration })}>
+                            <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue /></SelectTrigger>
+                            <SelectContent className="bg-slate-800 border-slate-700">{TASK_DURATIONS.map((duration) => <SelectItem key={duration.value} value={duration.value} className="text-white">{duration.label}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-end">
+                          <Button type="button" variant={task.includesCoordination ? "default" : "outline"} onClick={() => updateTask(taskIndex, { includesCoordination: !task.includesCoordination })} className={task.includesCoordination ? "w-full bg-indigo-600 hover:bg-indigo-700 text-white border-0" : "w-full border-slate-600 text-slate-300 hover:bg-slate-700"}>
+                            {task.includesCoordination ? "Multi-country coordination added" : "Add multi-country coordination"}
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-2"><Label className="text-slate-300">Task Description *</Label><Textarea value={task.taskDescription} onChange={(event) => updateTask(taskIndex, { taskDescription: event.target.value })} placeholder={`What did you work on for Task ${taskIndex + 1}?`} className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 min-h-24" /></div>
+                      <div className="space-y-2"><Label className="text-slate-300">Challenges (if any)</Label><Textarea value={task.challenges} onChange={(event) => updateTask(taskIndex, { challenges: event.target.value })} placeholder="Describe blockers or challenges, or write None" className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 min-h-20" /></div>
+
+                      {task.includesCoordination && (
+                        <div className="rounded-lg border border-indigo-500/30 bg-indigo-950/30 p-3 space-y-3">
+                          <div className="flex items-center justify-between gap-2"><div><p className="text-indigo-200 font-medium">Country coordination</p><p className="text-xs text-slate-400">Select each country and record how many people attended.</p></div><Button type="button" size="sm" variant="outline" onClick={() => addCountry(taskIndex)} className="border-indigo-400/50 text-indigo-200 hover:bg-indigo-900/40"><Plus className="w-4 h-4 mr-1" />Country</Button></div>
+                          {task.countries.map((country, countryIndex) => (
+                            <div key={`task-${taskIndex}-country-${countryIndex}`} className="grid grid-cols-1 sm:grid-cols-[1fr_9rem_auto] gap-2 items-end">
+                              <div className="space-y-1"><Label className="text-xs text-slate-400">Country *</Label><Select value={country.country || "not-selected"} onValueChange={(value) => updateCountry(taskIndex, countryIndex, { country: value === "not-selected" ? "" : value })}><SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Choose country" /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="not-selected" className="text-slate-400">Choose country</SelectItem>{COUNTRIES.map((countryName) => <SelectItem key={countryName} value={countryName} className="text-white">{countryName}</SelectItem>)}</SelectContent></Select></div>
+                              <div className="space-y-1"><Label className="text-xs text-slate-400">People attended *</Label><Input type="number" min="0" step="1" value={country.participantsAttended} onChange={(event) => updateCountry(taskIndex, countryIndex, { participantsAttended: event.target.value })} className="bg-slate-700/50 border-slate-600 text-white" /></div>
+                              {task.countries.length > 1 && <Button type="button" size="icon" variant="ghost" onClick={() => removeCountry(taskIndex, countryIndex)} className="text-red-300 hover:text-red-200" aria-label="Remove country"><Trash2 className="w-4 h-4" /></Button>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-slate-300">Staff Remarks</Label>
-                  <Textarea
-                    placeholder="Any additional remarks..."
-                    value={timesheetData.staffRemarks}
-                    onChange={(e) => setTimesheetData({ ...timesheetData, staffRemarks: e.target.value })}
-                    className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 min-h-20"
-                  />
-                </div>
+                <div className="space-y-2"><Label className="text-slate-300">Staff Remarks</Label><Textarea placeholder="Any additional remarks..." value={timesheetData.staffRemarks} onChange={(e) => setTimesheetData({ ...timesheetData, staffRemarks: e.target.value })} className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 min-h-20" /></div>
 
                 <Button 
                   disabled={isSubmittingTimesheet || !todayAttendance?.checkInTime}
@@ -960,21 +992,36 @@ export default function StaffDashboard() {
                       toast.error('No attendance record found for today');
                       return;
                     }
+                    const missingTask = timesheetData.tasks.findIndex((task) => !task.taskDescription.trim());
+                    if (missingTask >= 0) {
+                      toast.error(`Please add a description for Task ${missingTask + 1}`);
+                      return;
+                    }
+                    const invalidCoordination = timesheetData.tasks.some((task) => task.includesCoordination && task.countries.some((country) => !country.country.trim() || ! /^(0|[1-9]\d*)$/.test(country.participantsAttended)));
+                    if (invalidCoordination) {
+                      toast.error('Complete each country and participant count in the coordination section');
+                      return;
+                    }
                     setIsSubmittingTimesheet(true);
                     try {
                       const submitData = {
                         attendanceId: todayAttendance.id,
                         workModality: timesheetData.workModality as "nairobi_office" | "homa_bay_office" | "field" | "remote",
                         activityCategoryId: timesheetData.activityCategory ? parseInt(timesheetData.activityCategory) : undefined,
-                        sdgGoalId: timesheetData.sdgGoal ? parseInt(timesheetData.sdgGoal) : undefined,
                         kpiId: timesheetData.kpi && timesheetData.kpi !== 'none' ? parseInt(timesheetData.kpi) : undefined,
-                        taskDescription: timesheetData.taskDescription,
-                        staffRemarks: timesheetData.staffRemarks,
-                        amStartTime: timesheetData.amStartTime,
-                        amEndTime: timesheetData.amEndTime,
-                        pmStartTime: timesheetData.pmStartTime,
-                        pmEndTime: timesheetData.pmEndTime,
                         program: timesheetData.program,
+                        staffRemarks: timesheetData.staffRemarks,
+                        tasks: timesheetData.tasks.map((task) => ({
+                          estimatedDuration: task.estimatedDuration,
+                          taskDescription: task.taskDescription.trim(),
+                          challenges: task.challenges.trim() || undefined,
+                          coordination: task.includesCoordination
+                            ? task.countries.map((country) => ({
+                                country: country.country.trim(),
+                                participantsAttended: Number(country.participantsAttended),
+                              }))
+                            : [],
+                        })),
                       };
                       console.log('[StaffDashboard] Submitting timesheet with data:', submitData);
                       await submitTimesheetMutation.mutateAsync(submitData);
@@ -995,6 +1042,30 @@ export default function StaffDashboard() {
                     </>
                   )}
                 </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Monthly History Tab */}
+          <TabsContent value="history" className="space-y-4">
+            <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2"><History className="w-5 h-5 text-cyan-400" />Monthly Timesheet History</CardTitle>
+                <CardDescription className="text-slate-400">Submitted timesheets are saved here for tracing and monthly report preparation. The entry form resets for each new day.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="max-w-xs space-y-2"><Label className="text-slate-300">Choose month</Label><Input type="month" value={historyMonth} onChange={(event) => setHistoryMonth(event.target.value)} className="bg-slate-700/50 border-slate-600 text-white" /></div>
+                {isLoadingTimesheetHistory ? <p className="text-slate-400 text-sm">Loading your saved timesheets...</p> : monthlyTimesheetHistory && monthlyTimesheetHistory.length > 0 ? (
+                  <div className="space-y-3">
+                    {monthlyTimesheetHistory.map((record) => (
+                      <div key={record.id} className="rounded-xl border border-slate-700 bg-slate-900/40 p-4 space-y-3">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-white font-semibold">{record.date}</p><p className="text-xs text-slate-400">{record.workModality.replace(/_/g, " ")} · {record.activityCategory}</p></div><Badge className={record.isSubmitted ? "bg-green-600" : "bg-slate-600"}>{record.isSubmitted ? "Submitted" : "Draft"}</Badge></div>
+                        <div className="grid grid-cols-2 gap-3 text-sm"><div><p className="text-slate-400">Hours worked</p><p className="text-white font-medium">{record.hoursWorked}h</p></div><div><p className="text-slate-400">Distance</p><p className="text-white font-medium">{record.distanceTraveled}</p></div></div>
+                        <div className="space-y-2"><p className="text-slate-400 text-sm">Tasks</p>{record.tasks && record.tasks.length > 0 ? record.tasks.map((task) => <div key={task.id} className="rounded-lg bg-slate-800 p-3"><div className="flex flex-wrap justify-between gap-2"><p className="text-white font-medium">Task {task.taskNumber}</p><span className="text-xs text-cyan-300">{task.estimatedDuration.replace(/_/g, " ")}</span></div><p className="text-slate-200 text-sm mt-1 whitespace-pre-wrap">{task.taskDescription}</p><p className="text-slate-400 text-xs mt-1">Challenges: {task.challenges || "None"}</p>{task.coordination && task.coordination.length > 0 && <p className="text-indigo-300 text-xs mt-1">Coordination: {task.coordination.map((item) => `${item.country} (${item.participantsAttended})`).join(", ")}</p>}</div>) : <p className="text-slate-400 text-sm">No task details recorded for this entry.</p>}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : <p className="text-slate-400 text-sm">No timesheets saved for this month.</p>}
               </CardContent>
             </Card>
           </TabsContent>
@@ -1140,10 +1211,11 @@ export default function StaffDashboard() {
                   </div>
 
                   {/* Days Requested and Balance Validation */}
+                  <p className="text-xs text-slate-400">Leave days are calculated as working days only; Saturdays, Sundays, and configured public holidays are excluded.</p>
                   {leaveFormData.startDate && leaveFormData.endDate && leaveFormData.leaveType && (() => {
-                    const startDate = new Date(leaveFormData.startDate);
-                    const endDate = new Date(leaveFormData.endDate);
-                    const daysRequested = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                    const startDate = new Date(`${leaveFormData.startDate}T00:00:00`);
+                    const endDate = new Date(`${leaveFormData.endDate}T00:00:00`);
+                    const daysRequested = countKenyaWorkingDays(startDate, endDate);
                     const leaveTypeKey = leaveFormData.leaveType as 'annual' | 'sick' | 'maternity' | 'unpaid';
                     const selectedBalance = allLeaveBalances?.[0]?.[leaveTypeKey];
                     const availableDays = selectedBalance ? parseFloat(selectedBalance.remainingDays.toString()) : 0;
@@ -1193,18 +1265,16 @@ export default function StaffDashboard() {
                           toast.error('Please fill in all required fields');
                           return;
                         }
-                        const startDate = new Date(leaveFormData.startDate);
-                        const endDate = new Date(leaveFormData.endDate);
-                        const daysRequested = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-                        
-                        // No balance validation - allow any number of days
+                        const startDate = leaveFormData.startDate;
+                        const endDate = leaveFormData.endDate;
+
+                        // The server validates the authoritative weekday/public-holiday count.
                         setIsSubmittingLeave(true);
                         try {
                           await submitLeaveRequest.mutateAsync({
                             leaveType: leaveFormData.leaveType as any,
-                            startDate: startDate.toISOString().split('T')[0],
-                            endDate: endDate.toISOString().split('T')[0],
-                            daysRequested: parseInt(daysRequested.toString()),
+                            startDate,
+                            endDate,
                             reason: leaveFormData.reason,
                           });
                         } finally {
@@ -1235,6 +1305,28 @@ export default function StaffDashboard() {
                     </Button>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2"><Calendar className="w-5 h-5 text-indigo-400" />Previous Leave Records</CardTitle>
+                <CardDescription className="text-slate-400">Track your submitted, approved, and rejected leave requests.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingLeaveRequests ? <p className="text-slate-400 text-sm">Loading leave history...</p> : myLeaveRequests && myLeaveRequests.length > 0 ? (
+                  <div className="space-y-3">
+                    {myLeaveRequests.map((request) => (
+                      <div key={request.id} className="rounded-lg border border-slate-700 bg-slate-900/40 p-3">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div><p className="text-white font-medium capitalize">{request.leaveType} leave</p><p className="text-xs text-slate-400">{new Date(request.startDate).toLocaleDateString()} – {new Date(request.endDate).toLocaleDateString()} · {request.daysRequested} working day(s)</p></div>
+                          <Badge className={request.status === "approved" ? "bg-green-600" : request.status === "rejected" ? "bg-red-600" : "bg-amber-600"}>{request.status.charAt(0).toUpperCase() + request.status.slice(1)}</Badge>
+                        </div>
+                        {request.approvalReason && <p className="mt-2 text-xs text-slate-400">Decision note: {request.approvalReason}</p>}
+                      </div>
+                    ))}
+                  </div>
+                ) : <p className="text-slate-400 text-sm">No leave requests recorded yet.</p>}
               </CardContent>
             </Card>
           </TabsContent>

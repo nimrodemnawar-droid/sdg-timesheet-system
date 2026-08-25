@@ -823,3 +823,14 @@
 ## Leave Reporting Gap Follow-up
 - [x] Add a dedicated Admin leave reporting section that surfaces analytics and export actions together
 - [x] Add regression coverage proving leave exports use staff name/email fallback, actual daysRequested, and real statuses
+
+## Staff Timesheet and Leave History Enhancements
+- [x] Add repeatable Task 1..N entries to staff timesheet with duration dropdown, description, and challenges
+- [x] Add country coordination details with country selection and participant count when the activity requires it
+- [x] Require a submitted timesheet before staff can check out, with a clear mobile-friendly explanation
+- [x] Mirror all task, duration, challenge, country, and participant data in Admin attendance/timesheet views and exports
+- [x] Apply 21 annual leave days and count only weekdays excluding configured public holidays
+- [x] Add staff leave history showing previous requests and final statuses
+- [x] Add staff monthly timesheet history tab while retaining archived data and starting a clean current-period entry view
+- [x] Remove SDG goals and AM/PM start/end fields from the active staff timesheet form and new submission contract without deleting historical data
+- [x] Add database migrations, regression tests, and responsive verification for the new timesheet and leave behavior

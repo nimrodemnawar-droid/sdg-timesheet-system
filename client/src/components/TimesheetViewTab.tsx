@@ -57,13 +57,10 @@ export function TimesheetViewTab() {
       "Check-out Address",
       "Work Modality",
       "Activity Category",
-      "SDG Goal",
       "KPI",
-      "AM Start Time",
-      "AM End Time",
-      "PM Start Time",
-      "PM End Time",
-      "Task Description",
+      "Tasks",
+      "Challenges",
+      "Country Coordination",
       "Staff Remarks",
       "Program/Department",
       "Hours Worked",
@@ -86,13 +83,10 @@ export function TimesheetViewTab() {
       record.checkOutAddress,
       record.workModality,
       record.activityCategory,
-      record.sdgGoal,
       record.kpi,
-      record.amStartTime,
-      record.amEndTime,
-      record.pmStartTime,
-      record.pmEndTime,
-      record.taskDescription,
+      (record.tasks || []).map((task) => `Task ${task.taskNumber} [${task.estimatedDuration}]: ${task.taskDescription}`).join(" | ") || record.taskDescription || "N/A",
+      (record.tasks || []).map((task) => `Task ${task.taskNumber}: ${task.challenges || "None"}`).join(" | ") || "None",
+      (record.tasks || []).flatMap((task) => (task.coordination || []).map((item) => `Task ${task.taskNumber} - ${item.country}: ${item.participantsAttended}`)).join(" | ") || "None",
       record.staffRemarks,
       record.program,
       record.hoursWorked,
@@ -393,46 +387,22 @@ export function TimesheetViewTab() {
                         <p className="text-slate-500 text-xs">ID: {record.activityCategoryId}</p>
                       </div>
                       <div>
-                        <label className="text-slate-400 text-sm">SDG Goal</label>
-                        <p className="text-white font-medium">{record.sdgGoal}</p>
-                        <p className="text-slate-500 text-xs">ID: {record.sdgGoalId}</p>
-                      </div>
-                      <div>
                         <label className="text-slate-400 text-sm">Linked Output / KPI</label>
                         <Badge className="bg-purple-600">{record.kpi}</Badge>
                       </div>
                     </div>
-                    <div>
-                      <label className="text-slate-400 text-sm">Task Description</label>
-                      <p className="text-white text-sm bg-slate-800 rounded p-2">{record.taskDescription}</p>
+                    <div className="space-y-3">
+                      <label className="text-slate-400 text-sm">Submitted Tasks</label>
+                      {(record.tasks || []).length > 0 ? (record.tasks || []).map((task) => (
+                        <div key={task.id} className="rounded-lg bg-slate-800 p-3 space-y-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-white font-medium">Task {task.taskNumber}</p><Badge variant="outline" className="text-blue-200 border-blue-500/50">{task.estimatedDuration.replace(/_/g, " ")}</Badge></div>
+                          <p className="text-slate-200 text-sm whitespace-pre-wrap">{task.taskDescription}</p>
+                          <p className="text-slate-400 text-xs"><span className="font-medium text-slate-300">Challenges:</span> {task.challenges || "None"}</p>
+                          {(task.coordination || []).length > 0 && <div className="border-t border-slate-700 pt-2"><p className="text-indigo-200 text-xs font-medium mb-1">Country coordination</p><div className="flex flex-wrap gap-2">{(task.coordination || []).map((item) => <Badge key={`${task.id}-${item.country}`} variant="secondary" className="bg-indigo-950 text-indigo-200">{item.country}: {item.participantsAttended} attended</Badge>)}</div></div>}
+                        </div>
+                      )) : <p className="text-slate-400 text-sm bg-slate-800 rounded p-2">No structured tasks recorded for this historical entry.</p>}
                     </div>
-                    <div>
-                      <label className="text-slate-400 text-sm">Staff Remarks</label>
-                      <p className="text-white text-sm bg-slate-800 rounded p-2">{record.staffRemarks}</p>
-                    </div>
-                  </div>
-
-                  {/* Session Times */}
-                  <div className="border-t border-slate-600 pt-4 space-y-4">
-                    <h4 className="text-white font-semibold">Session Times</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-slate-400 text-sm">AM Start Time</label>
-                        <p className="text-white">{record.amStartTime}</p>
-                      </div>
-                      <div>
-                        <label className="text-slate-400 text-sm">AM End Time</label>
-                        <p className="text-white">{record.amEndTime}</p>
-                      </div>
-                      <div>
-                        <label className="text-slate-400 text-sm">PM Start Time</label>
-                        <p className="text-white">{record.pmStartTime}</p>
-                      </div>
-                      <div>
-                        <label className="text-slate-400 text-sm">PM End Time</label>
-                        <p className="text-white">{record.pmEndTime}</p>
-                      </div>
-                    </div>
+                    <div><label className="text-slate-400 text-sm">Staff Remarks</label><p className="text-white text-sm bg-slate-800 rounded p-2">{record.staffRemarks}</p></div>
                   </div>
 
                   {/* Additional Information */}

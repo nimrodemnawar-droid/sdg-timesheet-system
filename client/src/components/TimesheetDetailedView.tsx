@@ -28,6 +28,15 @@ interface TimesheetRecord {
   kpi: string;
   taskDescription: string;
   staffRemarks: string;
+  tasks?: Array<{
+    id: number;
+    taskNumber: number;
+    estimatedDuration: string;
+    taskDescription: string;
+    challenges: string;
+    coordination?: Array<{ country: string; participantsAttended: number }>;
+  }>;
+
   hoursWorked: number;
   distanceTraveled: number;
   submissionStatus: string;
@@ -84,7 +93,9 @@ export function TimesheetDetailedView() {
       "Work Modality",
       "Activity Category",
       "KPI",
-      "Task Description",
+      "Tasks",
+      "Challenges",
+      "Country Coordination",
       "Staff Remarks",
       "Hours Worked",
       "Distance Traveled",
@@ -125,7 +136,9 @@ export function TimesheetDetailedView() {
         record.workModality || "N/A",
         record.activityCategory || "N/A",
         record.kpi || "N/A",
-        record.taskDescription || "N/A",
+        (record.tasks || []).map((task: any) => `Task ${task.taskNumber} [${task.estimatedDuration}]: ${task.taskDescription}`).join(" | ") || record.taskDescription || "N/A",
+        (record.tasks || []).map((task: any) => `Task ${task.taskNumber}: ${task.challenges || "None"}`).join(" | ") || "None",
+        (record.tasks || []).flatMap((task: any) => (task.coordination || []).map((item: any) => `${item.country}: ${item.participantsAttended}`)).join(" | ") || "None",
         record.staffRemarks || "N/A",
         record.hoursWorked || "0",
         record.distanceTraveled || "0",
@@ -278,7 +291,7 @@ export function TimesheetDetailedView() {
                       <React.Fragment key={`row-${record.id}-${idx}`}>
                         {isNewDate && idx > 0 && (
                           <tr key={`date-separator-${new Date(record.date).toDateString()}`} className="bg-slate-600/30 border-b-2 border-slate-500">
-                            <td colSpan={18} className="py-3 px-4 text-slate-300 font-semibold text-center">
+                            <td colSpan={20} className="py-3 px-4 text-slate-300 font-semibold text-center">
                               📅 {new Date(record.date).toLocaleDateString("en-US", {
                                 weekday: "long",
                                 year: "numeric",
@@ -290,7 +303,7 @@ export function TimesheetDetailedView() {
                         )}
                         {isNewDate && idx === 0 && (
                           <tr key={`date-separator-first-${new Date(record.date).toDateString()}`} className="bg-slate-600/30 border-b-2 border-slate-500">
-                            <td colSpan={18} className="py-3 px-4 text-slate-300 font-semibold text-center">
+                            <td colSpan={20} className="py-3 px-4 text-slate-300 font-semibold text-center">
                               📅 {new Date(record.date).toLocaleDateString("en-US", {
                                 weekday: "long",
                                 year: "numeric",
@@ -342,10 +355,16 @@ export function TimesheetDetailedView() {
                       </td>
                       <td className="py-2 px-2 text-slate-300 text-xs">{record.activityCategory || "N/A"}</td>
                       <td className="py-2 px-2 text-slate-300 text-xs">{record.kpi || "N/A"}</td>
-                      <td className="py-2 px-2 text-slate-300 text-xs max-w-xs truncate">
-                        {record.taskDescription || "N/A"}
+                      <td className="py-2 px-2 text-slate-300 text-xs max-w-xs">
+                        <div className="space-y-1">{(record.tasks || []).length > 0 ? (record.tasks || []).map((task: any) => <div key={task.id}><span className="text-white">T{task.taskNumber}</span> · {task.estimatedDuration.replace(/_/g, " ")} · {task.taskDescription}</div>) : (record.taskDescription || "N/A")}</div>
                       </td>
-                      <td className="py-2 px-2 text-slate-300 text-xs max-w-xs truncate">
+                      <td className="py-2 px-2 text-slate-300 text-xs max-w-xs">
+                        <div className="space-y-1">{(record.tasks || []).length > 0 ? (record.tasks || []).map((task: any) => <div key={`challenge-${task.id}`}>T{task.taskNumber}: {task.challenges || "None"}</div>) : "None"}</div>
+                      </td>
+                      <td className="py-2 px-2 text-slate-300 text-xs max-w-xs">
+                        <div className="space-y-1">{(record.tasks || []).flatMap((task: any) => (task.coordination || []).map((item: any) => <div key={`${task.id}-${item.country}`}>T{task.taskNumber}: {item.country} ({item.participantsAttended})</div>))}</div>
+                      </td>
+                      <td className="py-2 px-2 text-slate-300 text-xs max-w-xs">
                         {record.staffRemarks || "N/A"}
                       </td>
                       <td className="py-2 px-2 text-slate-300 font-medium">{record.hoursWorked || "0"}h</td>

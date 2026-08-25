@@ -7,7 +7,7 @@ describe("Leave Request System - End-to-End", () => {
 
   beforeAll(async () => {
     // Initialize leave balance for testing
-    await db.initializeLeaveBalance(testUserId, "annual", testYear, 20);
+    await db.initializeLeaveBalance(testUserId, "annual", testYear, 21);
     await db.initializeLeaveBalance(testUserId, "sick", testYear, 10);
     await db.initializeLeaveBalance(testUserId, "maternity", testYear, 90);
   });
@@ -192,7 +192,7 @@ describe("Leave Request System - End-to-End", () => {
       expect(maternityBalance).toBeDefined();
 
       // Verify allocated days match initialization
-      expect(parseFloat(annualBalance!.allocatedDays.toString())).toBe(20);
+      expect(parseFloat(annualBalance!.allocatedDays.toString())).toBe(21);
       expect(parseFloat(sickBalance!.allocatedDays.toString())).toBe(10);
       expect(parseFloat(maternityBalance!.allocatedDays.toString())).toBe(90);
     });

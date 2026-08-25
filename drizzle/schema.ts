@@ -140,6 +140,42 @@ export type Attendance = typeof attendance.$inferSelect;
 export type InsertAttendance = typeof attendance.$inferInsert;
 
 /**
+ * Repeatable task entries attached to a submitted daily timesheet.
+ * The original attendance columns remain for historical compatibility.
+ */
+export const timesheetTasks = mysqlTable("timesheetTasks", {
+  id: int("id").autoincrement().primaryKey(),
+  attendanceId: int("attendanceId").notNull().references(() => attendance.id, { onDelete: "cascade" }),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  taskNumber: int("taskNumber").notNull(),
+  estimatedDuration: mysqlEnum("estimatedDuration", ["0_1_hour", "2_hours", "3_hours", "4_hours", "5_8_hours"]).notNull(),
+  taskDescription: text("taskDescription").notNull(),
+  challenges: text("challenges"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TimesheetTask = typeof timesheetTasks.$inferSelect;
+export type InsertTimesheetTask = typeof timesheetTasks.$inferInsert;
+
+/**
+ * Country-level coordination details for task entries that involve multiple countries.
+ */
+export const timesheetCountryCoordination = mysqlTable("timesheetCountryCoordination", {
+  id: int("id").autoincrement().primaryKey(),
+  taskId: int("taskId").notNull().references(() => timesheetTasks.id, { onDelete: "cascade" }),
+  attendanceId: int("attendanceId").notNull().references(() => attendance.id, { onDelete: "cascade" }),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  country: varchar("country", { length: 100 }).notNull(),
+  participantsAttended: int("participantsAttended").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TimesheetCountryCoordination = typeof timesheetCountryCoordination.$inferSelect;
+export type InsertTimesheetCountryCoordination = typeof timesheetCountryCoordination.$inferInsert;
+
+/**
  * Supervisor Confirmation - Separate workflow from staff submission
  * Stores supervisor review, signature, and private remarks (encrypted)
  */

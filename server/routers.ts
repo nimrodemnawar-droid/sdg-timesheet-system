@@ -2,6 +2,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
+import { countKenyaWorkingDays } from "../shared/leave";
 import * as db from "./db";
 import {
   encryptData,
@@ -160,6 +161,12 @@ export const appRouter = router({
             message: 'No check-in found for today. Please check in first.',
           });
         }
+        if (!todayAttendance.isSubmitted) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Submit your timesheet before checking out.',
+          });
+        }
 
         const encrypted = encryptData(
           JSON.stringify({
@@ -226,56 +233,60 @@ export const appRouter = router({
     submitTimesheet: protectedProcedure
       .input(
         z.object({
-          attendanceId: z.number(),
-          amStartTime: z.string().optional(),
-          amEndTime: z.string().optional(),
-          pmStartTime: z.string().optional(),
-          pmEndTime: z.string().optional(),
+          attendanceId: z.number().int().positive(),
           workModality: z.enum(["nairobi_office", "homa_bay_office", "field", "remote"]).optional(),
-          activityCategoryId: z.number().optional(),
-          sdgGoalId: z.number().optional(),
-          kpiId: z.number().optional(),
-          program: z.string().optional(),
-          taskDescription: z.string().optional(),
-          staffRemarks: z.string().optional(),
+          activityCategoryId: z.number().int().positive().optional(),
+          kpiId: z.number().int().positive().optional(),
+          program: z.string().trim().max(255).optional(),
+          staffRemarks: z.string().trim().max(5000).optional(),
+          tasks: z.array(z.object({
+            estimatedDuration: z.enum(["0_1_hour", "2_hours", "3_hours", "4_hours", "5_8_hours"]),
+            taskDescription: z.string().trim().min(1).max(5000),
+            challenges: z.string().trim().max(5000).optional(),
+            coordination: z.array(z.object({
+              country: z.string().trim().min(1).max(100),
+              participantsAttended: z.number().int().min(0).max(1000000),
+            })).max(50).optional(),
+          })).min(1).max(20),
         })
       )
       .mutation(async ({ input, ctx }) => {
         try {
+          const attendance = await db.getAttendanceById(input.attendanceId);
+          if (!attendance || attendance.userId !== ctx.user.id) {
+            throw new TRPCError({ code: "FORBIDDEN", message: "You can only submit your own timesheet" });
+          }
+          if (attendance.isSubmitted) {
+            throw new TRPCError({ code: "CONFLICT", message: "This timesheet has already been submitted" });
+          }
+
           await db.updateAttendanceWithTimesheetData(input.attendanceId, {
-            amStartTime: input.amStartTime,
-            amEndTime: input.amEndTime,
-            pmStartTime: input.pmStartTime,
-            pmEndTime: input.pmEndTime,
             workModality: input.workModality,
             activityCategoryId: input.activityCategoryId,
-            sdgGoalId: input.sdgGoalId,
             kpiId: input.kpiId,
             program: input.program,
-            taskDescription: input.taskDescription,
             staffRemarks: input.staffRemarks,
           });
-
+          await db.replaceTimesheetTasks(input.attendanceId, ctx.user.id, input.tasks);
           await db.submitTimesheet(input.attendanceId);
 
-          // Send email notification to admin
-          const attendanceRecord = await db.getTodayAttendance(ctx.user.id);
-          const attendance = attendanceRecord && attendanceRecord.id === input.attendanceId ? attendanceRecord : null;
+          const hoursWorked = attendance.durationMinutes ? attendance.durationMinutes / 60 : 0;
+          const isOvertime = hoursWorked > 8;
+          const overtimeHours = isOvertime ? hoursWorked - 8 : 0;
+          const taskSummary = input.tasks.map((task, index) => {
+            const coordination = task.coordination?.length
+              ? `; Countries: ${task.coordination.map((item) => `${item.country} (${item.participantsAttended})`).join(", ")}`
+              : "";
+            return `Task ${index + 1} [${task.estimatedDuration}]: ${task.taskDescription}${task.challenges ? `; Challenges: ${task.challenges}` : ""}${coordination}`;
+          }).join("\n");
 
-          if (attendance) {
-            const hoursWorked = attendance.durationMinutes ? attendance.durationMinutes / 60 : 0;
-            const isOvertime = hoursWorked > 8;
-            const overtimeHours = isOvertime ? hoursWorked - 8 : 0;
-
-            try {
-              await notifyOwner({
-                title: `📋 Timesheet Submitted - ${ctx.user.name} (#${(ctx.user.staffNumber || 0).toString().padStart(3, '0')})`,
-                content: `Staff member ${ctx.user.name} has submitted their timesheet.\n\nWork Hours: ${hoursWorked.toFixed(2)}h${isOvertime ? ` (⚠️ OVERTIME: ${overtimeHours.toFixed(2)}h)` : ''}\nWork Modality: ${input.workModality || 'Not specified'}\nTask: ${input.taskDescription || 'No description provided'}`,
-              });
-            } catch (emailError) {
-              console.error('[tRPC] Error sending timesheet notification:', emailError);
-              // Don't fail the timesheet submission if email fails
-            }
+          try {
+            await notifyOwner({
+              title: `📋 Timesheet Submitted - ${ctx.user.name} (#${(ctx.user.staffNumber || 0).toString().padStart(3, '0')})`,
+              content: `Staff member ${ctx.user.name} has submitted their timesheet.\n\nWork Hours: ${hoursWorked.toFixed(2)}h${isOvertime ? ` (⚠️ OVERTIME: ${overtimeHours.toFixed(2)}h)` : ''}\nWork Modality: ${input.workModality || 'Not specified'}\n${taskSummary}`,
+            });
+          } catch (emailError) {
+            console.error('[tRPC] Error sending timesheet notification:', emailError);
           }
 
           await logAuditEvent({
@@ -283,11 +294,12 @@ export const appRouter = router({
             action: "TIMESHEET_SUBMITTED",
             entityType: "ATTENDANCE",
             entityId: input.attendanceId,
-            details: { attendanceId: input.attendanceId },
+            details: { attendanceId: input.attendanceId, taskCount: input.tasks.length },
           });
 
-          return { success: true, message: "Timesheet submitted successfully" };
+          return { success: true, message: "Timesheet submitted successfully", taskCount: input.tasks.length };
         } catch (error) {
+          if (error instanceof TRPCError) throw error;
           console.error("[tRPC] Error submitting timesheet:", error);
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
@@ -542,6 +554,9 @@ Report generated at: ${new Date().toISOString()}`;
       .query(async ({ input, ctx }) => {
         try {
           const year = input.year || new Date().getFullYear();
+          if (input.leaveType === "annual") {
+            await db.ensureAnnualLeaveBalance(ctx.user.id, year);
+          }
           const balance = await db.getLeaveBalance(ctx.user.id, input.leaveType, year);
           return balance;
         } catch (error) {
@@ -570,14 +585,17 @@ Report generated at: ${new Date().toISOString()}`;
         const users = await db.getAllUsers();
         const currentYear = new Date().getFullYear();
         const balances = await Promise.all(
-          users.map(async (user) => ({
+          users.map(async (user) => {
+            await db.ensureAnnualLeaveBalance(user.id, currentYear);
+            return {
             userId: user.id,
             userName: user.name,
             annual: await db.getLeaveBalance(user.id, 'annual', currentYear),
             sick: await db.getLeaveBalance(user.id, 'sick', currentYear),
             maternity: await db.getLeaveBalance(user.id, 'maternity', currentYear),
             unpaid: await db.getLeaveBalance(user.id, 'unpaid', currentYear),
-          }))
+            };
+          })
         );
         return balances;
       } catch (error) {
@@ -640,6 +658,9 @@ Report generated at: ${new Date().toISOString()}`;
         if (request.status !== "pending") {
           throw new TRPCError({ code: "CONFLICT", message: "Leave request has already been decided" });
         }
+        if (request.leaveType === "annual") {
+          await db.ensureAnnualLeaveBalance(request.userId, new Date(request.startDate).getFullYear());
+        }
 
         await db.approveLeaveRequest(input.leaveRequestId, ctx.user.id, input.reason);
         return { success: true, status: "approved" as const, leaveRequestId: input.leaveRequestId };
@@ -664,7 +685,12 @@ Report generated at: ${new Date().toISOString()}`;
           throw new TRPCError({ code: "CONFLICT", message: "All selected leave requests must still be pending" });
         }
 
-        await Promise.all(leaveRequestIds.map((id) => db.approveLeaveRequest(id, ctx.user.id, input.reason)));
+        await Promise.all(requests.map(async (request) => {
+          if (request?.leaveType === "annual") {
+            await db.ensureAnnualLeaveBalance(request.userId, new Date(request.startDate).getFullYear());
+          }
+          return db.approveLeaveRequest(request!.id, ctx.user.id, input.reason);
+        }));
         return {
           success: true,
           status: "approved" as const,
@@ -697,16 +723,15 @@ Report generated at: ${new Date().toISOString()}`;
       .input(
         z.object({
           leaveType: z.enum(['annual', 'sick', 'unpaid', 'maternity', 'other']),
-          startDate: z.string(),
-          endDate: z.string(),
-          daysRequested: z.number(),
-          reason: z.string().optional(),
+          startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          reason: z.string().trim().max(5000).optional(),
         })
       )
       .mutation(async ({ input, ctx }) => {
         try {
-          const startDate = new Date(input.startDate);
-          const endDate = new Date(input.endDate);
+          const startDate = new Date(`${input.startDate}T00:00:00`);
+          const endDate = new Date(`${input.endDate}T00:00:00`);
           
           if (startDate > endDate) {
             throw new TRPCError({
@@ -715,12 +740,23 @@ Report generated at: ${new Date().toISOString()}`;
             });
           }
           
+          if (input.leaveType === "annual") {
+            await db.ensureAnnualLeaveBalance(ctx.user.id, startDate.getFullYear());
+          }
+          const daysRequested = countKenyaWorkingDays(startDate, endDate);
+          if (daysRequested <= 0) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'The selected dates contain no working days. Weekends and public holidays are excluded.',
+            });
+          }
+
           const result = await db.createLeaveRequest({
             userId: ctx.user.id,
             leaveType: input.leaveType,
             startDate,
             endDate,
-            daysRequested: input.daysRequested.toString(),
+            daysRequested: daysRequested.toString(),
             reason: input.reason,
           });
           
@@ -733,7 +769,7 @@ Report generated at: ${new Date().toISOString()}`;
           
           await notifyOwner({
             title: 'New Leave Request',
-            content: `${ctx.user.name} submitted ${input.leaveType} leave for ${input.daysRequested} days`,
+            content: `${ctx.user.name} submitted ${input.leaveType} leave for ${daysRequested} working day(s) from ${input.startDate} to ${input.endDate}`,
           });
           
           return { success: true, message: 'Leave request created successfully' };
@@ -881,6 +917,24 @@ Report generated at: ${new Date().toISOString()}`;
           throw new TRPCError({
             code: 'INTERNAL_SERVER_ERROR',
             message: 'Failed to fetch timesheet data',
+          });
+        }
+      }),
+
+    getMyComplete: protectedProcedure
+      .input(z.object({ startDate: z.string().optional(), endDate: z.string().optional() }))
+      .query(async ({ input, ctx }) => {
+        try {
+          return await db.getCompleteTimesheetData({
+            staffId: ctx.user.id,
+            startDate: input.startDate ? new Date(`${input.startDate}T00:00:00`) : undefined,
+            endDate: input.endDate ? new Date(`${input.endDate}T23:59:59`) : undefined,
+          });
+        } catch (error) {
+          console.error('[tRPC] Error fetching personal timesheet history:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to fetch personal timesheet history',
           });
         }
       }),

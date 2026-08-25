@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { countKenyaWorkingDays, ANNUAL_LEAVE_ENTITLEMENT_DAYS } from "../../../shared/leave";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +31,7 @@ export default function LeaveRequest() {
 
   // Default leave balance if query fails
   const defaultLeaveBalance = {
-    allocatedDays: 20,
+    allocatedDays: ANNUAL_LEAVE_ENTITLEMENT_DAYS,
     usedDays: 0,
   };
 
@@ -49,16 +50,10 @@ export default function LeaveRequest() {
 
     setIsSubmitting(true);
     try {
-      // Calculate days requested (simplified)
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const daysRequested = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
       await createRequestMutation.mutateAsync({
         leaveType: leaveType as "annual" | "sick" | "unpaid" | "maternity" | "other",
-        startDate: start.toISOString().split('T')[0],
-        endDate: end.toISOString().split('T')[0],
-        daysRequested: daysRequested,
+        startDate,
+        endDate,
         reason,
       });
 
@@ -194,6 +189,12 @@ export default function LeaveRequest() {
                   />
                 </div>
               </div>
+
+              {startDate && endDate && (
+                <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+                  This request will use <strong>{countKenyaWorkingDays(new Date(`${startDate}T00:00:00`), new Date(`${endDate}T00:00:00`))} working day(s)</strong>. Weekends and configured public holidays are excluded.
+                </div>
+              )}
 
               <Button
                 type="submit"

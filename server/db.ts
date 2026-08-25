@@ -1,9 +1,11 @@
 import { drizzle } from "drizzle-orm/mysql2";
-import { and, eq, gte, lte, desc, asc, isNotNull, sql } from "drizzle-orm";
+import { and, eq, gte, lte, desc, asc, inArray, isNotNull, sql } from "drizzle-orm";
 import {
   InsertUser,
   users,
   attendance,
+  timesheetTasks,
+  timesheetCountryCoordination,
   waypoints,
   leaveRequests,
   leaveBalance,
@@ -447,6 +449,108 @@ export async function submitTimesheet(attendanceId: number) {
     .where(eq(attendance.id, attendanceId));
 }
 
+export type TimesheetTaskInput = {
+  estimatedDuration: "0_1_hour" | "2_hours" | "3_hours" | "4_hours" | "5_8_hours";
+  taskDescription: string;
+  challenges?: string;
+  coordination?: Array<{ country: string; participantsAttended: number }>;
+};
+
+/** Replace the structured task set for an attendance record in one database transaction. */
+export async function replaceTimesheetTasks(
+  attendanceId: number,
+  userId: number,
+  tasks: TimesheetTaskInput[]
+) {
+  const database = await getDb();
+  if (!database) return [];
+
+  return database.transaction(async (tx) => {
+    const existingTasks = await tx
+      .select({ id: timesheetTasks.id })
+      .from(timesheetTasks)
+      .where(eq(timesheetTasks.attendanceId, attendanceId));
+
+    for (const task of existingTasks) {
+      await tx.delete(timesheetCountryCoordination).where(eq(timesheetCountryCoordination.taskId, task.id));
+    }
+    await tx.delete(timesheetTasks).where(eq(timesheetTasks.attendanceId, attendanceId));
+
+    if (tasks.length === 0) return [];
+
+    await tx.insert(timesheetTasks).values(
+      tasks.map((task, index) => ({
+        attendanceId,
+        userId,
+        taskNumber: index + 1,
+        estimatedDuration: task.estimatedDuration,
+        taskDescription: task.taskDescription.trim(),
+        challenges: task.challenges?.trim() || null,
+      }))
+    );
+
+    const savedTasks = await tx
+      .select()
+      .from(timesheetTasks)
+      .where(eq(timesheetTasks.attendanceId, attendanceId))
+      .orderBy(asc(timesheetTasks.taskNumber));
+
+    for (let index = 0; index < tasks.length; index += 1) {
+      const task = tasks[index];
+      const savedTask = savedTasks[index];
+      const coordination = (task.coordination ?? []).filter((item: { country: string; participantsAttended: number }) => item.country.trim());
+      if (!savedTask || !coordination.length) continue;
+      await tx.insert(timesheetCountryCoordination).values(
+        coordination.map((item: { country: string; participantsAttended: number }) => ({
+          taskId: savedTask.id,
+          attendanceId,
+          userId,
+          country: item.country.trim(),
+          participantsAttended: item.participantsAttended,
+        }))
+      );
+    }
+
+    return savedTasks;
+  });
+}
+
+export async function getTimesheetTasksForAttendance(attendanceId: number) {
+  const database = await getDb();
+  if (!database) return [];
+
+  const tasks = await database
+    .select()
+    .from(timesheetTasks)
+    .where(eq(timesheetTasks.attendanceId, attendanceId))
+    .orderBy(asc(timesheetTasks.taskNumber));
+  if (!tasks.length) return [];
+
+  const coordination = await database
+    .select()
+    .from(timesheetCountryCoordination)
+    .where(eq(timesheetCountryCoordination.attendanceId, attendanceId))
+    .orderBy(asc(timesheetCountryCoordination.id));
+  const coordinationByTask = new Map<number, typeof coordination>();
+  for (const item of coordination) {
+    const current = coordinationByTask.get(item.taskId) ?? [];
+    current.push(item);
+    coordinationByTask.set(item.taskId, current);
+  }
+
+  return tasks.map((task) => ({
+    id: task.id,
+    taskNumber: task.taskNumber,
+    estimatedDuration: task.estimatedDuration,
+    taskDescription: task.taskDescription,
+    challenges: task.challenges || "",
+    coordination: (coordinationByTask.get(task.id) ?? []).map((item) => ({
+      country: item.country,
+      participantsAttended: item.participantsAttended,
+    })),
+  }));
+}
+
 // ============ WAYPOINT TRACKING ============
 
 export async function addWaypoint(data: {
@@ -659,7 +763,7 @@ export async function approveLeaveRequest(
     })
     .where(eq(leaveRequests.id, leaveRequestId));
 
-  // Update leave balance
+  // Update leave balance using the stored request day count.
   const daysRequested = parseFloat(leaveRequest.daysRequested.toString());
   await updateLeaveBalance(
     leaveRequest.userId,
@@ -799,6 +903,29 @@ export async function initializeLeaveBalance(
     usedDays: "0" as any,
     remainingDays: allocatedDays.toString() as any,
   });
+}
+
+/** Keep annual leave aligned with the organisation-wide 21 working-day entitlement. */
+export async function ensureAnnualLeaveBalance(userId: number, year = new Date().getFullYear()) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const balance = await getLeaveBalance(userId, "annual", year);
+  if (!balance) {
+    await initializeLeaveBalance(userId, "annual", year, 21);
+    return getLeaveBalance(userId, "annual", year);
+  }
+
+  const allocated = Number(balance.allocatedDays) || 0;
+  if (allocated < 21) {
+    const used = Number(balance.usedDays) || 0;
+    await db.update(leaveBalance).set({
+      allocatedDays: "21" as any,
+      remainingDays: Math.max(0, 21 - used).toString() as any,
+    }).where(eq(leaveBalance.id, balance.id));
+    return getLeaveBalance(userId, "annual", year);
+  }
+  return balance;
 }
 
 // ============ SUPERVISOR REMARKS ============
@@ -1760,11 +1887,12 @@ export async function getAllLeaveBalances(userId: number) {
 
   try {
     const currentYear = new Date().getFullYear();
-    const leaveTypes = ["annual", "sick", "casual", "maternity"];
+    await ensureAnnualLeaveBalance(userId, currentYear);
+    const leaveTypes = ["annual", "sick", "unpaid", "maternity"];
     const balances: Record<string, number> = {
       annual: 0,
       sick: 0,
-      casual: 0,
+      unpaid: 0,
       maternity: 0,
     };
 
@@ -2357,7 +2485,8 @@ export async function getCompleteTimesheetData(options?: {
 
     const records = await query;
 
-    return records.map((r) => {
+    return Promise.all(records.map(async (r) => {
+      const tasks = await getTimesheetTasksForAttendance(r.id);
       const checkIn = new Date(r.checkInTime);
       const checkOut = r.checkOutTime ? new Date(r.checkOutTime) : null;
       const hoursWorked = checkOut
@@ -2398,8 +2527,9 @@ export async function getCompleteTimesheetData(options?: {
         evidenceUploadKey: r.evidenceUploadKey || "N/A",
         isSubmitted: r.isSubmitted || false,
         submittedAt: r.submittedAt ? new Date(r.submittedAt).toLocaleString("en-US", { timeZone: "Africa/Nairobi" }) : "N/A",
+        tasks,
       };
-    });
+    }));
   } catch (error) {
     console.error("[Database] Error fetching complete timesheet data:", error);
     return [];
