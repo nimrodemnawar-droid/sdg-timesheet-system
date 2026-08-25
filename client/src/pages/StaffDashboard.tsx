@@ -968,13 +968,6 @@ export default function StaffDashboard() {
                     <Input value={timesheetData.programProject} onChange={(event) => setTimesheetData({ ...timesheetData, programProject: event.target.value })} placeholder="Specific programme or project" className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400" />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-slate-300">Activity Type *</Label>
-                    <Select value={timesheetData.activityCategory} onValueChange={(value) => setTimesheetData({ ...timesheetData, activityCategory: value })}>
-                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Select activity type" /></SelectTrigger>
-                      <SelectContent className="bg-slate-800 border-slate-700 max-h-60">{ACTIVITY_CATEGORIES.map((category) => <SelectItem key={category} value={category} className="text-white">{category}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
 
 
                   <div className="space-y-2">
@@ -1066,8 +1059,8 @@ export default function StaffDashboard() {
                       toast.error('No attendance record found for today');
                       return;
                     }
-                    if (!timesheetData.organization || !timesheetData.departmentFunction || !timesheetData.activityCategory) {
-                      toast.error('Choose an organisation, department/function, and activity type before submitting');
+                    if (!timesheetData.organization || !timesheetData.departmentFunction) {
+                      toast.error('Choose an organisation and department/function before submitting');
                       return;
                     }
                     const missingTask = timesheetData.tasks.findIndex((task) => !task.activityType || !task.specificActivity.trim());
@@ -1095,6 +1088,7 @@ export default function StaffDashboard() {
                         organization: timesheetData.organization as "icy_africa" | "africa_for_sdgs" | "joint",
                         departmentFunction: timesheetData.departmentFunction,
                         programProject: timesheetData.programProject,
+                        activityCategory: timesheetData.tasks[0]?.activityType || timesheetData.activityCategory || "Other",
                         staffRemarks: timesheetData.staffRemarks,
                         tasks: timesheetData.tasks.map((task) => ({
                           estimatedDuration: task.estimatedDuration,
