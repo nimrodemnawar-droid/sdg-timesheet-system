@@ -319,7 +319,7 @@ describe('Export Address Field Verification', () => {
       // Count table headers
       const headerMatches = html.match(/<th>/g);
       expect(headerMatches).toBeDefined();
-      expect(headerMatches!.length).toBe(28); // 28 columns including structured tasks
+      expect(headerMatches!.length).toBe(31); // 31 columns including organization context and structured tasks
     });
   });
 

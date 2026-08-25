@@ -1682,6 +1682,9 @@ export interface TimesheetExportData {
   
   // Work Details
   workModality: string;
+  organization?: string;
+  departmentFunction?: string;
+  programProject?: string;
   activityCategory: string;
   sdgGoal: string;
   kpi: string;
@@ -1742,6 +1745,9 @@ export async function getTimesheetDataForExport(data: {
         overtimeHours: Math.round(overtimeHours * 100) / 100,
         distanceTraveled: r.distanceTraveled,
         workModality: r.workModality,
+        organization: r.organization,
+        departmentFunction: r.departmentFunction,
+        programProject: r.programProject,
         activityCategory: r.activityCategory,
         sdgGoal: r.sdgGoal,
         kpi: r.kpi,
@@ -1776,7 +1782,7 @@ export function generateCSVContent(data: TimesheetExportData[]): string {
     "Check-in Time", "Check-in Coordinates", "Check-in Address",
     "Check-out Time", "Check-out Coordinates", "Check-out Address",
     "Hours Worked", "Overtime Hours", "Distance Traveled",
-    "Work Modality", "Activity Category", "SDG Goal", "KPI",
+    "Work Modality", "Organisation", "Department / Function", "Programme / Project", "Activity Category", "SDG Goal", "KPI",
     "Task Description", "Structured Tasks", "Staff Remarks",
     "AM Start", "AM End", "PM Start", "PM End",
     "Program", "Evidence Upload Key", "Submission Status", "Submitted At"
@@ -1805,6 +1811,9 @@ export function generateCSVContent(data: TimesheetExportData[]): string {
     String(row.overtimeHours),
     escapeCSV(row.distanceTraveled),
     escapeCSV(row.workModality),
+    escapeCSV(row.organization),
+    escapeCSV(row.departmentFunction),
+    escapeCSV(row.programProject),
     escapeCSV(row.activityCategory),
     escapeCSV(row.sdgGoal),
     escapeCSV(row.kpi),
@@ -1866,6 +1875,9 @@ export function generateExcelContent(data: TimesheetExportData[]): string {
               <th>Overtime Hours</th>
               <th>Distance Traveled</th>
               <th>Work Modality</th>
+              <th>Organisation</th>
+              <th>Department / Function</th>
+              <th>Programme / Project</th>
               <th>Activity Category</th>
               <th>SDG Goal</th>
               <th>KPI</th>
@@ -1901,6 +1913,9 @@ export function generateExcelContent(data: TimesheetExportData[]): string {
                 <td>${row.overtimeHours}</td>
                 <td>${row.distanceTraveled}</td>
                 <td>${row.workModality}</td>
+                <td>${row.organization ?? "N/A"}</td>
+                <td>${row.departmentFunction ?? "N/A"}</td>
+                <td>${row.programProject ?? "N/A"}</td>
                 <td>${row.activityCategory}</td>
                 <td>${row.sdgGoal}</td>
                 <td>${row.kpi}</td>

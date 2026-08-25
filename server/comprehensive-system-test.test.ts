@@ -381,7 +381,7 @@ describe('Comprehensive System Test - Complete Workflow', () => {
       const lines = csv.split('\n');
       const headers = lines[0].split(',');
 
-      expect(headers).toHaveLength(28);
+      expect(headers).toHaveLength(31);
       expect(headers).toContain('Check-in Address');
       expect(headers).toContain('Check-out Address');
       expect(csv).toContain('Nairobi Central Office');
