@@ -263,6 +263,14 @@ export const appRouter = router({
               country: z.string().trim().min(1).max(100),
               participantsAttended: z.number().int().min(0).max(1000000),
             })).max(50).optional(),
+          }).superRefine((task, refinementContext) => {
+            if (task.onlineMissionary && task.onlineMissionaryParticipants === undefined) {
+              refinementContext.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["onlineMissionaryParticipants"],
+                message: "Enter the number attended for an Online Missionary activity",
+              });
+            }
           })).min(1).max(20),
         })
       )

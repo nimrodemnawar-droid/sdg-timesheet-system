@@ -899,3 +899,7 @@
 
 ## Daily Report Delivery Verification
 - [x] Add deterministic coverage for daily report formatting, structured-task totals, and notification delivery invocation
+
+## Online Missionary Validation Hardening
+- [x] Require attended participant count whenever a task is marked as Online Missionary
+- [x] Add regression coverage for valid and invalid missionary attendance payloads
