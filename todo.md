@@ -23,8 +23,8 @@
 - [x] Add real-time metrics display
 
 ## Phase 3: Admin Dashboard - Staff Management
-- [ ] Build staff directory table
-- [ ] Add staff search and filtering
+- [x] Build staff directory table
+- [x] Add staff search and filtering
 - [ ] Create add new staff form
 - [ ] Implement role assignment
 - [ ] Add staff activation/deactivation
