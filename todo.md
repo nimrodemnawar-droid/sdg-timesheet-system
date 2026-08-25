@@ -847,3 +847,7 @@
 - [x] Add end-to-end coverage proving Admin leave-type updates propagate to staff options and block deactivated requests
 - [x] Add explicit loading, error, and empty states for Admin and Staff leave-type queries
 - [x] Verify the complete Admin edit, toggle, refresh, and staff-form reflection flow
+
+## Structured Task Export Fidelity Follow-up
+- [x] Add structured Task 1..N details, challenges, countries, and participant counts to CSV and Excel exports
+- [x] Update export regression expectations and verify legacy rows remain lossless

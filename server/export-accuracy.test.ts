@@ -77,7 +77,7 @@ describe('Export Data Accuracy Verification', () => {
       expect(headers).toContain('Evidence Upload Key');
       expect(headers).toContain('Submission Status');
       expect(headers).toContain('Submitted At');
-      expect(headers.length).toBe(27); // 27 columns in CSV
+      expect(headers.length).toBe(28); // 28 columns in CSV including structured tasks
     });
 
     it('should properly escape CSV special characters', () => {

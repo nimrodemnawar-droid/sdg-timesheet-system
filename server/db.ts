@@ -1645,6 +1645,8 @@ export interface TimesheetExportData {
   sdgGoal: string;
   kpi: string;
   taskDescription: string;
+  /** Serialized Task 1..N details, including challenges and country coordination. */
+  structuredTasks?: string;
   staffRemarks: string;
   
   // Session Times
@@ -1703,6 +1705,13 @@ export async function getTimesheetDataForExport(data: {
         sdgGoal: r.sdgGoal,
         kpi: r.kpi,
         taskDescription: r.taskDescription,
+        structuredTasks: (r.tasks ?? []).map((task: { taskNumber?: number; estimatedDuration?: string; taskDescription?: string; challenges?: string | null; coordination?: Array<{ country: string; participantsAttended: number }> }) => {
+          const taskLabel = `Task ${task.taskNumber ?? ""}`.trim();
+          const coordination = task.coordination?.length
+            ? `; Countries: ${task.coordination.map((item) => `${item.country} (${item.participantsAttended})`).join(", ")}`
+            : "";
+          return `${taskLabel} [${task.estimatedDuration ?? "N/A"}]: ${task.taskDescription ?? "N/A"}${task.challenges ? `; Challenges: ${task.challenges}` : ""}${coordination}`;
+        }).join("\n"),
         staffRemarks: r.staffRemarks,
         amStartTime: r.amStartTime,
         amEndTime: r.amEndTime,
@@ -1727,12 +1736,12 @@ export function generateCSVContent(data: TimesheetExportData[]): string {
     "Check-out Time", "Check-out Coordinates", "Check-out Address",
     "Hours Worked", "Overtime Hours", "Distance Traveled",
     "Work Modality", "Activity Category", "SDG Goal", "KPI",
-    "Task Description", "Staff Remarks",
+    "Task Description", "Structured Tasks", "Staff Remarks",
     "AM Start", "AM End", "PM Start", "PM End",
     "Program", "Evidence Upload Key", "Submission Status", "Submitted At"
   ];
   
-  const escapeCSV = (value: string): string => {
+  const escapeCSV = (value: unknown): string => {
     const str = String(value || '');
     if (str.includes(',') || str.includes('"') || str.includes('\n')) {
       return `"${str.replace(/"/g, '""')}"`;
@@ -1759,6 +1768,7 @@ export function generateCSVContent(data: TimesheetExportData[]): string {
     escapeCSV(row.sdgGoal),
     escapeCSV(row.kpi),
     escapeCSV(row.taskDescription),
+    escapeCSV(row.structuredTasks),
     escapeCSV(row.staffRemarks),
     row.amStartTime,
     row.amEndTime,
@@ -1819,6 +1829,7 @@ export function generateExcelContent(data: TimesheetExportData[]): string {
               <th>SDG Goal</th>
               <th>KPI</th>
               <th>Task Description</th>
+              <th>Structured Tasks</th>
               <th>Staff Remarks</th>
               <th>AM Start</th>
               <th>AM End</th>
@@ -1853,6 +1864,7 @@ export function generateExcelContent(data: TimesheetExportData[]): string {
                 <td>${row.sdgGoal}</td>
                 <td>${row.kpi}</td>
                 <td>${row.taskDescription}</td>
+                <td>${row.structuredTasks ?? "N/A"}</td>
                 <td>${row.staffRemarks}</td>
                 <td>${row.amStartTime}</td>
                 <td>${row.amEndTime}</td>
