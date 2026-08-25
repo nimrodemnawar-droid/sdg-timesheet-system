@@ -83,7 +83,11 @@ export function TimesheetExportManager({
           link.click();
           document.body.removeChild(link);
         } else if ('content' in result && result.content) {
-          const blob = new Blob([result.content], { type: 'text/plain' });
+          const isPdf = exportFormat === "pdf";
+          const payload = isPdf
+            ? Uint8Array.from(atob(result.content), (character) => character.charCodeAt(0))
+            : result.content;
+          const blob = new Blob([payload], { type: isPdf ? 'application/pdf' : exportFormat === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'text/csv' });
           const url = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = url;

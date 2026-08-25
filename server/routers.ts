@@ -17,7 +17,7 @@ import { attendance, waypoints, users } from "../drizzle/schema";
 import { analyticsRouter } from "./analyticsRouter";
 import { notifyOwner } from "./_core/notification";
 import { storagePut } from "./storage";
-import { generateCSVContent, generateExcelContent } from "./db";
+import { generateCSVContent, generateExcelContent, generateTimesheetPDFContent } from "./db";
 import { logAuditEvent } from "./db";
 import { getTimesheetDataForExport } from "./db";
 import {
@@ -1104,9 +1104,7 @@ Report generated at: ${new Date().toISOString()}`;
             content = db.generateExcelContent(data);
             filename = `timesheets_${new Date().toISOString().split('T')[0]}.xlsx`;
           } else if (format === 'pdf') {
-            // For PDF, we generate CSV content and let the client handle PDF conversion
-            // or use a PDF library. For now, returning CSV content with PDF filename
-            content = db.generateCSVContent(data);
+            content = await db.generateTimesheetPDFContent(data);
             filename = `timesheets_${new Date().toISOString().split('T')[0]}.pdf`;
           } else {
             content = db.generateCSVContent(data);

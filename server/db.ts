@@ -1838,6 +1838,57 @@ export function generateCSVContent(data: TimesheetExportData[]): string {
   return csvContent;
 }
 
+export async function generateTimesheetPDFContent(data: TimesheetExportData[]): Promise<string> {
+  const pdf = await PDFDocument.create();
+  const regularFont = await pdf.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const pageWidth = 595.28;
+  const pageHeight = 841.89;
+  const margin = 36;
+  const lineHeight = 11;
+  const fontSize = 7.5;
+  const maxWidth = pageWidth - margin * 2;
+  let page = pdf.addPage([pageWidth, pageHeight]);
+  let y = pageHeight - margin;
+  const wrap = (value: string, font = regularFont, size = fontSize) => {
+    const words = value.replace(/\s+/g, " ").trim().split(" ");
+    const lines: string[] = [];
+    let line = "";
+    for (const word of words) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (font.widthOfTextAtSize(candidate, size) <= maxWidth) line = candidate;
+      else { if (line) lines.push(line); line = word; }
+    }
+    if (line) lines.push(line);
+    return lines.length ? lines : ["—"];
+  };
+  const write = (value: string, bold = false) => {
+    const font = bold ? boldFont : regularFont;
+    for (const line of wrap(value, font)) {
+      if (y < margin + lineHeight) { page = pdf.addPage([pageWidth, pageHeight]); y = pageHeight - margin; }
+      page.drawText(line, { x: margin, y, size: fontSize, font, color: rgb(0.12, 0.15, 0.2) });
+      y -= lineHeight;
+    }
+  };
+  write("SDG Timesheet System — Director-Ready Timesheet Report", true);
+  write(`Generated ${new Date().toLocaleString("en-KE", { timeZone: "Africa/Nairobi" })} • ${data.length} record${data.length === 1 ? "" : "s"}`);
+  y -= 7;
+  data.forEach((row, index) => {
+    if (y < margin + 150) { page = pdf.addPage([pageWidth, pageHeight]); y = pageHeight - margin; }
+    write(`${index + 1}. ${row.staffName || "Unknown staff"} (#${row.staffNumber ? String(row.staffNumber).padStart(3, "0") : "—"})`, true);
+    write(`Date: ${row.date || "—"} | Check-in: ${row.checkInTime || "—"} | Check-out: ${row.checkOutTime || "—"}`);
+    write(`Check-in location: ${row.checkInCoordinates || "GPS unavailable"} | ${row.checkInAddress || "Address unavailable"}`);
+    write(`Check-out location: ${row.checkOutCoordinates || "GPS unavailable"} | ${row.checkOutAddress || "Address unavailable"}`);
+    write(`Hours: ${row.hoursWorked || 0} | Overtime: ${row.overtimeHours || 0} | Distance: ${row.distanceTraveled || "—"}`);
+    write(`Organisation: ${row.organization || "—"} | Department: ${row.departmentFunction || "—"} | Programme: ${row.programProject || "—"}`);
+    write(`Activity: ${row.activityCategory || "—"} | KPI: ${row.kpi || "—"}`);
+    write(`Task details: ${row.structuredTasks || row.taskDescription || "—"}`);
+    write(`Remarks: ${row.staffRemarks || "—"} | Submitted: ${row.isSubmitted ? "Yes" : "No"} (${row.submittedAt || "—"})`);
+    y -= 8;
+  });
+  return Buffer.from(await pdf.save()).toString("base64");
+}
+
 export function generateExcelContent(data: TimesheetExportData[]): string {
   // Generate HTML that can be saved as Excel format
   const totalHours = data.reduce((sum, r) => sum + (typeof r.hoursWorked === 'number' ? r.hoursWorked : parseFloat(String(r.hoursWorked)) || 0), 0);

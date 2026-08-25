@@ -57,6 +57,7 @@ import { filterWaypointRecords, WAYPOINT_REFRESH_INTERVAL_MS } from "../../../sh
 import { ADMIN_TAB_VALUES, resolveAdminDashboardTab } from "../../../shared/adminDashboardTabs";
 import { toLeaveReportRows } from "../../../shared/leaveReport";
 import { formatAttendanceLocationSummary } from "../../../shared/location";
+import { summarizeLocationPoints } from "../../../shared/locationAnalytics";
 
 const EMPTY_WAYPOINT_RECORDS: any[] = [];
 
@@ -234,6 +235,7 @@ export default function AdminDashboard() {
     refetchInterval: WAYPOINT_REFRESH_INTERVAL_MS,
   });
   const waypointRecords = waypointRecordsData ?? EMPTY_WAYPOINT_RECORDS;
+  const locationSummary = useMemo(() => summarizeLocationPoints(filteredWaypointRecords), [filteredWaypointRecords]);
   const { data: analyticsMetrics, refetch: refetchAnalytics } = trpc.analytics.metrics.useQuery({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     endDate: new Date(),
@@ -1470,6 +1472,23 @@ export default function AdminDashboard() {
                       Location Waypoints
                     </h3>
                     <span className="text-xs text-slate-400">Live updates every 5 seconds</span>
+                  </div>
+                  <div className="mb-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="rounded-lg bg-slate-900/60 border border-slate-700 p-3"><p className="text-xs text-slate-400">GPS points</p><p className="text-xl font-semibold text-white">{locationSummary.validPoints}</p></div>
+                    <div className="rounded-lg bg-slate-900/60 border border-slate-700 p-3"><p className="text-xs text-slate-400">Staff represented</p><p className="text-xl font-semibold text-white">{locationSummary.uniqueStaff}</p></div>
+                    <div className="rounded-lg bg-slate-900/60 border border-slate-700 p-3"><p className="text-xs text-slate-400">Avg. accuracy</p><p className="text-xl font-semibold text-white">{locationSummary.averageAccuracy === null ? "—" : `${locationSummary.averageAccuracy}m`}</p></div>
+                    <div className="rounded-lg bg-slate-900/60 border border-slate-700 p-3"><p className="text-xs text-slate-400">Hotspot cells</p><p className="text-xl font-semibold text-white">{locationSummary.cells.length}</p></div>
+                  </div>
+                  <div className="mb-4 rounded-lg border border-slate-700 bg-slate-900/40 p-3">
+                    <div className="mb-2 flex items-center justify-between gap-2"><p className="text-sm font-semibold text-white">Location activity heatmap</p><p className="text-xs text-slate-500">Based on filtered GPS points</p></div>
+                    <div className="grid grid-cols-8 gap-1" aria-label="Location activity heatmap">
+                      {Array.from({ length: 64 }, (_, index) => {
+                        const row = Math.floor(index / 8); const column = index % 8;
+                        const cell = locationSummary.cells.find((candidate) => candidate.latitude === row && candidate.longitude === column);
+                        const intensity = cell?.intensity ?? 0;
+                        return <div key={`${row}:${column}`} title={cell ? `${cell.count} waypoint${cell.count === 1 ? "" : "s"}` : "No waypoints"} className="aspect-square rounded-sm bg-blue-500" style={{ opacity: intensity ? 0.2 + intensity * 0.8 : 0.06 }} />;
+                      })}
+                    </div>
                   </div>
                   <WaypointFilter
                     onFilterChange={setWaypointFilters}
