@@ -859,3 +859,8 @@
 ## Admin Location Detail Visibility Follow-up
 - [x] Show check-in and check-out GPS coordinates alongside addresses in the Admin detailed timesheet report
 - [x] Add regression coverage for coordinate rendering and Excel export columns
+
+## Daily and Weekly Report Scheduling Follow-up
+- [x] Create the approved daily 6:00 PM EAT scheduled report job (task UID: MHTLAKhaTDuymfeqWijb45)
+- [x] Create the approved weekly status scheduled report job (task UID: FdGuAv2TftAFeWE8pxXzK4)
+- [x] Verify both jobs are registered against the deployed callback paths and document their task IDs
