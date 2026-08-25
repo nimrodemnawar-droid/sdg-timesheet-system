@@ -4,3 +4,7 @@ export function formatCoordinates(latitude?: number | string | null, longitude?:
   const lng = Number(longitude);
   return Number.isFinite(lat) && Number.isFinite(lng) ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : "N/A";
 }
+
+export function shouldRetryGpsCapture(hasError: boolean, accuracy?: number | null): boolean {
+  return hasError || (accuracy != null && Number.isFinite(accuracy) && accuracy > 1000);
+}

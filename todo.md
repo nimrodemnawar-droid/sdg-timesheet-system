@@ -880,3 +880,7 @@
 - [x] Mirror all expanded fields in Admin views and exports
 - [x] Implement department-specific Admin dashboard behavior while preserving the existing Admin layout for Admin function
 - [x] Add migrations, validation, regression tests, and mobile/tablet verification for the expanded workflow
+
+## GPS Capture Retry Follow-up
+- [x] Add a clearly labeled retry GPS button beside acquisition errors and poor-accuracy guidance
+- [x] Add regression coverage for the retry action and mobile presentation

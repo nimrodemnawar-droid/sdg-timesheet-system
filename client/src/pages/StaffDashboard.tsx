@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { countKenyaWorkingDays } from "../../../shared/leave";
+import { shouldRetryGpsCapture } from "../../../shared/location";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -754,6 +755,7 @@ export default function StaffDashboard() {
                     <div>
                       <p className="text-red-300 font-medium">GPS Error</p>
                       <p className="text-red-200 text-sm">{gpsError}</p>
+                      <Button type="button" size="sm" onClick={acquireGPS} disabled={gpsStatus === "acquiring"} className="mt-3 bg-red-700 hover:bg-red-600 text-white">Retry GPS capture</Button>
                     </div>
                   </div>
                 )}
@@ -791,6 +793,12 @@ export default function StaffDashboard() {
                       </>
                     )}
                   </Button>
+
+                  {shouldRetryGpsCapture(false, gpsCoordinates?.accuracy) && (
+                    <Button type="button" onClick={acquireGPS} disabled={gpsStatus === "acquiring"} variant="outline" className="w-full border-amber-500/60 text-amber-200 hover:bg-amber-900/30 h-11">
+                      Retry for better accuracy
+                    </Button>
+                  )}
 
                   {gpsCoordinates && (
                     <Button
