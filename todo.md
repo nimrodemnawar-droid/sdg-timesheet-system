@@ -892,3 +892,7 @@
 ## Staff Task Activity Type Cleanup
 - [x] Remove the duplicate top-level Activity Type input and derive the legacy summary from each task’s Activity Type
 - [x] Verify per-task activity type validation, history, Admin display, and exports remain intact
+
+## Staff Leave Entitlement Fallback
+- [x] Preserve 21 annual, 5 sick, 999 unpaid, and 90 maternity values in the Staff statistics fallback when balance retrieval is unavailable
+- [x] Validate fallback-compatible leave and structured-timesheet flows
