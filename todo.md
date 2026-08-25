@@ -608,7 +608,7 @@
 - [x] Review waypoint data structure in database
 - [x] Create waypoint display component for Admin Dashboard
 - [x] Add waypoints section to timesheet/attendance table
-- [ ] Display check-in and check-out locations with GPS coordinates
+- [x] Display check-in and check-out locations with GPS coordinates
 - [x] Add distance traveled calculation and display
 - [x] Integrate Google Maps to show waypoint locations
 - [ ] Test waypoint accuracy and display on mobile devices
