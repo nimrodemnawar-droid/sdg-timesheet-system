@@ -56,6 +56,7 @@ import { DataManagementTab } from "@/components/DataManagementTab";
 import { filterWaypointRecords } from "../../../shared/waypointUtils";
 import { ADMIN_TAB_VALUES, resolveAdminDashboardTab } from "../../../shared/adminDashboardTabs";
 import { toLeaveReportRows } from "../../../shared/leaveReport";
+import { formatAttendanceLocationSummary } from "../../../shared/location";
 
 const EMPTY_WAYPOINT_RECORDS: any[] = [];
 
@@ -1377,6 +1378,8 @@ export default function AdminDashboard() {
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Date</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Check In</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Check Out</th>
+                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Check-in Location</th>
+                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Check-out Location</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Hours Worked</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Overtime (h)</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Distance (km)</th>
@@ -1402,6 +1405,18 @@ export default function AdminDashboard() {
                               ) : (
                                 <span className="text-slate-400">Not checked out</span>
                               )}
+                            </td>
+                            <td className="py-3 px-4 text-slate-400 min-w-48">
+                              {(() => {
+                                const locationSummary = formatAttendanceLocationSummary(record.checkInAddress, record.checkInLat, record.checkInLng);
+                                return <><div>{locationSummary.address}</div><div className="font-mono text-[10px] text-slate-500">{locationSummary.coordinates}</div></>;
+                              })()}
+                            </td>
+                            <td className="py-3 px-4 text-slate-400 min-w-48">
+                              {(() => {
+                                const locationSummary = formatAttendanceLocationSummary(record.checkOutAddress, record.checkOutLat, record.checkOutLng);
+                                return <><div>{locationSummary.address}</div><div className="font-mono text-[10px] text-slate-500">{locationSummary.coordinates}</div></>;
+                              })()}
                             </td>
                             <td className="py-3 px-4">
                               {record.hoursWorked > 0 ? (
@@ -1438,7 +1453,7 @@ export default function AdminDashboard() {
                         })
                       ) : (
                         <tr>
-                          <td colSpan={11} className="py-4 px-4 text-center text-slate-400">
+                          <td colSpan={13} className="py-4 px-4 text-center text-slate-400">
                             No staff checked in today
                           </td>
                         </tr>

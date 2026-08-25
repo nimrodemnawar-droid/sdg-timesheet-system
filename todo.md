@@ -165,15 +165,15 @@
 - [ ] Create admin map view showing all check-in locations
 - [ ] Add staff details popup on map (name, number, time, location)
 - [ ] Implement PDF report export with location data
-- [ ] Implement Excel report export with location data
-- [ ] Implement CSV report export with location data
+- [x] Implement Excel report export with location data
+- [x] Implement CSV report export with location data
 - [ ] Add location-based analytics (check-in heatmap, distance traveled)
-- [ ] Create attendance summary with staff numbers and locations
+- [x] Create attendance summary with staff numbers and locations
 - [x] Add date range filtering for reports
 - [ ] Add department filtering for reports
-- [ ] Write comprehensive tests for staff numbering system
-- [ ] Write comprehensive tests for check-in/out enforcement
-- [ ] Write comprehensive tests for report generation
+- [x] Write comprehensive tests for staff numbering system
+- [x] Write comprehensive tests for check-in/out enforcement
+- [x] Write comprehensive tests for report generation
 
 
 ## Phase 16: Waypoint Tracking UI Implementation

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatCoordinates } from "../shared/location";
+import { formatAttendanceLocationSummary, formatCoordinates } from "../shared/location";
 
 describe("Admin detailed timesheet GPS coordinates", () => {
   it("formats valid numeric and string coordinates to six decimals", () => {
@@ -11,6 +11,17 @@ describe("Admin detailed timesheet GPS coordinates", () => {
     expect(formatCoordinates(null, 36.817223)).toBe("N/A");
     expect(formatCoordinates(-1.286389, undefined)).toBe("N/A");
     expect(formatCoordinates("not-a-latitude", "36.817223")).toBe("N/A");
+  });
+
+  it("combines the attendance address and GPS values for the Admin summary artifact", () => {
+    expect(formatAttendanceLocationSummary("Nairobi Office", -1.286389, 36.817223)).toEqual({
+      address: "Nairobi Office",
+      coordinates: "-1.286389, 36.817223",
+    });
+    expect(formatAttendanceLocationSummary("", null, null)).toEqual({
+      address: "Unavailable",
+      coordinates: "GPS unavailable",
+    });
   });
 });
 
