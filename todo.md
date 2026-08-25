@@ -855,3 +855,7 @@
 ## Scheduled Daily Summary Compatibility Follow-up
 - [x] Calculate daily scheduled-report hours from completed attendance duration when structured timesheet session fields are absent
 - [x] Add regression coverage for structured-timesheet daily summary totals and cron report delivery behavior
+
+## Admin Location Detail Visibility Follow-up
+- [x] Show check-in and check-out GPS coordinates alongside addresses in the Admin detailed timesheet report
+- [x] Add regression coverage for coordinate rendering and Excel export columns

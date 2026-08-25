@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Download, Search } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { formatCoordinates } from "@shared/location";
 
 interface TimesheetRecord {
   id: string;
@@ -89,7 +90,9 @@ export function TimesheetDetailedView() {
       "Check-in Time",
       "Check-out Time",
       "Check-in Location",
+      "Check-in GPS Coordinates",
       "Check-out Location",
+      "Check-out GPS Coordinates",
       "Work Modality",
       "Activity Category",
       "KPI",
@@ -132,7 +135,9 @@ export function TimesheetDetailedView() {
         record.checkInTime || "N/A",
         record.checkOutTime || "N/A",
         record.checkInAddress || "N/A",
+        formatCoordinates(record.checkInLat, record.checkInLng),
         record.checkOutAddress || "N/A",
+        formatCoordinates(record.checkOutLat, record.checkOutLng),
         record.workModality || "N/A",
         record.activityCategory || "N/A",
         record.kpi || "N/A",
@@ -152,7 +157,7 @@ export function TimesheetDetailedView() {
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
 
     // Set column widths
-    const colWidths = [12, 15, 20, 12, 12, 12, 25, 20, 25, 20, 12, 15, 12, 20, 15, 12, 15, 15, 15, 12];
+    const colWidths = [12, 15, 20, 12, 12, 12, 25, 22, 25, 22, 25, 20, 12, 15, 12, 20, 15, 12, 15, 15, 15, 12];
     ws["!cols"] = colWidths.map((w) => ({ wch: w }));
 
     XLSX.utils.book_append_sheet(wb, ws, "Timesheet");
@@ -268,7 +273,9 @@ export function TimesheetDetailedView() {
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Check-in Time</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Check-out Time</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Check-in Location</th>
+                    <th className="text-left py-3 px-2 text-slate-200 font-bold">Check-in GPS</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Check-out Location</th>
+                    <th className="text-left py-3 px-2 text-slate-200 font-bold">Check-out GPS</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Work Modality</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Activity Category</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">KPI</th>
@@ -339,6 +346,9 @@ export function TimesheetDetailedView() {
                               "N/A"
                             )}
                           </td>
+                          <td className="py-2 px-2 text-slate-300 text-xs font-mono whitespace-nowrap">
+                            {formatCoordinates(record.checkInLat, record.checkInLng)}
+                          </td>
                           <td className="py-2 px-2 text-slate-300 text-xs font-medium max-w-xs">
                             {record.checkOutAddress ? (
                               <div className="break-words">
@@ -347,6 +357,9 @@ export function TimesheetDetailedView() {
                             ) : (
                               "N/A"
                             )}
+                          </td>
+                          <td className="py-2 px-2 text-slate-300 text-xs font-mono whitespace-nowrap">
+                            {formatCoordinates(record.checkOutLat, record.checkOutLng)}
                           </td>
                       <td className="py-2 px-2">
                         <Badge variant="outline" className="text-xs">
