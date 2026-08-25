@@ -2057,9 +2057,15 @@ export async function getAllLeaveBalances(userId: number) {
     for (const setting of configuredSettings) {
       if (!leaveTypes.includes(setting.leaveType)) continue;
       const existing = await getLeaveBalance(userId, setting.leaveType, currentYear);
+      const allocatedDays = setting.leaveType === "annual" ? 21 : Number(setting.defaultAllocatedDays) || 0;
       if (!existing) {
-        const allocatedDays = setting.leaveType === "annual" ? 21 : Number(setting.defaultAllocatedDays) || 0;
         await initializeLeaveBalance(userId, setting.leaveType, currentYear, allocatedDays);
+      } else if (Number(existing.allocatedDays) < allocatedDays) {
+        const usedDays = Math.max(0, Number(existing.usedDays) || 0);
+        await db.update(leaveBalance).set({
+          allocatedDays: allocatedDays.toString() as any,
+          remainingDays: Math.max(0, allocatedDays - usedDays).toString() as any,
+        }).where(eq(leaveBalance.id, existing.id));
       }
     }
     const balances: Record<string, number> = {
