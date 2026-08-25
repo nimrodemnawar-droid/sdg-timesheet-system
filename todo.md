@@ -35,9 +35,9 @@
 ## Phase 4: Admin Dashboard - Leave Management
 - [x] Create leave requests panel
 - [x] Build approval/rejection interface
-- [ ] Add encrypted remarks field
+- [x] Add encrypted remarks field
 - [x] Implement bulk approval
-- [ ] Create leave balance editor
+- [x] Create leave balance editor
 - [ ] Add leave type management
 - [x] Build leave analytics
 - [x] Create leave reports
@@ -834,3 +834,8 @@
 - [x] Add staff monthly timesheet history tab while retaining archived data and starting a clean current-period entry view
 - [x] Remove SDG goals and AM/PM start/end fields from the active staff timesheet form and new submission contract without deleting historical data
 - [x] Add database migrations, regression tests, and responsive verification for the new timesheet and leave behavior
+
+## Leave Balance Editor Follow-up
+- [x] Load and display current allocated, used, and remaining values for the selected staff member and leave type
+- [x] Show all relevant leave-type balances for the selected staff member instead of only first-page annual previews
+- [x] Add focused coverage for selecting staff/type, current-value display, allocation update, and refreshed staff visibility

@@ -1,7 +1,12 @@
 import crypto from "crypto";
 
 const ENCRYPTION_ALGORITHM = "aes-256-cbc";
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32);
+// Derive a stable key from the configured encryption key or existing project secret.
+// This avoids losing decryption capability when the server restarts without ENCRYPTION_KEY.
+const ENCRYPTION_KEY = crypto
+  .createHash("sha256")
+  .update(process.env.ENCRYPTION_KEY || process.env.JWT_SECRET || "sdg-timesheet-development-key")
+  .digest();
 
 /**
  * Encrypts sensitive data using AES-256-CBC.

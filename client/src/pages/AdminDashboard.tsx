@@ -63,7 +63,7 @@ export default function AdminDashboard() {
   const { user } = useAuth();
   const [location] = useLocation();
   const requestedTab = useMemo(() => {
-    const query = location.split("?")[1] ?? "";
+    const query = typeof window !== "undefined" ? window.location.search : location.split("?")[1] ?? "";
     const tab = new URLSearchParams(query).get("tab");
     return resolveAdminDashboardTab(tab);
   }, [location]);
@@ -88,6 +88,9 @@ export default function AdminDashboard() {
   const [leaveFilterStatus, setLeaveFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [leaveSearchTerm, setLeaveSearchTerm] = useState("");
   const [leaveSortBy, setLeaveSortBy] = useState<"date-desc" | "date-asc" | "staff-name" | "leave-type">("date-desc");
+  const [balanceUserId, setBalanceUserId] = useState("");
+  const [balanceLeaveType, setBalanceLeaveType] = useState<"annual" | "sick" | "unpaid" | "maternity" | "other">("annual");
+  const [balanceAllocatedDays, setBalanceAllocatedDays] = useState("21");
   const [showGpsMap, setShowGpsMap] = useState(false);
   const mapRef = useRef<google.maps.Map | null>(null);
   const [timesheetFilters, setTimesheetFilters] = useState<TimesheetFilterOptions>({
@@ -119,7 +122,51 @@ export default function AdminDashboard() {
   }) as any;
   const { data: leaveAnalytics, refetch: refetchLeaveAnalytics } = trpc.leave.analytics.useQuery(undefined, {
     refetchInterval: 5000,
-  }) as any;
+  });
+  const { data: leaveBalances, refetch: refetchLeaveBalances } = trpc.leave.getAllBalances.useQuery(undefined, {
+    refetchInterval: 10000,
+  });
+  const updateLeaveBalanceMutation = trpc.leave.updateBalance.useMutation();
+  const selectedLeaveBalanceRecord = useMemo(() => {
+    const staffBalance = (leaveBalances || []).find((balance: any) => String(balance.userId) === balanceUserId);
+    return (staffBalance as any)?.[balanceLeaveType] || null;
+  }, [leaveBalances, balanceUserId, balanceLeaveType]);
+
+  useEffect(() => {
+    if (selectedLeaveBalanceRecord?.allocatedDays != null) {
+      setBalanceAllocatedDays(String(selectedLeaveBalanceRecord.allocatedDays));
+    } else if (balanceLeaveType === "annual") {
+      setBalanceAllocatedDays("21");
+    }
+  }, [selectedLeaveBalanceRecord?.id, selectedLeaveBalanceRecord?.allocatedDays, balanceLeaveType]);
+
+  const handleUpdateLeaveBalance = async () => {
+    const userId = Number(balanceUserId);
+    const allocatedDays = Number(balanceAllocatedDays);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      toast.error("Select a staff member first");
+      return;
+    }
+    if (!Number.isFinite(allocatedDays) || allocatedDays < 0 || allocatedDays > 365) {
+      toast.error("Enter an allocation between 0 and 365 days");
+      return;
+    }
+    if (balanceLeaveType === "annual" && allocatedDays !== 21) {
+      toast.error("Annual leave is fixed at 21 working days");
+      return;
+    }
+    try {
+      await updateLeaveBalanceMutation.mutateAsync({
+        userId,
+        leaveType: balanceLeaveType,
+        allocatedDays,
+      });
+      await Promise.all([refetchLeaveBalances(), refetchLeaveAnalytics()]);
+      toast.success("Leave balance updated");
+    } catch (error: any) {
+      toast.error(error?.message || "Could not update leave balance");
+    }
+  };
 
   // Sort leave requests based on selected sort option
   const sortedLeaveRequests = leaveRequests ? [...leaveRequests].sort((a: any, b: any) => {
@@ -723,6 +770,75 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <p className="text-sm text-slate-500">Analytics will appear after staff submit leave requests.</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Leave Balance Editor */}
+            <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Edit2 className="w-5 h-5 text-purple-400" />
+                  Leave Balance Editor
+                </CardTitle>
+                <CardDescription className="text-slate-400">Adjust an allocation without changing the staff member's used leave history.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">Staff member</Label>
+                    <Select value={balanceUserId || "not-selected"} onValueChange={(value) => setBalanceUserId(value === "not-selected" ? "" : value)}>
+                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Select staff" /></SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-700">
+                        <SelectItem value="not-selected" className="text-slate-400">Select staff</SelectItem>
+                        {(staffList || []).map((staff: any) => <SelectItem key={staff.id} value={String(staff.id)} className="text-white">{staff.name || staff.email || `User ${staff.id}`}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">Leave type</Label>
+                    <Select value={balanceLeaveType} onValueChange={(value) => { const nextType = value as typeof balanceLeaveType; setBalanceLeaveType(nextType); if (nextType === "annual") setBalanceAllocatedDays("21"); }}>
+                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-700">
+                        {(["annual", "sick", "unpaid", "maternity", "other"] as const).map((type) => <SelectItem key={type} value={type} className="text-white capitalize">{type}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">Allocated days</Label>
+                    <Input type="number" min="0" max="365" step="0.5" value={balanceAllocatedDays} disabled={balanceLeaveType === "annual"} onChange={(event) => setBalanceAllocatedDays(event.target.value)} className="bg-slate-700/50 border-slate-600 text-white disabled:opacity-70" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3 rounded-lg border border-purple-500/20 bg-purple-950/20 p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs text-slate-400">Annual leave is fixed at 21 working days. Remaining days are recalculated from the existing used total, and historical requests are not deleted.</p>
+                  <Button type="button" onClick={handleUpdateLeaveBalance} disabled={updateLeaveBalanceMutation.isPending} className="bg-purple-600 hover:bg-purple-700 text-white border-0 whitespace-nowrap">
+                    {updateLeaveBalanceMutation.isPending ? "Saving..." : "Save balance"}
+                  </Button>
+                </div>
+                {balanceUserId && (
+                  <div className="rounded-lg border border-slate-700 bg-slate-900/30 p-3">
+                    <p className="text-sm font-medium text-white">Current balance for {(leaveBalances || []).find((balance: any) => String(balance.userId) === balanceUserId)?.userName || `User ${balanceUserId}`}</p>
+                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                      <div><p className="text-xs text-slate-400">Allocated</p><p className="text-lg font-semibold text-white">{Number(selectedLeaveBalanceRecord?.allocatedDays ?? 0).toFixed(1)} days</p></div>
+                      <div><p className="text-xs text-slate-400">Used</p><p className="text-lg font-semibold text-amber-300">{Number(selectedLeaveBalanceRecord?.usedDays ?? 0).toFixed(1)} days</p></div>
+                      <div><p className="text-xs text-slate-400">Remaining</p><p className="text-lg font-semibold text-green-300">{Number(selectedLeaveBalanceRecord?.remainingDays ?? 0).toFixed(1)} days</p></div>
+                    </div>
+                  </div>
+                )}
+                {leaveBalances && leaveBalances.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs text-slate-400">Select a staff member to review all current leave-type balances.</p>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                      {leaveBalances.map((balance: any) => (
+                        <button type="button" key={balance.userId} onClick={() => setBalanceUserId(String(balance.userId))} className={`rounded-lg border p-3 text-left hover:border-purple-400/60 ${String(balance.userId) === balanceUserId ? "border-purple-400 bg-purple-950/30" : "border-slate-700 bg-slate-900/30"}`}>
+                          <p className="truncate text-sm font-medium text-white">{balance.userName || `User ${balance.userId}`}</p>
+                          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-slate-400">
+                            {(["annual", "sick", "unpaid", "maternity"] as const).map((type) => <span key={type} className="capitalize">{type}: <strong className="text-slate-200">{Number(balance[type]?.remainingDays ?? 0).toFixed(1)}</strong></span>)}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>

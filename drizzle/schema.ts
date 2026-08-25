@@ -230,7 +230,9 @@ export const leaveRequests = mysqlTable("leaveRequests", {
   reason: text("reason"),
   status: mysqlEnum("status", ["pending", "approved", "rejected", "cancelled"]).default("pending").notNull(),
   approvedBy: int("approvedBy"), // user id of approver
-  approvalReason: text("approvalReason"), // reason for approval/rejection
+  approvalReason: text("approvalReason"), // legacy display/fallback field
+  encryptedApprovalReason: text("encryptedApprovalReason"),
+  approvalReasonIv: varchar("approvalReasonIv", { length: 32 }),
   approvedAt: timestamp("approvedAt"),
   supportingDocumentKey: text("supportingDocumentKey"), // S3 file key for supporting docs
   createdAt: timestamp("createdAt").defaultNow().notNull(),

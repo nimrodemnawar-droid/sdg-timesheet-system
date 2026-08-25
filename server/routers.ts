@@ -607,6 +607,52 @@ Report generated at: ${new Date().toISOString()}`;
       }
     }),
 
+    updateBalance: adminProcedure
+      .input(z.object({
+        userId: z.number().int().positive(),
+        leaveType: z.enum(['annual', 'sick', 'unpaid', 'maternity', 'other']),
+        year: z.number().int().min(2020).max(2100).optional(),
+        allocatedDays: z.number().finite().min(0).max(365),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const year = input.year ?? new Date().getFullYear();
+        if (input.leaveType === 'annual' && input.allocatedDays !== 21) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Annual leave entitlement must remain 21 working days.',
+          });
+        }
+
+        const updated = await db.updateLeaveBalanceAllocation(
+          input.userId,
+          input.leaveType,
+          year,
+          input.allocatedDays,
+        );
+        if (!updated) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Leave balance could not be found or created.',
+          });
+        }
+
+        await db.logAuditEvent({
+          userId: ctx.user.id,
+          action: 'leave_balance_updated',
+          entityType: 'leave_balance',
+          entityId: updated.id,
+          details: {
+            targetUserId: input.userId,
+            leaveType: input.leaveType,
+            year,
+            allocatedDays: input.allocatedDays,
+            usedDays: Number(updated.usedDays),
+            remainingDays: Number(updated.remainingDays),
+          },
+        });
+        return updated;
+      }),
+
     getPending: adminProcedure.query(async () => {
       try {
         return await db.getPendingLeaveRequests();

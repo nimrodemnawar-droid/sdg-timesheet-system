@@ -34,6 +34,7 @@ import {
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { encryptData, decryptData } from "./encryption";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -618,6 +619,22 @@ export async function createLeaveRequest(data: {
   return result;
 }
 
+const decryptLeaveApprovalReason = (request: any) => {
+  const { encryptedApprovalReason, approvalReasonIv, ...visibleRequest } = request;
+  if (encryptedApprovalReason && approvalReasonIv) {
+    try {
+      visibleRequest.approvalReason = decryptData(encryptedApprovalReason, approvalReasonIv);
+    } catch (error) {
+      // Older records may have been encrypted with the pre-stable development key.
+      // Keep the legacy plain-text value visible rather than failing the entire leave query.
+      if (!visibleRequest.approvalReason) {
+        visibleRequest.approvalReason = "Decision note is unavailable";
+      }
+    }
+  }
+  return visibleRequest;
+};
+
 export async function getLeaveRequest(id: number) {
   const db = await getDb();
   if (!db) return undefined;
@@ -628,18 +645,19 @@ export async function getLeaveRequest(id: number) {
     .where(eq(leaveRequests.id, id))
     .limit(1);
 
-  return result.length > 0 ? result[0] : undefined;
+  return result.length > 0 ? decryptLeaveApprovalReason(result[0]) : undefined;
 }
 
 export async function getUserLeaveRequests(userId: number) {
   const db = await getDb();
   if (!db) return [];
 
-  return await db
+  const result = await db
     .select()
     .from(leaveRequests)
     .where(eq(leaveRequests.userId, userId))
     .orderBy(desc(leaveRequests.createdAt));
+  return result.map(decryptLeaveApprovalReason);
 }
 
 const leaveRequestSelect = {
@@ -656,6 +674,8 @@ const leaveRequestSelect = {
   status: leaveRequests.status,
   approvedBy: leaveRequests.approvedBy,
   approvalReason: leaveRequests.approvalReason,
+  encryptedApprovalReason: leaveRequests.encryptedApprovalReason,
+  approvalReasonIv: leaveRequests.approvalReasonIv,
   approvedAt: leaveRequests.approvedAt,
   createdAt: leaveRequests.createdAt,
   updatedAt: leaveRequests.updatedAt,
@@ -665,23 +685,25 @@ export async function getAllLeaveRequests() {
   const db = await getDb();
   if (!db) return [];
 
-  return await db
+  const result = await db
     .select(leaveRequestSelect)
     .from(leaveRequests)
     .leftJoin(users, eq(leaveRequests.userId, users.id))
     .orderBy(desc(leaveRequests.createdAt));
+  return result.map(decryptLeaveApprovalReason);
 }
 
 export async function getPendingLeaveRequests() {
   const db = await getDb();
   if (!db) return [];
 
-  return await db
+  const result = await db
     .select(leaveRequestSelect)
     .from(leaveRequests)
     .leftJoin(users, eq(leaveRequests.userId, users.id))
     .where(eq(leaveRequests.status, "pending"))
     .orderBy(asc(leaveRequests.createdAt));
+  return result.map(decryptLeaveApprovalReason);
 }
 
 export async function getLeaveAnalytics() {
@@ -751,13 +773,16 @@ export async function approveLeaveRequest(
 
   const user = await db.select().from(users).where(eq(users.id, leaveRequest.userId)).limit(1);
   const staffUser = user[0];
+  const encryptedReason = reason?.trim() ? encryptData(reason.trim()) : undefined;
 
   await db
     .update(leaveRequests)
     .set({
       status: "approved",
       approvedBy,
-      approvalReason: reason,
+      approvalReason: null,
+      encryptedApprovalReason: encryptedReason?.encryptedData,
+      approvalReasonIv: encryptedReason?.iv,
       approvedAt: new Date(),
       updatedAt: new Date(),
     })
@@ -798,13 +823,16 @@ export async function rejectLeaveRequest(
 
   const user = await db.select().from(users).where(eq(users.id, leaveRequest.userId)).limit(1);
   const staffUser = user[0];
+  const encryptedReason = reason?.trim() ? encryptData(reason.trim()) : undefined;
 
   await db
     .update(leaveRequests)
     .set({
       status: "rejected",
       approvedBy,
-      approvalReason: reason,
+      approvalReason: null,
+      encryptedApprovalReason: encryptedReason?.encryptedData,
+      approvalReasonIv: encryptedReason?.iv,
       approvedAt: new Date(),
       updatedAt: new Date(),
     })
@@ -926,6 +954,31 @@ export async function ensureAnnualLeaveBalance(userId: number, year = new Date()
     return getLeaveBalance(userId, "annual", year);
   }
   return balance;
+}
+
+/** Update an allocation without overwriting the used-day history. */
+export async function updateLeaveBalanceAllocation(
+  userId: number,
+  leaveType: string,
+  year: number,
+  allocatedDays: number,
+) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const existing = await getLeaveBalance(userId, leaveType, year);
+  if (!existing) {
+    await initializeLeaveBalance(userId, leaveType, year, allocatedDays);
+    return getLeaveBalance(userId, leaveType, year);
+  }
+
+  const usedDays = Math.max(0, Number(existing.usedDays) || 0);
+  await db.update(leaveBalance).set({
+    allocatedDays: allocatedDays.toString() as any,
+    remainingDays: Math.max(0, allocatedDays - usedDays).toString() as any,
+  }).where(eq(leaveBalance.id, existing.id));
+
+  return getLeaveBalance(userId, leaveType, year);
 }
 
 // ============ SUPERVISOR REMARKS ============
