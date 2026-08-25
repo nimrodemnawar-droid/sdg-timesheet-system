@@ -38,7 +38,7 @@
 - [x] Add encrypted remarks field
 - [x] Implement bulk approval
 - [x] Create leave balance editor
-- [ ] Add leave type management
+- [x] Add leave type management
 - [x] Build leave analytics
 - [x] Create leave reports
 
@@ -842,3 +842,8 @@
 
 ## Tablet Navigation Refinement
 - [x] Reduce medium-width header crowding and keep Admin tab navigation horizontally usable
+
+## Leave Type Management Verification Follow-up
+- [x] Add end-to-end coverage proving Admin leave-type updates propagate to staff options and block deactivated requests
+- [x] Add explicit loading, error, and empty states for Admin and Staff leave-type queries
+- [x] Verify the complete Admin edit, toggle, refresh, and staff-form reflection flow

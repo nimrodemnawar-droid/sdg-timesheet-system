@@ -99,6 +99,13 @@
       "when": 1787653466192,
       "tag": "0013_loving_abomination",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1787654565353,
+      "tag": "0014_narrow_wiccan",
+      "breakpoints": true
     }
   ]
 }

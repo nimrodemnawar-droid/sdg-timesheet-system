@@ -64,3 +64,49 @@ describe("Admin leave balance editor", () => {
     }
   });
 });
+
+  it("provisions the predefined leave types and always includes annual leave", async () => {
+    const caller = appRouter.createCaller(createAdminContext());
+    const types = await caller.leave.getAllTypes();
+    expect(types.map((type) => type.leaveType)).toEqual(expect.arrayContaining(["annual", "sick", "unpaid", "maternity", "other"]));
+  });
+
+  it("does not allow Admins to disable annual leave", async () => {
+    const caller = appRouter.createCaller(createAdminContext());
+    await expect(caller.leave.updateType({
+      leaveType: "annual",
+      label: "Annual Leave",
+      description: "Annual leave entitlement",
+      isActive: false,
+    })).rejects.toThrow("Annual leave must remain available");
+  });
+
+  it("propagates a deactivated type to staff options and blocks new requests", async () => {
+    const caller = appRouter.createCaller(createAdminContext());
+    const original = (await caller.leave.getAllTypes()).find((type) => type.leaveType === "other");
+    if (!original) return;
+
+    try {
+      await caller.leave.updateType({
+        leaveType: "other",
+        label: original.label,
+        description: original.description,
+        isActive: false,
+      });
+      const staffTypes = await caller.leave.getTypes();
+      expect(staffTypes.some((type) => type.leaveType === "other")).toBe(false);
+      await expect(caller.leave.createRequest({
+        leaveType: "other",
+        startDate: "2026-08-26",
+        endDate: "2026-08-27",
+        reason: "Configuration propagation test",
+      })).rejects.toThrow("currently unavailable");
+    } finally {
+      await caller.leave.updateType({
+        leaveType: "other",
+        label: original.label,
+        description: original.description,
+        isActive: Boolean(original.isActive),
+      });
+    }
+  });

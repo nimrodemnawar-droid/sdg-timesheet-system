@@ -91,6 +91,7 @@ export default function AdminDashboard() {
   const [balanceUserId, setBalanceUserId] = useState("");
   const [balanceLeaveType, setBalanceLeaveType] = useState<"annual" | "sick" | "unpaid" | "maternity" | "other">("annual");
   const [balanceAllocatedDays, setBalanceAllocatedDays] = useState("21");
+  const [leaveTypeDrafts, setLeaveTypeDrafts] = useState<Record<string, { label: string; description: string; isActive: boolean }>>({});
   const [showGpsMap, setShowGpsMap] = useState(false);
   const mapRef = useRef<google.maps.Map | null>(null);
   const [timesheetFilters, setTimesheetFilters] = useState<TimesheetFilterOptions>({
@@ -126,7 +127,38 @@ export default function AdminDashboard() {
   const { data: leaveBalances, refetch: refetchLeaveBalances } = trpc.leave.getAllBalances.useQuery(undefined, {
     refetchInterval: 10000,
   });
+  const { data: allLeaveTypes, isLoading: isLoadingLeaveTypes, isError: isLeaveTypesError, refetch: refetchLeaveTypes } = trpc.leave.getAllTypes.useQuery();
+  const utils = trpc.useUtils();
   const updateLeaveBalanceMutation = trpc.leave.updateBalance.useMutation();
+  const updateLeaveTypeMutation = trpc.leave.updateType.useMutation();
+
+  useEffect(() => {
+    if (allLeaveTypes) {
+      setLeaveTypeDrafts(Object.fromEntries(allLeaveTypes.map((setting: any) => [setting.leaveType, {
+        label: setting.label,
+        description: setting.description || "",
+        isActive: Boolean(setting.isActive),
+      }])));
+    }
+  }, [allLeaveTypes]);
+
+  const handleUpdateLeaveType = async (leaveType: string) => {
+    const draft = leaveTypeDrafts[leaveType];
+    if (!draft) return;
+    try {
+      await updateLeaveTypeMutation.mutateAsync({
+        leaveType: leaveType as "annual" | "sick" | "unpaid" | "maternity" | "other",
+        label: draft.label,
+        description: draft.description || null,
+        isActive: leaveType === "annual" ? true : draft.isActive,
+      });
+      await refetchLeaveTypes();
+      utils.leave.getTypes.invalidate();
+      toast.success(`${draft.label} settings saved`);
+    } catch (error: any) {
+      toast.error(error?.message || "Could not update leave type");
+    }
+  };
   const selectedLeaveBalanceRecord = useMemo(() => {
     const staffBalance = (leaveBalances || []).find((balance: any) => String(balance.userId) === balanceUserId);
     return (staffBalance as any)?.[balanceLeaveType] || null;
@@ -839,6 +871,47 @@ export default function AdminDashboard() {
                       ))}
                     </div>
                   </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Leave Type Management */}
+            <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Filter className="w-5 h-5 text-cyan-400" />
+                  Leave Type Management
+                </CardTitle>
+                <CardDescription className="text-slate-400">Control the labels and availability shown on new staff leave requests. Existing history is preserved.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {isLoadingLeaveTypes ? (
+                  <p className="text-sm text-slate-400">Loading leave types...</p>
+                ) : isLeaveTypesError ? (
+                  <p className="rounded-lg border border-red-500/30 bg-red-950/20 p-3 text-sm text-red-200">Leave types could not be loaded. Refresh and try again.</p>
+                ) : allLeaveTypes && allLeaveTypes.length > 0 ? (
+                  allLeaveTypes.map((setting: any) => {
+                  const draft = leaveTypeDrafts[setting.leaveType] || { label: setting.label, description: setting.description || "", isActive: Boolean(setting.isActive) };
+                  return (
+                    <div key={setting.leaveType} className="grid grid-cols-1 gap-3 rounded-lg border border-slate-700 bg-slate-900/30 p-3 lg:grid-cols-[1fr_1.5fr_auto_auto] lg:items-end">
+                      <div className="space-y-1">
+                        <Label className="text-xs capitalize text-slate-400">{setting.leaveType}</Label>
+                        <Input value={draft.label} onChange={(event) => setLeaveTypeDrafts((current) => ({ ...current, [setting.leaveType]: { ...draft, label: event.target.value } }))} className="bg-slate-700/50 border-slate-600 text-white" aria-label={`${setting.leaveType} label`} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-slate-400">Description</Label>
+                        <Input value={draft.description} onChange={(event) => setLeaveTypeDrafts((current) => ({ ...current, [setting.leaveType]: { ...draft, description: event.target.value } }))} className="bg-slate-700/50 border-slate-600 text-white" aria-label={`${setting.leaveType} description`} />
+                      </div>
+                      <label className="flex items-center gap-2 pb-2 text-sm text-slate-300">
+                        <Checkbox checked={setting.leaveType === "annual" ? true : draft.isActive} disabled={setting.leaveType === "annual"} onCheckedChange={(checked) => setLeaveTypeDrafts((current) => ({ ...current, [setting.leaveType]: { ...draft, isActive: checked === true } }))} />
+                        Active
+                      </label>
+                      <Button type="button" size="sm" onClick={() => handleUpdateLeaveType(setting.leaveType)} disabled={updateLeaveTypeMutation.isPending} className="bg-cyan-600 hover:bg-cyan-700 text-white border-0">Save</Button>
+                    </div>
+                  );
+                  })
+                ) : (
+                  <p className="text-sm text-slate-400">No leave types are configured yet.</p>
                 )}
               </CardContent>
             </Card>

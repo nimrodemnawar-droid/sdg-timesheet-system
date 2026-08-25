@@ -26,6 +26,7 @@ import {
   manualApprovalRequests,
   monthlyReports,
   monthlyReportAuditLog,
+  leaveTypeSettings,
   type ReportSchedule,
   type InsertReportSchedule,
   type InsertReportDeliveryHistory,
@@ -850,6 +851,63 @@ export async function rejectLeaveRequest(
       sentAt: new Date(),
     });
   }
+}
+
+const DEFAULT_LEAVE_TYPE_SETTINGS = [
+  { leaveType: "annual", label: "Annual Leave", description: "Annual leave entitlement", isActive: true },
+  { leaveType: "sick", label: "Sick Leave", description: "Leave for illness or medical recovery", isActive: true },
+  { leaveType: "unpaid", label: "Unpaid Leave", description: "Approved time away without paid entitlement", isActive: true },
+  { leaveType: "maternity", label: "Maternity Leave", description: "Maternity-related leave", isActive: true },
+  { leaveType: "other", label: "Other Leave", description: "Other approved leave category", isActive: true },
+] as const;
+
+export async function getLeaveTypeSettings(includeInactive = false) {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    let settings = await db.select().from(leaveTypeSettings).orderBy(asc(leaveTypeSettings.id));
+    if (settings.length === 0) {
+      await db.insert(leaveTypeSettings).values(DEFAULT_LEAVE_TYPE_SETTINGS as any);
+      settings = await db.select().from(leaveTypeSettings).orderBy(asc(leaveTypeSettings.id));
+    }
+    return includeInactive ? settings : settings.filter((setting) => setting.isActive || setting.leaveType === "annual");
+  } catch (error) {
+    console.error("Error fetching leave type settings:", error);
+    return [];
+  }
+}
+
+export async function updateLeaveTypeSetting(
+  leaveType: string,
+  label: string,
+  description: string | null,
+  isActive: boolean,
+) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const normalizedType = leaveType as "annual" | "sick" | "unpaid" | "maternity" | "other";
+  const existing = await db.select().from(leaveTypeSettings)
+    .where(eq(leaveTypeSettings.leaveType, normalizedType))
+    .limit(1);
+  if (existing.length > 0) {
+    await db.update(leaveTypeSettings).set({ label, description, isActive })
+      .where(eq(leaveTypeSettings.id, existing[0].id));
+    const updated = await db.select().from(leaveTypeSettings)
+      .where(eq(leaveTypeSettings.id, existing[0].id)).limit(1);
+    return updated[0] ?? null;
+  }
+
+  await db.insert(leaveTypeSettings).values({
+    leaveType: normalizedType,
+    label,
+    description,
+    isActive,
+  });
+  const created = await db.select().from(leaveTypeSettings)
+    .where(eq(leaveTypeSettings.leaveType, normalizedType)).limit(1);
+  return created[0] ?? null;
 }
 
 export async function getLeaveBalance(

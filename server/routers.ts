@@ -568,6 +568,45 @@ Report generated at: ${new Date().toISOString()}`;
         }
       }),
 
+    getTypes: protectedProcedure.query(async () => {
+      const types = await db.getLeaveTypeSettings(false);
+      return types;
+    }),
+
+    getAllTypes: adminProcedure.query(async () => {
+      return db.getLeaveTypeSettings(true);
+    }),
+
+    updateType: adminProcedure
+      .input(z.object({
+        leaveType: z.enum(['annual', 'sick', 'unpaid', 'maternity', 'other']),
+        label: z.string().trim().min(2).max(100),
+        description: z.string().trim().max(500).nullable().optional(),
+        isActive: z.boolean(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (input.leaveType === 'annual' && !input.isActive) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Annual leave must remain available.' });
+        }
+        const updated = await db.updateLeaveTypeSetting(
+          input.leaveType,
+          input.label,
+          input.description?.trim() || null,
+          input.isActive || input.leaveType === 'annual',
+        );
+        if (!updated) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Leave type could not be updated.' });
+        }
+        await db.logAuditEvent({
+          userId: ctx.user.id,
+          action: 'leave_type_updated',
+          entityType: 'leave_type_setting',
+          entityId: updated.id,
+          details: { leaveType: input.leaveType, label: updated.label, isActive: updated.isActive },
+        });
+        return updated;
+      }),
+
     getMyRequests: protectedProcedure.query(async ({ ctx }) => {
       try {
         return await db.getUserLeaveRequests(ctx.user.id);
@@ -786,6 +825,13 @@ Report generated at: ${new Date().toISOString()}`;
             });
           }
           
+          const activeLeaveTypes = await db.getLeaveTypeSettings(false);
+          if (!activeLeaveTypes.some((setting) => setting.leaveType === input.leaveType)) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'This leave type is currently unavailable for new requests.',
+            });
+          }
           if (input.leaveType === "annual") {
             await db.ensureAnnualLeaveBalance(ctx.user.id, startDate.getFullYear());
           }
@@ -821,6 +867,7 @@ Report generated at: ${new Date().toISOString()}`;
           return { success: true, message: 'Leave request created successfully' };
         } catch (error) {
           console.error('[tRPC] Error creating leave request:', error);
+          if (error instanceof TRPCError) throw error;
           throw new TRPCError({
             code: 'INTERNAL_SERVER_ERROR',
             message: 'Failed to create leave request',

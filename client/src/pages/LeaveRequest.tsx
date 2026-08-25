@@ -27,6 +27,7 @@ export default function LeaveRequest() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: leaveRequests, refetch: refetchRequests } = trpc.leave.getMyRequests.useQuery();
+  const { data: activeLeaveTypes = [] } = trpc.leave.getTypes.useQuery();
   const createRequestMutation = trpc.leave.createRequest.useMutation();
 
   // Default leave balance if query fails
@@ -45,6 +46,11 @@ export default function LeaveRequest() {
 
     if (new Date(startDate) > new Date(endDate)) {
       toast.error("End date must be after start date");
+      return;
+    }
+
+    if (!activeLeaveTypes.some((setting) => setting.leaveType === leaveType)) {
+      toast.error("This leave type is currently unavailable");
       return;
     }
 
@@ -148,11 +154,9 @@ export default function LeaveRequest() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="annual">Annual Leave</SelectItem>
-                      <SelectItem value="sick">Sick Leave</SelectItem>
-                      <SelectItem value="maternity">Maternity Leave</SelectItem>
-                      <SelectItem value="unpaid">Unpaid Leave</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      {activeLeaveTypes.map((setting: any) => (
+                        <SelectItem key={setting.leaveType} value={setting.leaveType}>{setting.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

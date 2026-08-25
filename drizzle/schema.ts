@@ -258,6 +258,22 @@ export const leaveBalance = mysqlTable("leaveBalance", {
 export type LeaveBalance = typeof leaveBalance.$inferSelect;
 export type InsertLeaveBalance = typeof leaveBalance.$inferInsert;
 
+/**
+ * Admin-managed configuration for the predefined leave types.
+ * Historical leave requests and balances keep their original enum values.
+ */
+export const leaveTypeSettings = mysqlTable("leaveTypeSettings", {
+  id: int("id").autoincrement().primaryKey(),
+  leaveType: mysqlEnum("leaveType", ["annual", "sick", "unpaid", "maternity", "other"]).notNull(),
+  label: varchar("label", { length: 100 }).notNull(),
+  description: text("description"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type LeaveTypeSetting = typeof leaveTypeSettings.$inferSelect;
+export type InsertLeaveTypeSetting = typeof leaveTypeSettings.$inferInsert;
 
 /**
  * Supervisor Remarks - Encrypted field notes for supervisors

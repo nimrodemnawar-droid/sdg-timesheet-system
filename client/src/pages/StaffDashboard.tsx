@@ -227,6 +227,8 @@ export default function StaffDashboard() {
   }, [historyMonth]);
   const { data: monthlyTimesheetHistory, isLoading: isLoadingTimesheetHistory } = trpc.timesheet.getMyComplete.useQuery(historyRange);
   const { data: allLeaveBalances } = trpc.leave.getAllBalances.useQuery();
+  const { data: activeLeaveTypes = [], isLoading: isLoadingLeaveTypes, isError: isLeaveTypesError } = trpc.leave.getTypes.useQuery();
+  const myLeaveBalance = useMemo(() => (allLeaveBalances || []).find((balance: any) => balance.userId === user?.id), [allLeaveBalances, user?.id]);
   const { data: myLeaveRequests, isLoading: isLoadingLeaveRequests } = trpc.leave.getMyRequests.useQuery();
   const { data: kpiList, isLoading: isLoadingKPIs } = trpc.kpi.getKPIs.useQuery();
   const { data: todayWaypoints, refetch: refetchWaypoints } = trpc.attendance.getWaypoints.useQuery(
@@ -1122,21 +1124,19 @@ export default function StaffDashboard() {
               <CardContent className="space-y-6">
                 {/* Leave Balance Summary */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {allLeaveBalances && Array.isArray(allLeaveBalances) && allLeaveBalances.length > 0 ? (
-                    allLeaveBalances[0] && (['annual', 'sick', 'unpaid', 'maternity'] as const).map((leaveType) => {
-                      const balance = allLeaveBalances[0][leaveType];
+                  {isLoadingLeaveTypes ? (
+                    <div className="col-span-2 md:col-span-4 bg-slate-700/50 rounded-lg p-4 border border-slate-600"><p className="text-slate-400 text-sm">Loading leave types...</p></div>
+                  ) : isLeaveTypesError ? (
+                    <div className="col-span-2 md:col-span-4 bg-red-900/20 rounded-lg p-4 border border-red-500/30"><p className="text-red-200 text-sm">Leave types could not be loaded. Refresh and try again.</p></div>
+                  ) : myLeaveBalance && activeLeaveTypes.length > 0 ? (
+                    activeLeaveTypes.map((setting: any) => {
+                      const balance = (myLeaveBalance as any)[setting.leaveType];
                       if (!balance) return null;
-                      const leaveTypeLabels: Record<string, { label: string; color: string }> = {
-                        annual: { label: 'Annual Leave', color: 'text-blue-400' },
-                        sick: { label: 'Sick Leave', color: 'text-green-400' },
-                        unpaid: { label: 'Unpaid Leave', color: 'text-yellow-400' },
-                        maternity: { label: 'Maternity Leave', color: 'text-pink-400' },
-                      };
-                      const typeInfo = leaveTypeLabels[leaveType];
+                      const typeColors: Record<string, string> = { annual: 'text-blue-400', sick: 'text-green-400', unpaid: 'text-yellow-400', maternity: 'text-pink-400', other: 'text-purple-400' };
                       return (
-                        <div key={balance.id} className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
-                          <p className="text-slate-400 text-xs font-medium mb-1">{typeInfo.label}</p>
-                          <p className={`text-2xl font-bold ${typeInfo.color}`}>{parseFloat(balance.remainingDays.toString())}</p>
+                        <div key={setting.leaveType} className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
+                          <p className="text-slate-400 text-xs font-medium mb-1">{setting.label}</p>
+                          <p className={`text-2xl font-bold ${typeColors[setting.leaveType] || 'text-cyan-400'}`}>{parseFloat(balance.remainingDays.toString())}</p>
                           <p className="text-xs text-slate-500 mt-1">days remaining</p>
                         </div>
                       );
@@ -1152,15 +1152,16 @@ export default function StaffDashboard() {
                 <div className="space-y-4 pt-4 border-t border-slate-700">
                   <div className="space-y-2">
                     <Label htmlFor="leaveType" className="text-white font-medium">Select Leave Type *</Label>
-                    <Select value={leaveFormData.leaveType} onValueChange={(value) => setLeaveFormData({ ...leaveFormData, leaveType: value })}>
+                    <Select value={leaveFormData.leaveType} onValueChange={(value) => setLeaveFormData({ ...leaveFormData, leaveType: value })} disabled={isLoadingLeaveTypes || isLeaveTypesError || activeLeaveTypes.length === 0}>
                       <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
                         <SelectValue placeholder="Choose leave type" />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-800 border-slate-600">
-                        <SelectItem value="annual" className="text-white">Annual Leave</SelectItem>
-                        <SelectItem value="sick" className="text-white">Sick Leave</SelectItem>
-                        <SelectItem value="unpaid" className="text-white">Unpaid Leave</SelectItem>
-                        <SelectItem value="maternity" className="text-white">Maternity Leave</SelectItem>
+                        {activeLeaveTypes.length > 0 ? activeLeaveTypes.map((setting: any) => (
+                          <SelectItem key={setting.leaveType} value={setting.leaveType} className="text-white">
+                            {setting.label}
+                          </SelectItem>
+                        )) : <SelectItem value="no-types" disabled className="text-slate-400">No leave types available</SelectItem>}
                       </SelectContent>
                     </Select>
                     {/* Show selected leave type balance */}
@@ -1168,7 +1169,7 @@ export default function StaffDashboard() {
                       <div className="mt-3 p-3 bg-blue-900/30 border border-blue-500/50 rounded-lg">
                         {(() => {
                           const leaveTypeKey = leaveFormData.leaveType as 'annual' | 'sick' | 'maternity' | 'unpaid';
-                          const selectedBalance = allLeaveBalances[0]?.[leaveTypeKey];
+                          const selectedBalance = myLeaveBalance?.[leaveTypeKey];
                           if (selectedBalance) {
                             const remaining = parseFloat(selectedBalance.remainingDays.toString());
                             const allocated = parseFloat(selectedBalance.allocatedDays.toString());
