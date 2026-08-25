@@ -125,8 +125,8 @@ export default function Home() {
                     <span className="text-xl font-bold text-blue-400">{stats?.leaveBalance?.sick || 0} days</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-300">Casual:</span>
-                    <span className="text-xl font-bold text-purple-400">{stats?.leaveBalance?.casual || 0} days</span>
+                    <span className="text-slate-300">Unpaid:</span>
+                    <span className="text-xl font-bold text-purple-400">{stats?.leaveBalance?.unpaid || 0} days</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-300">Maternity:</span>

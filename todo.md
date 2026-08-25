@@ -884,3 +884,7 @@
 ## GPS Capture Retry Follow-up
 - [x] Add a clearly labeled retry GPS button beside acquisition errors and poor-accuracy guidance
 - [x] Add regression coverage for the retry action and mobile presentation
+
+## Staff Leave Balance Label Follow-up
+- [x] Display Unpaid Leave balance using the configured 999-day entitlement instead of the obsolete Casual label
+- [x] Add regression coverage for Staff leave-balance labels and values
