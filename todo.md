@@ -161,16 +161,16 @@
 - [x] Enforce single daily check-out per staff member
 - [x] Capture check-in location (GPS coordinates) and address
 - [x] Capture check-out location (GPS coordinates) and address
-- [ ] Allow waypoint tracking throughout the day (after check-in)
-- [ ] Create admin map view showing all check-in locations
-- [ ] Add staff details popup on map (name, number, time, location)
+- [x] Allow waypoint tracking throughout the day (after check-in)
+- [x] Create admin map view showing all check-in locations
+- [x] Add staff details popup on map (name, number, time, location)
 - [ ] Implement PDF report export with location data
 - [x] Implement Excel report export with location data
 - [x] Implement CSV report export with location data
 - [ ] Add location-based analytics (check-in heatmap, distance traveled)
 - [x] Create attendance summary with staff numbers and locations
 - [x] Add date range filtering for reports
-- [ ] Add department filtering for reports
+- [x] Add department filtering for reports
 - [x] Write comprehensive tests for staff numbering system
 - [x] Write comprehensive tests for check-in/out enforcement
 - [x] Write comprehensive tests for report generation
@@ -187,8 +187,8 @@
 - [x] Create dedicated waypoint history page with CSV export
 - [x] Add route visualization on interactive map
 - [x] Write comprehensive tests for waypoint tracking
-- [ ] Verify real-time synchronization with admin map
-- [ ] Add admin map view showing all staff waypoints
+- [x] Verify real-time synchronization with admin map
+- [x] Add admin map view showing all staff waypoints
 - [ ] Add heatmap analytics for location-based insights
 
 

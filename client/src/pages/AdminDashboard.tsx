@@ -53,7 +53,7 @@ import { WaypointDisplay } from "@/components/WaypointDisplay";
 import { WaypointFilter, type WaypointFilterOptions } from "@/components/WaypointFilter";
 import MonthlyReports from "@/pages/MonthlyReports";
 import { DataManagementTab } from "@/components/DataManagementTab";
-import { filterWaypointRecords } from "../../../shared/waypointUtils";
+import { filterWaypointRecords, WAYPOINT_REFRESH_INTERVAL_MS } from "../../../shared/waypointUtils";
 import { ADMIN_TAB_VALUES, resolveAdminDashboardTab } from "../../../shared/adminDashboardTabs";
 import { toLeaveReportRows } from "../../../shared/leaveReport";
 import { formatAttendanceLocationSummary } from "../../../shared/location";
@@ -231,7 +231,7 @@ export default function AdminDashboard() {
     }
   );
   const { data: waypointRecordsData, isLoading: waypointsLoading } = trpc.waypoints.getHistory.useQuery(waypointQueryInput, {
-    refetchInterval: 5000,
+    refetchInterval: WAYPOINT_REFRESH_INTERVAL_MS,
   });
   const waypointRecords = waypointRecordsData ?? EMPTY_WAYPOINT_RECORDS;
   const { data: analyticsMetrics, refetch: refetchAnalytics } = trpc.analytics.metrics.useQuery({

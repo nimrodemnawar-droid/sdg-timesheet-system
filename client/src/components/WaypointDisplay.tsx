@@ -2,6 +2,7 @@ import React from 'react';
 import { MapPin, Navigation, Clock, Mountain } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { formatWaypointPopupDetails } from '../../../shared/waypointUtils';
 
 export interface WaypointData {
   id?: number;
@@ -19,17 +20,12 @@ interface WaypointDisplayProps {
   staffNumber: string | number;
 }
 
-const formatTimestamp = (value: Date) => new Date(value).toLocaleString('en-KE', {
-  timeZone: 'Africa/Nairobi',
-  dateStyle: 'medium',
-  timeStyle: 'short',
-});
-
 const formatNumber = (value: number | null | undefined, digits = 2) => (
   typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) : '—'
 );
 
 export const WaypointDisplay: React.FC<WaypointDisplayProps> = ({ waypoint, staffName, staffNumber }) => {
+  const popupDetails = formatWaypointPopupDetails({ ...waypoint, staffName, staffNumber });
   const accuracy = typeof waypoint.accuracy === 'number' ? waypoint.accuracy : null;
   const accuracyClass = accuracy === null
     ? 'bg-slate-700 text-slate-300 border-slate-600'
@@ -42,8 +38,8 @@ export const WaypointDisplay: React.FC<WaypointDisplayProps> = ({ waypoint, staf
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <CardTitle className="text-base text-white truncate">{staffName}</CardTitle>
-            <CardDescription className="text-slate-400">Staff #{staffNumber}</CardDescription>
+            <CardTitle className="text-base text-white truncate">{popupDetails.staffName}</CardTitle>
+            <CardDescription className="text-slate-400">Staff #{popupDetails.staffNumber}</CardDescription>
           </div>
           <Badge variant="outline" className="shrink-0 border-blue-700 bg-blue-950/40 text-blue-300">
             Waypoint {waypoint.id ? `#${waypoint.id}` : ''}
@@ -53,7 +49,7 @@ export const WaypointDisplay: React.FC<WaypointDisplayProps> = ({ waypoint, staf
       <CardContent className="space-y-3 text-sm">
         <div className="flex items-center gap-2 text-slate-300">
           <Clock className="w-4 h-4 text-blue-400 shrink-0" />
-          <span>{formatTimestamp(waypoint.timestamp)}</span>
+          <span>{popupDetails.timestamp}</span>
         </div>
 
         <div className="rounded-lg border border-slate-700 bg-slate-800/70 p-3 space-y-2">
@@ -62,7 +58,7 @@ export const WaypointDisplay: React.FC<WaypointDisplayProps> = ({ waypoint, staf
             <span className="font-medium">GPS location</span>
           </div>
           <code className="block break-all text-xs text-slate-300">
-            {formatNumber(waypoint.latitude, 6)}, {formatNumber(waypoint.longitude, 6)}
+            {popupDetails.location}
           </code>
           <a
             href={`https://maps.google.com/?q=${waypoint.latitude},${waypoint.longitude}`}
