@@ -2052,7 +2052,16 @@ export async function getAllLeaveBalances(userId: number) {
   try {
     const currentYear = new Date().getFullYear();
     await ensureAnnualLeaveBalance(userId, currentYear);
+    const configuredSettings = await getLeaveTypeSettings(true);
     const leaveTypes = ["annual", "sick", "unpaid", "maternity"];
+    for (const setting of configuredSettings) {
+      if (!leaveTypes.includes(setting.leaveType)) continue;
+      const existing = await getLeaveBalance(userId, setting.leaveType, currentYear);
+      if (!existing) {
+        const allocatedDays = setting.leaveType === "annual" ? 21 : Number(setting.defaultAllocatedDays) || 0;
+        await initializeLeaveBalance(userId, setting.leaveType, currentYear, allocatedDays);
+      }
+    }
     const balances: Record<string, number> = {
       annual: 0,
       sick: 0,
