@@ -530,7 +530,7 @@
 - [x] Implement email notification with summary content using notifyOwner
 - [x] Create scheduled task API endpoint for daily report trigger
 - [x] Include: total staff checked in, hours worked, activities, missing submissions
-- [ ] Test end-to-end report generation and delivery
+- [x] Test end-to-end report generation and delivery
 - [x] Set up scheduled task to run daily at end of day (6 PM EAT)
 
 ## Phase 50: Check-out Display on Admin Dashboard
@@ -896,3 +896,6 @@
 ## Staff Leave Entitlement Fallback
 - [x] Preserve 21 annual, 5 sick, 999 unpaid, and 90 maternity values in the Staff statistics fallback when balance retrieval is unavailable
 - [x] Validate fallback-compatible leave and structured-timesheet flows
+
+## Daily Report Delivery Verification
+- [x] Add deterministic coverage for daily report formatting, structured-task totals, and notification delivery invocation
