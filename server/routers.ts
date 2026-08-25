@@ -238,10 +238,26 @@ export const appRouter = router({
           activityCategoryId: z.number().int().positive().optional(),
           kpiId: z.number().int().positive().optional(),
           program: z.string().trim().max(255).optional(),
+          organization: z.enum(["icy_africa", "africa_for_sdgs", "joint"]).optional(),
+          departmentFunction: z.string().trim().max(100).optional(),
+          programProject: z.string().trim().max(255).optional(),
           staffRemarks: z.string().trim().max(5000).optional(),
           tasks: z.array(z.object({
             estimatedDuration: z.enum(["0_1_hour", "2_hours", "3_hours", "4_hours", "5_8_hours"]),
+            activityType: z.string().trim().min(1).max(100),
             taskDescription: z.string().trim().min(1).max(5000),
+            specificActivity: z.string().trim().min(1).max(5000),
+            targetStakeholder: z.string().trim().max(5000).optional(),
+            locationPlatform: z.enum(["physical_location", "zoom", "whatsapp", "email", "school", "church", "other"]).optional(),
+            tangibleOutput: z.string().trim().max(5000).optional(),
+            numbersReached: z.number().int().min(0).max(1000000).optional(),
+            outcomeResults: z.string().trim().max(5000).optional(),
+            followUpRequired: z.enum(["yes", "no"]).default("no"),
+            evidenceType: z.enum(["report", "photo", "email", "registration_list", "document", "social_media_link", "other"]).optional(),
+            evidenceLink: z.string().trim().max(5000).optional(),
+            activityStatus: z.enum(["completed", "ongoing", "pending"]).default("completed"),
+            onlineMissionary: z.boolean().default(false),
+            onlineMissionaryParticipants: z.number().int().min(0).max(1000000).optional(),
             challenges: z.string().trim().max(5000).optional(),
             coordination: z.array(z.object({
               country: z.string().trim().min(1).max(100),
@@ -265,6 +281,9 @@ export const appRouter = router({
             activityCategoryId: input.activityCategoryId,
             kpiId: input.kpiId,
             program: input.program,
+            organization: input.organization,
+            departmentFunction: input.departmentFunction,
+            programProject: input.programProject,
             staffRemarks: input.staffRemarks,
           });
           await db.replaceTimesheetTasks(input.attendanceId, ctx.user.id, input.tasks);
@@ -277,7 +296,7 @@ export const appRouter = router({
             const coordination = task.coordination?.length
               ? `; Countries: ${task.coordination.map((item) => `${item.country} (${item.participantsAttended})`).join(", ")}`
               : "";
-            return `Task ${index + 1} [${task.estimatedDuration}]: ${task.taskDescription}${task.challenges ? `; Challenges: ${task.challenges}` : ""}${coordination}`;
+            return `Task ${index + 1} [${task.activityType}; ${task.estimatedDuration}]: ${task.specificActivity || task.taskDescription}${task.challenges ? `; Challenges: ${task.challenges}` : ""}${coordination}`;
           }).join("\n");
 
           try {
@@ -832,8 +851,12 @@ Report generated at: ${new Date().toISOString()}`;
               message: 'This leave type is currently unavailable for new requests.',
             });
           }
+          const leaveYear = startDate.getFullYear();
           if (input.leaveType === "annual") {
-            await db.ensureAnnualLeaveBalance(ctx.user.id, startDate.getFullYear());
+            await db.ensureAnnualLeaveBalance(ctx.user.id, leaveYear);
+          } else if (!(await db.getLeaveBalance(ctx.user.id, input.leaveType, leaveYear))) {
+            const configuredType = activeLeaveTypes.find((setting) => setting.leaveType === input.leaveType);
+            await db.initializeLeaveBalance(ctx.user.id, input.leaveType, leaveYear, Number(configuredType?.defaultAllocatedDays ?? 0));
           }
           const daysRequested = countKenyaWorkingDays(startDate, endDate);
           if (daysRequested <= 0) {

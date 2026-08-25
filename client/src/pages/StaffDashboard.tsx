@@ -29,26 +29,22 @@ interface GPSCoordinates {
 }
 
 const ACTIVITY_CATEGORIES = [
-  "Program Implementation",
-  "Community Outreach",
-  "Training & Workshop Facilitation",
-  "Monitoring & Evaluation",
-  "Data Collection",
-  "Reporting & Documentation",
-  "ICT Development",
-  "System Maintenance",
-  "Stakeholder Engagement",
-  "Environmental Activity",
-  "Education Support",
-  "Health Outreach",
-  "Research & Proposal Writing",
-  "Administrative Work",
-  "Field Visit",
-  "Partnership Development",
-  "Youth Empowerment",
-  "Women Empowerment",
-  "Digital Transformation",
+  "Meeting", "Training", "Mobilisation", "Planning", "Reporting", "Follow Up", "Programme Implementation", "Community Outreach", "Monitoring & Evaluation", "Data Collection", "Stakeholder Engagement", "Administrative Work", "Field Visit", "Other",
 ];
+
+const ORGANIZATIONS = [
+  { label: "ICY Africa", value: "icy_africa" },
+  { label: "Africa for SDGs", value: "africa_for_sdgs" },
+  { label: "Joint", value: "joint" },
+];
+
+const DEPARTMENT_FUNCTIONS = ["Programme", "Admin", "Finance", "Communication", "Monitoring & Evaluation", "Partnerships", "Other"];
+const LOCATION_PLATFORMS = [
+  { label: "Physical location", value: "physical_location" }, { label: "Zoom", value: "zoom" }, { label: "WhatsApp", value: "whatsapp" }, { label: "Email", value: "email" }, { label: "School", value: "school" }, { label: "Church", value: "church" }, { label: "Other", value: "other" },
+] as const;
+const EVIDENCE_TYPES = [
+  { label: "Report", value: "report" }, { label: "Photo", value: "photo" }, { label: "Email", value: "email" }, { label: "Registration list", value: "registration_list" }, { label: "Document", value: "document" }, { label: "Social media link", value: "social_media_link" }, { label: "Other", value: "other" },
+] as const;
 
 const WORK_MODALITIES = [
   { label: "Nairobi Office", value: "nairobi_office" },
@@ -85,7 +81,20 @@ type TaskDuration = (typeof TASK_DURATIONS)[number]["value"];
 type CountryCoordinationDraft = { country: string; participantsAttended: string };
 type TimesheetTaskDraft = {
   estimatedDuration: TaskDuration;
+  activityType: string;
   taskDescription: string;
+  specificActivity: string;
+  targetStakeholder: string;
+  locationPlatform: string;
+  tangibleOutput: string;
+  numbersReached: string;
+  outcomeResults: string;
+  followUpRequired: "yes" | "no";
+  evidenceType: string;
+  evidenceLink: string;
+  activityStatus: "completed" | "ongoing" | "pending";
+  onlineMissionary: boolean;
+  onlineMissionaryParticipants: string;
   challenges: string;
   includesCoordination: boolean;
   countries: CountryCoordinationDraft[];
@@ -93,7 +102,20 @@ type TimesheetTaskDraft = {
 
 const createTaskDraft = (): TimesheetTaskDraft => ({
   estimatedDuration: "0_1_hour",
+  activityType: "",
   taskDescription: "",
+  specificActivity: "",
+  targetStakeholder: "",
+  locationPlatform: "",
+  tangibleOutput: "",
+  numbersReached: "",
+  outcomeResults: "",
+  followUpRequired: "no",
+  evidenceType: "",
+  evidenceLink: "",
+  activityStatus: "completed",
+  onlineMissionary: false,
+  onlineMissionaryParticipants: "",
   challenges: "",
   includesCoordination: false,
   countries: [{ country: "", participantsAttended: "" }],
@@ -102,6 +124,9 @@ const createTaskDraft = (): TimesheetTaskDraft => ({
 const createInitialTimesheetData = () => ({
   date: new Date().toISOString().split("T")[0],
   workModality: "field",
+  organization: "",
+  departmentFunction: "",
+  programProject: "",
   activityCategory: "",
   program: "",
   kpi: "none",
@@ -662,29 +687,29 @@ export default function StaffDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="flex w-full max-w-full justify-start gap-1 overflow-x-auto whitespace-nowrap bg-slate-800/50 border border-slate-700 backdrop-blur-sm p-1">
-            <TabsTrigger value="check-in" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white shrink-0 text-xs sm:text-sm">
+          <TabsList className="flex w-full max-w-full min-h-12 justify-start gap-1 overflow-x-auto overflow-y-hidden flex-nowrap whitespace-nowrap bg-slate-800/50 border border-slate-700 backdrop-blur-sm p-1">
+            <TabsTrigger value="check-in" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white shrink-0 min-w-max text-xs sm:text-sm">
               <MapPin className="w-4 h-4 mr-2" />
               Check In/Out
             </TabsTrigger>
-            <TabsTrigger value="timesheet" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white shrink-0 text-xs sm:text-sm">
+            <TabsTrigger value="timesheet" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white shrink-0 min-w-max text-xs sm:text-sm">
               <Briefcase className="w-4 h-4 mr-2" />
               Timesheet
             </TabsTrigger>
-            <TabsTrigger value="history" className="data-[state=active]:bg-cyan-600 text-slate-300 data-[state=active]:text-white shrink-0 text-xs sm:text-sm"><History className="w-4 h-4 mr-2" />Monthly History</TabsTrigger>
-            <TabsTrigger value="activities" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white shrink-0 text-xs sm:text-sm">
+            <TabsTrigger value="history" className="data-[state=active]:bg-cyan-600 text-slate-300 data-[state=active]:text-white shrink-0 min-w-max text-xs sm:text-sm"><History className="w-4 h-4 mr-2" />Monthly History</TabsTrigger>
+            <TabsTrigger value="activities" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white shrink-0 min-w-max text-xs sm:text-sm">
               <Activity className="w-4 h-4 mr-2" />
               Activities
             </TabsTrigger>
-            <TabsTrigger value="waypoints" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white shrink-0 text-xs sm:text-sm">
+            <TabsTrigger value="waypoints" className="data-[state=active]:bg-blue-600 text-slate-300 data-[state=active]:text-white shrink-0 min-w-max text-xs sm:text-sm">
               <Navigation className="w-4 h-4 mr-2" />
               Waypoints
             </TabsTrigger>
-            <TabsTrigger value="leave" className="data-[state=active]:bg-purple-600 text-slate-300 data-[state=active]:text-white shrink-0 text-xs sm:text-sm">
+            <TabsTrigger value="leave" className="data-[state=active]:bg-purple-600 text-slate-300 data-[state=active]:text-white shrink-0 min-w-max text-xs sm:text-sm">
               <AlertCircle className="w-4 h-4 mr-2" />
               Request Leave
             </TabsTrigger>
-            <TabsTrigger value="calendar" className="data-[state=active]:bg-indigo-600 text-slate-300 data-[state=active]:text-white shrink-0 text-xs sm:text-sm">
+            <TabsTrigger value="calendar" className="data-[state=active]:bg-indigo-600 text-slate-300 data-[state=active]:text-white shrink-0 min-w-max text-xs sm:text-sm">
               <Calendar className="w-4 h-4 mr-2" />
               Leave Calendar
             </TabsTrigger>
@@ -915,14 +940,34 @@ export default function StaffDashboard() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Activity Category</Label>
-                    <Select value={timesheetData.activityCategory} onValueChange={(value) => setTimesheetData({ ...timesheetData, activityCategory: value })}>
-                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Select a category" /></SelectTrigger>
-                      <SelectContent className="bg-slate-800 border-slate-700 max-h-60">
-                        {activityCategoriesData?.map((category) => <SelectItem key={category.id} value={category.id.toString()} className="text-white">{category.name}</SelectItem>)}
-                      </SelectContent>
+                    <Label className="text-slate-300">Organisation *</Label>
+                    <Select value={timesheetData.organization || "not-selected"} onValueChange={(value) => setTimesheetData({ ...timesheetData, organization: value === "not-selected" ? "" : value })}>
+                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Choose organisation" /></SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="not-selected" className="text-slate-400">Choose organisation</SelectItem>{ORGANIZATIONS.map((item) => <SelectItem key={item.value} value={item.value} className="text-white">{item.label}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">Department / Function *</Label>
+                    <Select value={timesheetData.departmentFunction || "not-selected"} onValueChange={(value) => setTimesheetData({ ...timesheetData, departmentFunction: value === "not-selected" ? "" : value })}>
+                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Choose function" /></SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="not-selected" className="text-slate-400">Choose function</SelectItem>{DEPARTMENT_FUNCTIONS.map((item) => <SelectItem key={item} value={item} className="text-white">{item}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">Programme / Project <span className="text-slate-500">(optional)</span></Label>
+                    <Input value={timesheetData.programProject} onChange={(event) => setTimesheetData({ ...timesheetData, programProject: event.target.value })} placeholder="Specific programme or project" className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">Activity Type *</Label>
+                    <Select value={timesheetData.activityCategory} onValueChange={(value) => setTimesheetData({ ...timesheetData, activityCategory: value })}>
+                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Select activity type" /></SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-700 max-h-60">{ACTIVITY_CATEGORIES.map((category) => <SelectItem key={category} value={category} className="text-white">{category}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+
 
                   <div className="space-y-2">
                     <Label className="text-slate-300 flex items-center gap-2"><Target className="w-4 h-4" />Linked Output / KPI</Label>
@@ -953,6 +998,13 @@ export default function StaffDashboard() {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
+                          <Label className="text-slate-300">Activity Type *</Label>
+                          <Select value={task.activityType || "not-selected"} onValueChange={(value) => updateTask(taskIndex, { activityType: value === "not-selected" ? "" : value })}>
+                            <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Choose activity type" /></SelectTrigger>
+                            <SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="not-selected" className="text-slate-400">Choose activity type</SelectItem>{ACTIVITY_CATEGORIES.map((item) => <SelectItem key={item} value={item} className="text-white">{item}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
                           <Label className="text-slate-300">Estimated Time *</Label>
                           <Select value={task.estimatedDuration} onValueChange={(value) => updateTask(taskIndex, { estimatedDuration: value as TaskDuration })}>
                             <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue /></SelectTrigger>
@@ -965,8 +1017,20 @@ export default function StaffDashboard() {
                           </Button>
                         </div>
                       </div>
-                      <div className="space-y-2"><Label className="text-slate-300">Task Description *</Label><Textarea value={task.taskDescription} onChange={(event) => updateTask(taskIndex, { taskDescription: event.target.value })} placeholder={`What did you work on for Task ${taskIndex + 1}?`} className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 min-h-24" /></div>
+                      <div className="space-y-2"><Label className="text-slate-300">Specific Activity *</Label><Textarea value={task.specificActivity} onChange={(event) => updateTask(taskIndex, { specificActivity: event.target.value, taskDescription: event.target.value })} placeholder={`What specific activity did you complete for Task ${taskIndex + 1}?`} className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 min-h-20" /></div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2"><Label className="text-slate-300">Target / Stakeholder</Label><Input value={task.targetStakeholder} onChange={(event) => updateTask(taskIndex, { targetStakeholder: event.target.value })} placeholder="Who was this activity directed to?" className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400" /></div>
+                        <div className="space-y-2"><Label className="text-slate-300">Location / Platform</Label><Select value={task.locationPlatform || "not-selected"} onValueChange={(value) => updateTask(taskIndex, { locationPlatform: value === "not-selected" ? "" : value })}><SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Choose location or platform" /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="not-selected" className="text-slate-400">Choose location or platform</SelectItem>{LOCATION_PLATFORMS.map((item) => <SelectItem key={item.value} value={item.value} className="text-white">{item.label}</SelectItem>)}</SelectContent></Select></div>
+                        <div className="space-y-2"><Label className="text-slate-300">Tangible Output</Label><Textarea value={task.tangibleOutput} onChange={(event) => updateTask(taskIndex, { tangibleOutput: event.target.value })} placeholder="What was produced or accomplished?" className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 min-h-20" /></div>
+                        <div className="space-y-2"><Label className="text-slate-300">Numbers Reached / Engaged</Label><Input type="number" min="0" step="1" value={task.numbersReached} onChange={(event) => updateTask(taskIndex, { numbersReached: event.target.value })} placeholder="If applicable" className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400" /></div>
+                        <div className="space-y-2 md:col-span-2"><Label className="text-slate-300">Outcome / Results</Label><Textarea value={task.outcomeResults} onChange={(event) => updateTask(taskIndex, { outcomeResults: event.target.value })} placeholder="What changed or was achieved?" className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 min-h-20" /></div>
+                        <div className="space-y-2"><Label className="text-slate-300">Follow-up Required</Label><Select value={task.followUpRequired} onValueChange={(value) => updateTask(taskIndex, { followUpRequired: value as "yes" | "no" })}><SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="yes" className="text-white">Yes</SelectItem><SelectItem value="no" className="text-white">No</SelectItem></SelectContent></Select></div>
+                        <div className="space-y-2"><Label className="text-slate-300">Status</Label><Select value={task.activityStatus} onValueChange={(value) => updateTask(taskIndex, { activityStatus: value as "completed" | "ongoing" | "pending" })}><SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="completed" className="text-white">Completed</SelectItem><SelectItem value="ongoing" className="text-white">Ongoing</SelectItem><SelectItem value="pending" className="text-white">Pending</SelectItem></SelectContent></Select></div>
+                        <div className="space-y-2"><Label className="text-slate-300">Evidence Type</Label><Select value={task.evidenceType || "not-selected"} onValueChange={(value) => updateTask(taskIndex, { evidenceType: value === "not-selected" ? "" : value })}><SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Choose evidence" /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="not-selected" className="text-slate-400">Choose evidence</SelectItem>{EVIDENCE_TYPES.map((item) => <SelectItem key={item.value} value={item.value} className="text-white">{item.label}</SelectItem>)}</SelectContent></Select></div>
+                        <div className="space-y-2"><Label className="text-slate-300">Evidence / Link</Label><Input value={task.evidenceLink} onChange={(event) => updateTask(taskIndex, { evidenceLink: event.target.value })} placeholder="Paste a link or evidence reference" className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400" /></div>
+                      </div>
                       <div className="space-y-2"><Label className="text-slate-300">Challenges (if any)</Label><Textarea value={task.challenges} onChange={(event) => updateTask(taskIndex, { challenges: event.target.value })} placeholder="Describe blockers or challenges, or write None" className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 min-h-20" /></div>
+                      <div className="rounded-lg border border-cyan-500/30 bg-cyan-950/20 p-3 space-y-3"><label className="flex items-center gap-2 text-sm text-cyan-100"><input type="checkbox" checked={task.onlineMissionary} onChange={(event) => updateTask(taskIndex, { onlineMissionary: event.target.checked })} className="h-4 w-4 accent-cyan-500" /> Online missionary activity</label>{task.onlineMissionary && <div className="space-y-1"><Label className="text-xs text-slate-400">Numbers attended that day *</Label><Input type="number" min="0" step="1" value={task.onlineMissionaryParticipants} onChange={(event) => updateTask(taskIndex, { onlineMissionaryParticipants: event.target.value })} className="bg-slate-700/50 border-slate-600 text-white" /></div>}</div>
 
                       {task.includesCoordination && (
                         <div className="rounded-lg border border-indigo-500/30 bg-indigo-950/30 p-3 space-y-3">
@@ -994,9 +1058,18 @@ export default function StaffDashboard() {
                       toast.error('No attendance record found for today');
                       return;
                     }
-                    const missingTask = timesheetData.tasks.findIndex((task) => !task.taskDescription.trim());
+                    if (!timesheetData.organization || !timesheetData.departmentFunction || !timesheetData.activityCategory) {
+                      toast.error('Choose an organisation, department/function, and activity type before submitting');
+                      return;
+                    }
+                    const missingTask = timesheetData.tasks.findIndex((task) => !task.activityType || !task.specificActivity.trim());
                     if (missingTask >= 0) {
-                      toast.error(`Please add a description for Task ${missingTask + 1}`);
+                      toast.error(`Choose an activity type and add a specific activity for Task ${missingTask + 1}`);
+                      return;
+                    }
+                    const invalidMissionary = timesheetData.tasks.some((task) => task.onlineMissionary && !/^(0|[1-9]\\d*)$/.test(task.onlineMissionaryParticipants));
+                    if (invalidMissionary) {
+                      toast.error('Enter the number attended for every online missionary activity');
                       return;
                     }
                     const invalidCoordination = timesheetData.tasks.some((task) => task.includesCoordination && task.countries.some((country) => !country.country.trim() || ! /^(0|[1-9]\d*)$/.test(country.participantsAttended)));
@@ -1009,13 +1082,28 @@ export default function StaffDashboard() {
                       const submitData = {
                         attendanceId: todayAttendance.id,
                         workModality: timesheetData.workModality as "nairobi_office" | "homa_bay_office" | "field" | "remote",
-                        activityCategoryId: timesheetData.activityCategory ? parseInt(timesheetData.activityCategory) : undefined,
                         kpiId: timesheetData.kpi && timesheetData.kpi !== 'none' ? parseInt(timesheetData.kpi) : undefined,
                         program: timesheetData.program,
+                        organization: timesheetData.organization as "icy_africa" | "africa_for_sdgs" | "joint",
+                        departmentFunction: timesheetData.departmentFunction,
+                        programProject: timesheetData.programProject,
                         staffRemarks: timesheetData.staffRemarks,
                         tasks: timesheetData.tasks.map((task) => ({
                           estimatedDuration: task.estimatedDuration,
-                          taskDescription: task.taskDescription.trim(),
+                          activityType: task.activityType,
+                          taskDescription: task.specificActivity.trim(),
+                          specificActivity: task.specificActivity.trim(),
+                          targetStakeholder: task.targetStakeholder.trim() || undefined,
+                          locationPlatform: task.locationPlatform ? task.locationPlatform as "physical_location" | "zoom" | "whatsapp" | "email" | "school" | "church" | "other" : undefined,
+                          tangibleOutput: task.tangibleOutput.trim() || undefined,
+                          numbersReached: task.numbersReached ? Number(task.numbersReached) : undefined,
+                          outcomeResults: task.outcomeResults.trim() || undefined,
+                          followUpRequired: task.followUpRequired,
+                          evidenceType: task.evidenceType ? task.evidenceType as "report" | "photo" | "email" | "registration_list" | "document" | "social_media_link" | "other" : undefined,
+                          evidenceLink: task.evidenceLink.trim() || undefined,
+                          activityStatus: task.activityStatus,
+                          onlineMissionary: task.onlineMissionary,
+                          onlineMissionaryParticipants: task.onlineMissionary ? Number(task.onlineMissionaryParticipants) : undefined,
                           challenges: task.challenges.trim() || undefined,
                           coordination: task.includesCoordination
                             ? task.countries.map((country) => ({
@@ -1061,9 +1149,9 @@ export default function StaffDashboard() {
                   <div className="space-y-3">
                     {monthlyTimesheetHistory.map((record) => (
                       <div key={record.id} className="rounded-xl border border-slate-700 bg-slate-900/40 p-4 space-y-3">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-white font-semibold">{record.date}</p><p className="text-xs text-slate-400">{record.workModality.replace(/_/g, " ")} · {record.activityCategory}</p></div><Badge className={record.isSubmitted ? "bg-green-600" : "bg-slate-600"}>{record.isSubmitted ? "Submitted" : "Draft"}</Badge></div>
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-white font-semibold">{record.date}</p><p className="text-xs text-slate-400">{record.workModality.replace(/_/g, " ")} · {record.activityCategory} · {record.organization || "Organisation not recorded"} · {record.departmentFunction || "Function not recorded"}</p><p className="text-xs text-slate-500">Programme / Project: {record.programProject || "Not specified"}</p></div><Badge className={record.isSubmitted ? "bg-green-600" : "bg-slate-600"}>{record.isSubmitted ? "Submitted" : "Draft"}</Badge></div>
                         <div className="grid grid-cols-2 gap-3 text-sm"><div><p className="text-slate-400">Hours worked</p><p className="text-white font-medium">{record.hoursWorked}h</p></div><div><p className="text-slate-400">Distance</p><p className="text-white font-medium">{record.distanceTraveled}</p></div></div>
-                        <div className="space-y-2"><p className="text-slate-400 text-sm">Tasks</p>{record.tasks && record.tasks.length > 0 ? record.tasks.map((task) => <div key={task.id} className="rounded-lg bg-slate-800 p-3"><div className="flex flex-wrap justify-between gap-2"><p className="text-white font-medium">Task {task.taskNumber}</p><span className="text-xs text-cyan-300">{task.estimatedDuration.replace(/_/g, " ")}</span></div><p className="text-slate-200 text-sm mt-1 whitespace-pre-wrap">{task.taskDescription}</p><p className="text-slate-400 text-xs mt-1">Challenges: {task.challenges || "None"}</p>{task.coordination && task.coordination.length > 0 && <p className="text-indigo-300 text-xs mt-1">Coordination: {task.coordination.map((item) => `${item.country} (${item.participantsAttended})`).join(", ")}</p>}</div>) : <p className="text-slate-400 text-sm">No task details recorded for this entry.</p>}</div>
+                        <div className="space-y-2"><p className="text-slate-400 text-sm">Tasks</p>{record.tasks && record.tasks.length > 0 ? record.tasks.map((task) => <div key={task.id} className="rounded-lg bg-slate-800 p-3 space-y-1"><div className="flex flex-wrap justify-between gap-2"><p className="text-white font-medium">Task {task.taskNumber}</p><span className="text-xs text-cyan-300">{task.estimatedDuration.replace(/_/g, " ")} · {task.activityStatus || "completed"}</span></div><p className="text-slate-200 text-sm whitespace-pre-wrap"><span className="text-cyan-300">{task.activityType || "Activity"}:</span> {task.specificActivity || task.taskDescription}</p><p className="text-slate-400 text-xs"><span className="font-medium text-slate-300">Target:</span> {task.targetStakeholder || "Not specified"} · <span className="font-medium text-slate-300">Platform:</span> {task.locationPlatform || "Not specified"}</p><p className="text-slate-400 text-xs"><span className="font-medium text-slate-300">Output:</span> {task.tangibleOutput || "Not specified"} · <span className="font-medium text-slate-300">Reached:</span> {task.numbersReached ?? "N/A"}</p><p className="text-slate-400 text-xs"><span className="font-medium text-slate-300">Outcome:</span> {task.outcomeResults || "Not specified"} · <span className="font-medium text-slate-300">Follow-up:</span> {task.followUpRequired || "no"}</p><p className="text-slate-400 text-xs"><span className="font-medium text-slate-300">Evidence:</span> {task.evidenceType || "Not specified"}{task.evidenceLink ? ` · ${task.evidenceLink}` : ""}{task.onlineMissionary ? ` · Online missionary attended: ${task.onlineMissionaryParticipants ?? 0}` : ""}</p><p className="text-slate-400 text-xs">Challenges: {task.challenges || "None"}</p>{task.coordination && task.coordination.length > 0 && <p className="text-indigo-300 text-xs">Coordination: {task.coordination.map((item) => `${item.country} (${item.participantsAttended})`).join(", ")}</p>}</div>) : <p className="text-slate-400 text-sm">No task details recorded for this entry.</p>}</div>
                       </div>
                     ))}
                   </div>

@@ -118,7 +118,10 @@ export const attendance = mysqlTable("attendance", {
   workModality: mysqlEnum("workModality", ["nairobi_office", "homa_bay_office", "field", "remote"]),
   activityCategoryId: int("activityCategoryId"), // Foreign key to activity categories
   sdgGoalId: int("sdgGoalId"), // Foreign key to SDG goals
-  program: varchar("program", { length: 255 }), // Program/Department
+  program: varchar("program", { length: 255 }), // Legacy program/department field
+  organization: mysqlEnum("organization", ["icy_africa", "africa_for_sdgs", "joint"]),
+  departmentFunction: varchar("departmentFunction", { length: 100 }),
+  programProject: varchar("programProject", { length: 255 }),
   kpiId: int("kpiId"), // Linked KPI
   taskDescription: text("taskDescription"),
   evidenceUploadKey: text("evidenceUploadKey"), // S3 file key for evidence
@@ -149,7 +152,20 @@ export const timesheetTasks = mysqlTable("timesheetTasks", {
   userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
   taskNumber: int("taskNumber").notNull(),
   estimatedDuration: mysqlEnum("estimatedDuration", ["0_1_hour", "2_hours", "3_hours", "4_hours", "5_8_hours"]).notNull(),
-  taskDescription: text("taskDescription").notNull(),
+  taskDescription: text("taskDescription").notNull(), // Legacy description retained for historical rows
+  activityType: varchar("activityType", { length: 100 }),
+  specificActivity: text("specificActivity"),
+  targetStakeholder: text("targetStakeholder"),
+  locationPlatform: mysqlEnum("locationPlatform", ["physical_location", "zoom", "whatsapp", "email", "school", "church", "other"]),
+  tangibleOutput: text("tangibleOutput"),
+  numbersReached: int("numbersReached"),
+  outcomeResults: text("outcomeResults"),
+  followUpRequired: mysqlEnum("followUpRequired", ["yes", "no"]).default("no").notNull(),
+  evidenceType: mysqlEnum("evidenceType", ["report", "photo", "email", "registration_list", "document", "social_media_link", "other"]),
+  evidenceLink: text("evidenceLink"),
+  activityStatus: mysqlEnum("activityStatus", ["completed", "ongoing", "pending"]).default("completed").notNull(),
+  onlineMissionary: boolean("onlineMissionary").default(false).notNull(),
+  onlineMissionaryParticipants: int("onlineMissionaryParticipants"),
   challenges: text("challenges"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -267,6 +283,7 @@ export const leaveTypeSettings = mysqlTable("leaveTypeSettings", {
   leaveType: mysqlEnum("leaveType", ["annual", "sick", "unpaid", "maternity", "other"]).notNull(),
   label: varchar("label", { length: 100 }).notNull(),
   description: text("description"),
+  defaultAllocatedDays: decimal("defaultAllocatedDays", { precision: 6, scale: 2 }).notNull().default("0"),
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

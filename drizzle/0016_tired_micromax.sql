@@ -1,0 +1,1 @@
+ALTER TABLE `timesheetTasks` ADD `activityType` varchar(100);

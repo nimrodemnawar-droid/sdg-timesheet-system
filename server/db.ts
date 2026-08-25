@@ -456,6 +456,19 @@ export type TimesheetTaskInput = {
   taskDescription: string;
   challenges?: string;
   coordination?: Array<{ country: string; participantsAttended: number }>;
+  activityType?: string;
+  specificActivity?: string;
+  targetStakeholder?: string;
+  locationPlatform?: "physical_location" | "zoom" | "whatsapp" | "email" | "school" | "church" | "other";
+  tangibleOutput?: string;
+  numbersReached?: number;
+  outcomeResults?: string;
+  followUpRequired?: "yes" | "no";
+  evidenceType?: "report" | "photo" | "email" | "registration_list" | "document" | "social_media_link" | "other";
+  evidenceLink?: string;
+  activityStatus?: "completed" | "ongoing" | "pending";
+  onlineMissionary?: boolean;
+  onlineMissionaryParticipants?: number;
 };
 
 /** Replace the structured task set for an attendance record in one database transaction. */
@@ -487,6 +500,19 @@ export async function replaceTimesheetTasks(
         taskNumber: index + 1,
         estimatedDuration: task.estimatedDuration,
         taskDescription: task.taskDescription.trim(),
+        activityType: task.activityType?.trim() || null,
+        specificActivity: task.specificActivity?.trim() || task.taskDescription.trim(),
+        targetStakeholder: task.targetStakeholder?.trim() || null,
+        locationPlatform: task.locationPlatform || null,
+        tangibleOutput: task.tangibleOutput?.trim() || null,
+        numbersReached: task.numbersReached ?? null,
+        outcomeResults: task.outcomeResults?.trim() || null,
+        followUpRequired: task.followUpRequired || "no",
+        evidenceType: task.evidenceType || null,
+        evidenceLink: task.evidenceLink?.trim() || null,
+        activityStatus: task.activityStatus || "completed",
+        onlineMissionary: task.onlineMissionary ?? false,
+        onlineMissionaryParticipants: task.onlineMissionaryParticipants ?? null,
         challenges: task.challenges?.trim() || null,
       }))
     );
@@ -545,6 +571,19 @@ export async function getTimesheetTasksForAttendance(attendanceId: number) {
     taskNumber: task.taskNumber,
     estimatedDuration: task.estimatedDuration,
     taskDescription: task.taskDescription,
+    activityType: task.activityType || "",
+    specificActivity: task.specificActivity || task.taskDescription,
+    targetStakeholder: task.targetStakeholder || "",
+    locationPlatform: task.locationPlatform || "",
+    tangibleOutput: task.tangibleOutput || "",
+    numbersReached: task.numbersReached ?? null,
+    outcomeResults: task.outcomeResults || "",
+    followUpRequired: task.followUpRequired,
+    evidenceType: task.evidenceType || "",
+    evidenceLink: task.evidenceLink || "",
+    activityStatus: task.activityStatus,
+    onlineMissionary: task.onlineMissionary,
+    onlineMissionaryParticipants: task.onlineMissionaryParticipants ?? null,
     challenges: task.challenges || "",
     coordination: (coordinationByTask.get(task.id) ?? []).map((item) => ({
       country: item.country,
@@ -854,11 +893,11 @@ export async function rejectLeaveRequest(
 }
 
 const DEFAULT_LEAVE_TYPE_SETTINGS = [
-  { leaveType: "annual", label: "Annual Leave", description: "Annual leave entitlement", isActive: true },
-  { leaveType: "sick", label: "Sick Leave", description: "Leave for illness or medical recovery", isActive: true },
-  { leaveType: "unpaid", label: "Unpaid Leave", description: "Approved time away without paid entitlement", isActive: true },
-  { leaveType: "maternity", label: "Maternity Leave", description: "Maternity-related leave", isActive: true },
-  { leaveType: "other", label: "Other Leave", description: "Other approved leave category", isActive: true },
+  { leaveType: "annual", label: "Annual Leave", description: "Annual leave entitlement", defaultAllocatedDays: "21", isActive: true },
+  { leaveType: "sick", label: "Sick Leave", description: "Leave for illness or medical recovery", defaultAllocatedDays: "5", isActive: true },
+  { leaveType: "unpaid", label: "Unpaid Leave", description: "Approved time away without paid entitlement", defaultAllocatedDays: "999", isActive: true },
+  { leaveType: "maternity", label: "Maternity Leave", description: "Maternity-related leave", defaultAllocatedDays: "90", isActive: true },
+  { leaveType: "other", label: "Other Leave", description: "Other approved leave category", defaultAllocatedDays: "0", isActive: true },
 ] as const;
 
 export async function getLeaveTypeSettings(includeInactive = false) {
@@ -899,10 +938,12 @@ export async function updateLeaveTypeSetting(
     return updated[0] ?? null;
   }
 
+  const defaultAllocatedDays = normalizedType === "annual" ? "21" : normalizedType === "sick" ? "5" : normalizedType === "maternity" ? "90" : normalizedType === "unpaid" ? "999" : "0";
   await db.insert(leaveTypeSettings).values({
     leaveType: normalizedType,
     label,
     description,
+    defaultAllocatedDays,
     isActive,
   });
   const created = await db.select().from(leaveTypeSettings)
@@ -2572,6 +2613,9 @@ export async function getCompleteTimesheetData(options?: {
         checkInAddress: attendance.checkInAddress,
         checkOutAddress: attendance.checkOutAddress,
         workModality: attendance.workModality,
+        organization: attendance.organization,
+        departmentFunction: attendance.departmentFunction,
+        programProject: attendance.programProject,
         activityCategoryId: attendance.activityCategoryId,
         activityCategoryName: activityCategories.name,
         sdgGoalId: attendance.sdgGoalId,
@@ -2633,6 +2677,9 @@ export async function getCompleteTimesheetData(options?: {
           : "N/A",
         checkOutAddress: r.checkOutAddress || "N/A",
         workModality: r.workModality || "N/A",
+        organization: r.organization || "N/A",
+        departmentFunction: r.departmentFunction || "N/A",
+        programProject: r.programProject || r.program || "N/A",
         activityCategoryId: r.activityCategoryId || "N/A",
         activityCategory: r.activityCategoryName || "N/A",
         sdgGoalId: r.sdgGoalId || "N/A",
@@ -2676,6 +2723,9 @@ export async function updateAttendanceWithTimesheetData(
     pmStartTime?: string;
     pmEndTime?: string;
     program?: string;
+    organization?: "icy_africa" | "africa_for_sdgs" | "joint";
+    departmentFunction?: string;
+    programProject?: string;
   }
 ) {
   const db = await getDb();
@@ -2715,6 +2765,9 @@ export async function updateAttendanceWithTimesheetData(
     if (data.taskDescription !== undefined) {
       updateData.taskDescription = data.taskDescription || null;
     }
+    if (data.organization !== undefined) updateData.organization = data.organization || null;
+    if (data.departmentFunction !== undefined) updateData.departmentFunction = data.departmentFunction || null;
+    if (data.programProject !== undefined) updateData.programProject = data.programProject || null;
     if (data.staffRemarks !== undefined) {
       updateData.staffRemarks = data.staffRemarks || null;
     }

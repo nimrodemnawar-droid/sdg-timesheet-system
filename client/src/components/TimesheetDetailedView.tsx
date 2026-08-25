@@ -3,6 +3,7 @@ import React from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Download, Search } from "lucide-react";
@@ -25,6 +26,9 @@ interface TimesheetRecord {
   checkOutLng?: number;
   checkOutAddress?: string;
   workModality: string;
+  organization?: string;
+  departmentFunction?: string;
+  programProject?: string;
   activityCategory: string;
   kpi: string;
   taskDescription: string;
@@ -35,6 +39,18 @@ interface TimesheetRecord {
     estimatedDuration: string;
     taskDescription: string;
     challenges: string;
+    specificActivity?: string;
+    targetStakeholder?: string;
+    locationPlatform?: string;
+    tangibleOutput?: string;
+    numbersReached?: number | null;
+    outcomeResults?: string;
+    followUpRequired?: string;
+    evidenceType?: string;
+    evidenceLink?: string;
+    activityStatus?: string;
+    onlineMissionary?: boolean;
+    onlineMissionaryParticipants?: number | null;
     coordination?: Array<{ country: string; participantsAttended: number }>;
   }>;
 
@@ -51,6 +67,7 @@ export function TimesheetDetailedView() {
   );
   const [endDate, setEndDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState("all");
 
   // Fetch timesheet data
   const { data: timesheetData, isLoading } = trpc.timesheet.getComplete.useQuery(
@@ -69,7 +86,7 @@ export function TimesheetDetailedView() {
       record.staffName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.staffNumber.toString().includes(searchTerm) ||
       record.staffEmail.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ).filter((record: any) => selectedDepartment === "all" || (record.departmentFunction || "Unassigned") === selectedDepartment);
 
   // Sort by date (newest first)
   const sortedData = [...(filteredData || [])].sort((a: any, b: any) => {
@@ -94,11 +111,15 @@ export function TimesheetDetailedView() {
       "Check-out Location",
       "Check-out GPS Coordinates",
       "Work Modality",
-      "Activity Category",
+      "Organisation",
+      "Department / Function",
+      "Programme / Project",
+      "Activity Type",
       "KPI",
       "Tasks",
       "Challenges",
       "Country Coordination",
+      "Task Details",
       "Staff Remarks",
       "Hours Worked",
       "Distance Traveled",
@@ -139,11 +160,15 @@ export function TimesheetDetailedView() {
         record.checkOutAddress || "N/A",
         formatCoordinates(record.checkOutLat, record.checkOutLng),
         record.workModality || "N/A",
+        record.organization || "N/A",
+        record.departmentFunction || "N/A",
+        record.programProject || "N/A",
         record.activityCategory || "N/A",
         record.kpi || "N/A",
-        (record.tasks || []).map((task: any) => `Task ${task.taskNumber} [${task.estimatedDuration}]: ${task.taskDescription}`).join(" | ") || record.taskDescription || "N/A",
+        (record.tasks || []).map((task: any) => `Task ${task.taskNumber} (${task.activityType || "Activity"}): ${task.specificActivity || task.taskDescription} [${task.estimatedDuration}]`).join(" | ") || record.taskDescription || "N/A",
         (record.tasks || []).map((task: any) => `Task ${task.taskNumber}: ${task.challenges || "None"}`).join(" | ") || "None",
         (record.tasks || []).flatMap((task: any) => (task.coordination || []).map((item: any) => `${item.country}: ${item.participantsAttended}`)).join(" | ") || "None",
+        (record.tasks || []).map((task: any) => `T${task.taskNumber}: target=${task.targetStakeholder || "N/A"}; location=${task.locationPlatform || "N/A"}; output=${task.tangibleOutput || "N/A"}; reached=${task.numbersReached ?? "N/A"}; outcome=${task.outcomeResults || "N/A"}; follow-up=${task.followUpRequired || "no"}; evidence=${task.evidenceType || "N/A"}${task.evidenceLink ? ` (${task.evidenceLink})` : ""}; status=${task.activityStatus || "completed"}${task.onlineMissionary ? `; online missionary attended=${task.onlineMissionaryParticipants ?? 0}` : ""}`).join(" | ") || "N/A",
         record.staffRemarks || "N/A",
         record.hoursWorked || "0",
         record.distanceTraveled || "0",
@@ -157,7 +182,7 @@ export function TimesheetDetailedView() {
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
 
     // Set column widths
-    const colWidths = [12, 15, 20, 12, 12, 12, 25, 22, 25, 22, 25, 20, 12, 15, 12, 20, 15, 12, 15, 15, 15, 12];
+    const colWidths = [12, 15, 20, 12, 12, 12, 25, 22, 25, 22, 25, 20, 18, 18, 22, 20, 12, 15, 45, 28, 18, 20, 20, 15, 55];
     ws["!cols"] = colWidths.map((w) => ({ wch: w }));
 
     XLSX.utils.book_append_sheet(wb, ws, "Timesheet");
@@ -190,7 +215,7 @@ export function TimesheetDetailedView() {
           <CardTitle className="text-white text-lg">Filters</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="text-sm text-slate-300 block mb-2">Start Date</label>
               <Input
@@ -208,6 +233,13 @@ export function TimesheetDetailedView() {
                 onChange={(e) => setEndDate(e.target.value)}
                 className="bg-slate-700/50 border-slate-600 text-white"
               />
+            </div>
+            <div>
+              <label className="text-sm text-slate-300 block mb-2">Department / Function</label>
+              <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="all" className="text-white">All functions</SelectItem>{["Admin", "Programme", "Finance", "Communication", "Monitoring & Evaluation", "Partnerships", "Other", "Unassigned"].map((item) => <SelectItem key={item} value={item} className="text-white">{item}</SelectItem>)}</SelectContent>
+              </Select>
             </div>
             <div>
               <label className="text-sm text-slate-300 block mb-2">Search Staff</label>
@@ -277,9 +309,13 @@ export function TimesheetDetailedView() {
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Check-out Location</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Check-out GPS</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Work Modality</th>
-                    <th className="text-left py-3 px-2 text-slate-200 font-bold">Activity Category</th>
+                    <th className="text-left py-3 px-2 text-slate-200 font-bold">Organisation</th>
+                    <th className="text-left py-3 px-2 text-slate-200 font-bold">Department / Function</th>
+                    <th className="text-left py-3 px-2 text-slate-200 font-bold">Programme / Project</th>
+                    <th className="text-left py-3 px-2 text-slate-200 font-bold">Activity Type</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">KPI</th>
-                    <th className="text-left py-3 px-2 text-slate-200 font-bold">Task Description</th>
+                    <th className="text-left py-3 px-2 text-slate-200 font-bold">Specific Activity</th>
+                    {selectedDepartment !== "Admin" && <th className="text-left py-3 px-2 text-slate-200 font-bold">Task Details</th>}
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Staff Remarks</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Hours Worked</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Distance Traveled</th>
@@ -298,7 +334,7 @@ export function TimesheetDetailedView() {
                       <React.Fragment key={`row-${record.id}-${idx}`}>
                         {isNewDate && idx > 0 && (
                           <tr key={`date-separator-${new Date(record.date).toDateString()}`} className="bg-slate-600/30 border-b-2 border-slate-500">
-                            <td colSpan={20} className="py-3 px-4 text-slate-300 font-semibold text-center">
+                            <td colSpan={24} className="py-3 px-4 text-slate-300 font-semibold text-center">
                               📅 {new Date(record.date).toLocaleDateString("en-US", {
                                 weekday: "long",
                                 year: "numeric",
@@ -310,7 +346,7 @@ export function TimesheetDetailedView() {
                         )}
                         {isNewDate && idx === 0 && (
                           <tr key={`date-separator-first-${new Date(record.date).toDateString()}`} className="bg-slate-600/30 border-b-2 border-slate-500">
-                            <td colSpan={20} className="py-3 px-4 text-slate-300 font-semibold text-center">
+                            <td colSpan={24} className="py-3 px-4 text-slate-300 font-semibold text-center">
                               📅 {new Date(record.date).toLocaleDateString("en-US", {
                                 weekday: "long",
                                 year: "numeric",
@@ -366,11 +402,17 @@ export function TimesheetDetailedView() {
                           {record.workModality || "N/A"}
                         </Badge>
                       </td>
+                      <td className="py-2 px-2 text-slate-300 text-xs">{record.organization || "N/A"}</td>
+                      <td className="py-2 px-2 text-slate-300 text-xs">{record.departmentFunction || "N/A"}</td>
+                      <td className="py-2 px-2 text-slate-300 text-xs">{record.programProject || record.program || "N/A"}</td>
                       <td className="py-2 px-2 text-slate-300 text-xs">{record.activityCategory || "N/A"}</td>
                       <td className="py-2 px-2 text-slate-300 text-xs">{record.kpi || "N/A"}</td>
                       <td className="py-2 px-2 text-slate-300 text-xs max-w-xs">
-                        <div className="space-y-1">{(record.tasks || []).length > 0 ? (record.tasks || []).map((task: any) => <div key={task.id}><span className="text-white">T{task.taskNumber}</span> · {task.estimatedDuration.replace(/_/g, " ")} · {task.taskDescription}</div>) : (record.taskDescription || "N/A")}</div>
+                        <div className="space-y-1">{(record.tasks || []).length > 0 ? (record.tasks || []).map((task: any) => <div key={task.id}><span className="text-white">T{task.taskNumber}</span> · {task.activityType || "Activity"} · {task.estimatedDuration.replace(/_/g, " ")} · {task.specificActivity || task.taskDescription}</div>) : (record.taskDescription || "N/A")}</div>
                       </td>
+                      {selectedDepartment !== "Admin" && <td className="py-2 px-2 text-slate-300 text-xs max-w-md">
+                        <div className="space-y-1">{(record.tasks || []).length > 0 ? (record.tasks || []).map((task: any) => <div key={`detail-${task.id}`}>T{task.taskNumber}: {task.targetStakeholder || "No stakeholder"}; {task.locationPlatform || "No platform"}; output: {task.tangibleOutput || "N/A"}; reached: {task.numbersReached ?? "N/A"}; outcome: {task.outcomeResults || "N/A"}; follow-up: {task.followUpRequired || "no"}; evidence: {task.evidenceType || "N/A"}; status: {task.activityStatus || "completed"}{task.onlineMissionary ? `; missionary attended: ${task.onlineMissionaryParticipants ?? 0}` : ""}</div>) : "N/A"}</div>
+                      </td>}
                       <td className="py-2 px-2 text-slate-300 text-xs max-w-xs">
                         <div className="space-y-1">{(record.tasks || []).length > 0 ? (record.tasks || []).map((task: any) => <div key={`challenge-${task.id}`}>T{task.taskNumber}: {task.challenges || "None"}</div>) : "None"}</div>
                       </td>

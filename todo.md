@@ -864,3 +864,19 @@
 - [x] Create the approved daily 6:00 PM EAT scheduled report job (task UID: MHTLAKhaTDuymfeqWijb45)
 - [x] Create the approved weekly status scheduled report job (task UID: FdGuAv2TftAFeWE8pxXzK4)
 - [x] Verify both jobs are registered against the deployed callback paths and document their task IDs
+
+## Expanded Leave and Timesheet Reporting Requirements
+- [x] Configure Sick Leave entitlement to 5 days
+- [x] Configure Maternity Leave entitlement to 90 days
+- [x] Configure Unpaid Leave entitlement to 999 days
+- [x] Add staff organisation selection: ICY Africa, Africa for SDGs, or Joint
+- [x] Add Department/Function selection including Programme, Admin, Finance, Communication, and extensible options
+- [x] Add optional Programme/Project selection and persistence
+- [x] Replace task description with specific activity and configurable activity-type options
+- [x] Add task target/stakeholder, location/platform, tangible output, numbers reached/engaged, and outcome/results
+- [x] Add Online Missionary coordination option with attended-number capture
+- [x] Add task-level follow-up required Yes/No and evidence-type selection
+- [x] Add evidence/link field and status selection: Completed, Ongoing, or Pending
+- [x] Mirror all expanded fields in Admin views and exports
+- [x] Implement department-specific Admin dashboard behavior while preserving the existing Admin layout for Admin function
+- [x] Add migrations, validation, regression tests, and mobile/tablet verification for the expanded workflow

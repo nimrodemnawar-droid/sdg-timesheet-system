@@ -21,7 +21,7 @@ const structuredSubmission: TimesheetExportData = {
   kpi: "Global coaching sessions",
   taskDescription: "Coordinate Global Coaches",
   structuredTasks:
-    "Task 1 [3_hours]: Coordinate Global Coaches; Challenges: Calendar conflicts; Countries: Kenya (12), Uganda (8)\nTask 2 [2_hours]: Prepare follow-up brief; Countries: Tanzania (5)",
+    "Task 1 (Training): Coordinate Global Coaches [3_hours]; Challenges: Calendar conflicts; Countries: Kenya (12), Uganda (8)\nTask 2 (Follow Up): Prepare follow-up brief [2_hours]; Countries: Tanzania (5)",
   staffRemarks: "Follow-up scheduled",
   amStartTime: "N/A",
   amEndTime: "N/A",
@@ -38,11 +38,12 @@ describe("structured timesheet export fidelity", () => {
     const csv = generateCSVContent([structuredSubmission]);
 
     expect(csv).toContain("Structured Tasks");
-    expect(csv).toContain("Task 1 [3_hours]: Coordinate Global Coaches");
+    expect(csv).toContain("Task 1 (Training): Coordinate Global Coaches [3_hours]");
+    expect(csv).toContain("Training");
     expect(csv).toContain("Challenges: Calendar conflicts");
     expect(csv).toContain("Kenya (12)");
     expect(csv).toContain("Uganda (8)");
-    expect(csv).toContain("Task 2 [2_hours]: Prepare follow-up brief");
+    expect(csv).toContain("Task 2 (Follow Up): Prepare follow-up brief [2_hours]");
     expect(csv).toContain("Tanzania (5)");
   });
 
@@ -50,10 +51,11 @@ describe("structured timesheet export fidelity", () => {
     const excel = generateExcelContent([structuredSubmission]);
 
     expect(excel).toContain("<th>Structured Tasks</th>");
-    expect(excel).toContain("Task 1 [3_hours]: Coordinate Global Coaches");
+    expect(excel).toContain("Task 1 (Training): Coordinate Global Coaches [3_hours]");
+    expect(excel).toContain("Follow Up");
     expect(excel).toContain("Challenges: Calendar conflicts");
     expect(excel).toContain("Kenya (12)");
-    expect(excel).toContain("Task 2 [2_hours]: Prepare follow-up brief");
+    expect(excel).toContain("Task 2 (Follow Up): Prepare follow-up brief [2_hours]");
     expect(excel).toContain("Tanzania (5)");
   });
 

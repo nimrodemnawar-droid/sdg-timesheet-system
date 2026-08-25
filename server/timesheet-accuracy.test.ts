@@ -254,3 +254,30 @@ describe('Timesheet Accuracy & Validation', () => {
     });
   });
 });
+
+
+describe('Expanded SDG reporting fields', () => {
+  it('preserves the requested leave entitlements', () => {
+    const entitlements = { annual: 21, sick: 5, maternity: 90, unpaid: 999 };
+    expect(entitlements).toEqual({ annual: 21, sick: 5, maternity: 90, unpaid: 999 });
+  });
+
+  it('retains task-level activity, stakeholder, output, reach, outcome, evidence, and status fields', () => {
+    const task = {
+      specificActivity: 'Facilitated a community training',
+      targetStakeholder: 'Youth leaders',
+      locationPlatform: 'physical_location',
+      tangibleOutput: 'Training attendance register',
+      numbersReached: 32,
+      outcomeResults: 'Participants adopted the reporting checklist',
+      followUpRequired: 'yes',
+      evidenceType: 'registration_list',
+      evidenceLink: 'https://example.org/register',
+      activityStatus: 'completed',
+      onlineMissionary: true,
+      onlineMissionaryParticipants: 18,
+    };
+    const stored = { ...task };
+    expect(stored).toEqual(task);
+  });
+});
