@@ -531,7 +531,7 @@
 - [x] Create scheduled task API endpoint for daily report trigger
 - [x] Include: total staff checked in, hours worked, activities, missing submissions
 - [ ] Test end-to-end report generation and delivery
-- [ ] Set up scheduled task to run daily at end of day (6 PM EAT)
+- [x] Set up scheduled task to run daily at end of day (6 PM EAT)
 
 ## Phase 50: Check-out Display on Admin Dashboard
 - [x] Create database helper function to calculate hours worked
@@ -662,17 +662,17 @@
 
 
 ## Phase 26: Automatic Weekly Status Report Generation
-- [ ] Create weekly status report generation script
-- [ ] Collect comprehensive system metrics and statistics
-- [ ] Generate timesheet summary statistics
-- [ ] Calculate attendance rates and trends
-- [ ] Analyze overtime patterns
-- [ ] Create HTML email template for reports
-- [ ] Set up tRPC procedures for report scheduling
-- [ ] Configure Manus scheduled task for weekly execution
-- [ ] Test report generation and email delivery
-- [ ] Verify report accuracy and completeness
-- [ ] Document scheduling setup and configuration
+- [x] Create weekly status report generation script
+- [x] Collect comprehensive system metrics and statistics
+- [x] Generate timesheet summary statistics
+- [x] Calculate attendance rates and trends
+- [x] Analyze overtime patterns
+- [x] Create HTML email template for reports
+- [x] Set up tRPC procedures for report scheduling
+- [x] Configure Manus scheduled task for weekly execution
+- [x] Test report generation and email delivery
+- [x] Verify report accuracy and completeness
+- [x] Document scheduling setup and configuration
 
 
 ## Phase 27: GPS Address Capture & Map Display Enhancement
@@ -724,8 +724,8 @@
 - [x] Add error toast notifications
 - [x] Show location capture progress
 - [x] Display address confirmation message
-- [ ] Add retry button on failure
-- [ ] Test animations on mobile devices
+- [x] Add retry button on failure
+- [x] Test animations on mobile devices
 - [ ] Test with slow network conditions
 
 
