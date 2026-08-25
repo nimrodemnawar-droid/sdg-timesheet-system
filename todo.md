@@ -13,14 +13,14 @@
 - [ ] Add profile section with photo
 
 ## Phase 2: Admin Dashboard - Overview
-- [ ] Create admin home with KPI cards
-- [ ] Display total staff count
-- [ ] Show checked-in today count
-- [ ] Display overtime hours
-- [ ] Show pending leave requests
-- [ ] Add quick action buttons
-- [ ] Create staff overview table
-- [ ] Add real-time metrics display
+- [x] Create admin home with KPI cards
+- [x] Display total staff count
+- [x] Show checked-in today count
+- [x] Display overtime hours
+- [x] Show pending leave requests
+- [x] Add quick action buttons
+- [x] Create staff overview table
+- [x] Add real-time metrics display
 
 ## Phase 3: Admin Dashboard - Staff Management
 - [ ] Build staff directory table
@@ -43,24 +43,24 @@
 - [x] Create leave reports
 
 ## Phase 5: Admin Dashboard - Attendance & Reports
-- [ ] Build attendance report interface
-- [ ] Add date range filtering
-- [ ] Create staff filtering
-- [ ] Implement CSV export
-- [ ] Add PDF export
-- [ ] Create monthly summaries
-- [ ] Build overtime reports
-- [ ] Add attendance analytics charts
+- [x] Build attendance report interface
+- [x] Add date range filtering
+- [x] Create staff filtering
+- [x] Implement CSV export
+- [x] Add PDF export
+- [x] Create monthly summaries
+- [x] Build overtime reports
+- [x] Add attendance analytics charts
 
 ## Phase 6: Admin Dashboard - GPS & Tracking
-- [ ] Create live GPS map view
-- [ ] Add real-time staff location markers
-- [ ] Implement route visualization
-- [ ] Add date/time filtering
-- [ ] Create staff selection filter
-- [ ] Add distance calculations
+- [x] Create live GPS map view
+- [x] Add real-time staff location markers
+- [x] Implement route visualization
+- [x] Add date/time filtering
+- [x] Create staff selection filter
+- [x] Add distance calculations
 - [ ] Build activity heatmap
-- [ ] Implement map controls
+- [x] Implement map controls
 
 ## Phase 7: Professional Styling & UX
 - [ ] Implement professional color scheme
@@ -169,7 +169,7 @@
 - [ ] Implement CSV report export with location data
 - [ ] Add location-based analytics (check-in heatmap, distance traveled)
 - [ ] Create attendance summary with staff numbers and locations
-- [ ] Add date range filtering for reports
+- [x] Add date range filtering for reports
 - [ ] Add department filtering for reports
 - [ ] Write comprehensive tests for staff numbering system
 - [ ] Write comprehensive tests for check-in/out enforcement
@@ -903,3 +903,7 @@
 ## Online Missionary Validation Hardening
 - [x] Require attended participant count whenever a task is marked as Online Missionary
 - [x] Add regression coverage for valid and invalid missionary attendance payloads
+
+## Scheduled Report Authentication Consistency
+- [x] Return a clear 403 cron-only response for unauthenticated daily report requests
+- [x] Update daily handler regression coverage without changing successful delivery behavior

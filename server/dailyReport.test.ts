@@ -30,8 +30,8 @@ describe("Daily Timesheet Report Handler", () => {
 
     await dailyTimesheetReportHandler({ headers: {}, url: "/api/scheduled/dailyTimesheetReport" } as any, response as any);
 
-    expect(response.statusCode).toBe(500);
-    expect(response.body.error).toContain("not authenticated");
+    expect(response.statusCode).toBe(403);
+    expect(response.body.error).toBe("cron-only");
     expect(mocks.notifyOwner).not.toHaveBeenCalled();
   });
 

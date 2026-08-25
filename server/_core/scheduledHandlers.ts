@@ -11,9 +11,15 @@ import { gte } from "drizzle-orm";
  */
 export async function dailyTimesheetReportHandler(req: Request, res: Response) {
   try {
-    // Authenticate as cron caller
-    const user = await sdk.authenticateRequest(req);
-    if (!user.isCron || !user.taskUid) {
+    // Authenticate as cron caller. Authentication failures are caller errors,
+    // not report-generation failures, so keep them out of the 500 handler.
+    let user: any;
+    try {
+      user = await sdk.authenticateRequest(req);
+    } catch {
+      return res.status(403).json({ error: "cron-only" });
+    }
+    if (!user || !user.isCron || !user.taskUid) {
       return res.status(403).json({ error: "cron-only" });
     }
 
