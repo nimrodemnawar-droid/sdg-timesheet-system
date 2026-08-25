@@ -839,3 +839,6 @@
 - [x] Load and display current allocated, used, and remaining values for the selected staff member and leave type
 - [x] Show all relevant leave-type balances for the selected staff member instead of only first-page annual previews
 - [x] Add focused coverage for selecting staff/type, current-value display, allocation update, and refreshed staff visibility
+
+## Tablet Navigation Refinement
+- [x] Reduce medium-width header crowding and keep Admin tab navigation horizontally usable

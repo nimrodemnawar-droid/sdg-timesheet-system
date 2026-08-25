@@ -520,44 +520,44 @@ export default function AdminDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="bg-gradient-to-r from-slate-800/80 via-slate-700/60 to-slate-800/80 border border-slate-600/50 backdrop-blur-sm flex flex-wrap gap-2 h-auto p-4 rounded-lg shadow-xl hover:shadow-2xl transition-all duration-300">
-            <TabsTrigger value="staff" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-700 data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
+          <TabsList className="bg-gradient-to-r from-slate-800/80 via-slate-700/60 to-slate-800/80 border border-slate-600/50 backdrop-blur-sm flex w-full max-w-full flex-nowrap justify-start gap-2 overflow-x-auto h-auto p-3 rounded-lg shadow-xl hover:shadow-2xl transition-all duration-300">
+            <TabsTrigger value="staff" className="shrink-0 px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-700 data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <Users className="w-4 h-4 mr-2" />
               Staff
             </TabsTrigger>
-            <TabsTrigger value="leave" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-amber-700 data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
+            <TabsTrigger value="leave" className="shrink-0 px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-amber-700 data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <FileText className="w-4 h-4 mr-2" />
               Leave
             </TabsTrigger>
-            <TabsTrigger value="attendance" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-cyan-700 data-[state=active]:shadow-lg data-[state=active]:shadow-cyan-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
+            <TabsTrigger value="attendance" className="shrink-0 px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-cyan-700 data-[state=active]:shadow-lg data-[state=active]:shadow-cyan-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <Clock className="w-4 h-4 mr-2" />
               Attendance
             </TabsTrigger>
-            <TabsTrigger value="reports" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-700 data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
+            <TabsTrigger value="reports" className="shrink-0 px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-700 data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <BarChart3 className="w-4 h-4 mr-2" />
               Reports
             </TabsTrigger>
-            <TabsTrigger value="export" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-indigo-700 data-[state=active]:shadow-lg data-[state=active]:shadow-indigo-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
+            <TabsTrigger value="export" className="shrink-0 px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-indigo-700 data-[state=active]:shadow-lg data-[state=active]:shadow-indigo-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <Download className="w-4 h-4 mr-2" />
               Export
             </TabsTrigger>
-            <TabsTrigger value="gpsmap" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-700 data-[state=active]:shadow-lg data-[state=active]:shadow-rose-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
+            <TabsTrigger value="gpsmap" className="shrink-0 px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-700 data-[state=active]:shadow-lg data-[state=active]:shadow-rose-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <MapPin className="w-4 h-4 mr-2" />
               GPS Map
             </TabsTrigger>
-            <TabsTrigger value="timesheet" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-700 data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
+            <TabsTrigger value="timesheet" className="shrink-0 px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-700 data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <FileText className="w-4 h-4 mr-2" />
               Timesheet
             </TabsTrigger>
-            <TabsTrigger value="admin-management" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-600 data-[state=active]:to-pink-700 data-[state=active]:shadow-lg data-[state=active]:shadow-pink-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
+            <TabsTrigger value="admin-management" className="shrink-0 px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-600 data-[state=active]:to-pink-700 data-[state=active]:shadow-lg data-[state=active]:shadow-pink-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <Shield className="w-4 h-4 mr-2" />
               Admin
             </TabsTrigger>
-            <TabsTrigger value="monthly-reports" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-violet-700 data-[state=active]:shadow-lg data-[state=active]:shadow-violet-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
+            <TabsTrigger value="monthly-reports" className="shrink-0 px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-violet-700 data-[state=active]:shadow-lg data-[state=active]:shadow-violet-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <FileText className="w-4 h-4 mr-2" />
               Monthly Reports
             </TabsTrigger>
-            <TabsTrigger value="data-management" className="px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-700 data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
+            <TabsTrigger value="data-management" className="shrink-0 px-4 py-2.5 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-700 data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/50 text-slate-300 data-[state=active]:text-white hover:text-white hover:bg-slate-700/50 transition-all duration-300 font-medium">
               <Database className="w-4 h-4 mr-2" />
               Data Management
             </TabsTrigger>

@@ -41,7 +41,7 @@ function Navigation() {
           <div className="flex items-center gap-4">
             <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663395360248/Y6QXkr6MF6bWis5GKruirk/africa-for-sdgs-logo-NWnzDLbseMeymGhj8b83a5.webp" alt="Africa for SDGs" className="h-10 w-10" />
             <h1 className="text-xl font-bold text-blue-400">Africa for SDGs Timesheet</h1>
-            <div className="hidden md:flex gap-1">
+            <div className="hidden lg:flex gap-1">
               {navItems.map((item) => (
                 <button
                   key={item.href}
@@ -60,7 +60,7 @@ function Navigation() {
 
           <div className="flex items-center gap-4">
             <ConnectionStatusIndicator />
-            <span className="text-sm text-slate-300">{user.name}</span>
+            <span className="hidden sm:inline text-sm text-slate-300 max-w-28 truncate">{user.name}</span>
             <button
               onClick={() => logout()}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition"
