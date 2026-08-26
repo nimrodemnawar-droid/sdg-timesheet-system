@@ -1,5 +1,4 @@
-import { useState } from "react";
-import React from "react";
+import React, { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,7 @@ import { Download, Search } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { formatCoordinates } from "@shared/location";
+import { TimesheetExportManager } from "@/components/TimesheetExportManager";
 
 interface TimesheetRecord {
   id: string;
@@ -200,13 +200,7 @@ export function TimesheetDetailedView() {
             Complete staff timesheet with all 20 columns - each day displayed separately
           </p>
         </div>
-        <Button
-          onClick={handleExportExcel}
-          className="bg-green-600 hover:bg-green-700 text-white"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Export to Excel
-        </Button>
+        <TimesheetExportManager />
       </div>
 
       {/* Filters */}
@@ -316,6 +310,8 @@ export function TimesheetDetailedView() {
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">KPI</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Specific Activity</th>
                     {selectedDepartment !== "Admin" && <th className="text-left py-3 px-2 text-slate-200 font-bold">Task Details</th>}
+                    <th className="text-left py-3 px-2 text-slate-200 font-bold">Challenges</th>
+                    <th className="text-left py-3 px-2 text-slate-200 font-bold">Multi-country Coordination</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Staff Remarks</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Hours Worked</th>
                     <th className="text-left py-3 px-2 text-slate-200 font-bold">Distance Traveled</th>

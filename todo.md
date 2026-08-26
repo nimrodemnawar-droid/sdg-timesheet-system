@@ -939,3 +939,10 @@ The original Phase 1–9 checklist is a historical scaffold. Items marked comple
 ## Daily Timesheet Field Order Correction
 - [x] Place Activity Type immediately after Date, followed by Organisation, Department / Function, and Programme / Project
 - [x] Validate the corrected field order on desktop, tablet, and phone layouts
+
+## Admin Timesheet and Export Verification
+- [x] Verify Admin Timesheet loads complete task details without runtime or console errors
+- [x] Verify CSV export includes complete Admin Timesheet attendance, GPS, context, and task fidelity
+- [x] Verify Excel export includes complete Admin Timesheet attendance, GPS, context, and task fidelity
+- [x] Verify PDF export is valid and includes complete Admin Timesheet location and task fidelity
+- [x] Run responsive and regression validation, then publish the verified Admin Timesheet release
