@@ -277,7 +277,7 @@ export const appRouter = router({
                 message: "Enter the number attended for an Online Missionary activity",
               });
             }
-          })).min(1).max(20),
+          })).min(1).max(4),
         })
       )
       .mutation(async ({ input, ctx }) => {

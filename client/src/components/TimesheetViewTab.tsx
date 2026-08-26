@@ -380,26 +380,32 @@ export function TimesheetViewTab() {
                   {/* Activity Details */}
                   <div className="border-t border-slate-600 pt-4 space-y-4">
                     <h4 className="text-white font-semibold">Activity Details</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-slate-400 text-sm">Activity Category</label>
-                        <p className="text-white font-medium">{record.activityCategory}</p>
-                        <p className="text-slate-500 text-xs">ID: {record.activityCategoryId}</p>
-                      </div>
-                      <div>
-                        <label className="text-slate-400 text-sm">Linked Output / KPI</label>
-                        <Badge className="bg-purple-600">{record.kpi}</Badge>
-                      </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div><label className="text-slate-400 text-sm">Organisation</label><p className="text-white font-medium">{(record as any).organization || "Not specified"}</p></div>
+                      <div><label className="text-slate-400 text-sm">Department / Function</label><p className="text-white font-medium">{(record as any).departmentFunction || "Not specified"}</p></div>
+                      <div><label className="text-slate-400 text-sm">Programme / Project</label><p className="text-white font-medium">{(record as any).programProject || record.program || "Not specified"}</p></div>
+                      <div><label className="text-slate-400 text-sm">Activity Category</label><p className="text-white font-medium">{record.activityCategory || "Not specified"}</p><p className="text-slate-500 text-xs">ID: {record.activityCategoryId || "—"}</p></div>
                     </div>
                     <div className="space-y-3">
                       <label className="text-slate-400 text-sm">Submitted Tasks</label>
                       {(record.tasks || []).length > 0 ? (record.tasks || []).map((task) => (
-                        <div key={task.id} className="rounded-lg bg-slate-800 p-3 space-y-2">
-                          <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-white font-medium">Task {task.taskNumber}</p><Badge variant="outline" className="text-blue-200 border-blue-500/50">{task.estimatedDuration.replace(/_/g, " ")}</Badge></div>
-                          <p className="text-slate-200 text-sm whitespace-pre-wrap">{task.taskDescription}</p>
-                          <p className="text-slate-400 text-xs"><span className="font-medium text-slate-300">Challenges:</span> {task.challenges || "None"}</p>
-                          {(task.coordination || []).length > 0 && <div className="border-t border-slate-700 pt-2"><p className="text-indigo-200 text-xs font-medium mb-1">Country coordination</p><div className="flex flex-wrap gap-2">{(task.coordination || []).map((item) => <Badge key={`${task.id}-${item.country}`} variant="secondary" className="bg-indigo-950 text-indigo-200">{item.country}: {item.participantsAttended} attended</Badge>)}</div></div>}
-                        </div>
+                          <div key={task.id} className="rounded-lg bg-slate-800 p-3 space-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-white font-medium">Task {task.taskNumber}</p><div className="flex flex-wrap gap-2"><Badge variant="outline" className="text-blue-200 border-blue-500/50">{task.estimatedDuration.replace(/_/g, " ")}</Badge>{(task as any).activityStatus && <Badge className="bg-blue-700">{(task as any).activityStatus}</Badge>}</div></div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                              <div><label className="text-slate-500 text-xs">Activity Type</label><p className="text-slate-200">{(task as any).activityType || "Not specified"}</p></div>
+                              <div><label className="text-slate-500 text-xs">Specific Activity</label><p className="text-slate-200 whitespace-pre-wrap">{(task as any).specificActivity || task.taskDescription || "Not specified"}</p></div>
+                              <div><label className="text-slate-500 text-xs">Target / Stakeholder</label><p className="text-slate-200">{(task as any).targetStakeholder || "Not specified"}</p></div>
+                              <div><label className="text-slate-500 text-xs">Location / Platform</label><p className="text-slate-200">{(task as any).locationPlatform || "Not specified"}</p></div>
+                              <div><label className="text-slate-500 text-xs">Tangible Output</label><p className="text-slate-200 whitespace-pre-wrap">{(task as any).tangibleOutput || "Not specified"}</p></div>
+                              <div><label className="text-slate-500 text-xs">Numbers Reached / Engaged</label><p className="text-slate-200">{(task as any).numbersReached ?? "Not applicable"}</p></div>
+                              <div className="sm:col-span-2"><label className="text-slate-500 text-xs">Outcome / Results</label><p className="text-slate-200 whitespace-pre-wrap">{(task as any).outcomeResults || "Not specified"}</p></div>
+                              <div><label className="text-slate-500 text-xs">Follow-up Required</label><p className="text-slate-200">{(task as any).followUpRequired || "No"}</p></div>
+                              <div><label className="text-slate-500 text-xs">Evidence</label><p className="text-slate-200">{(task as any).evidenceType || "Not specified"}{(task as any).evidenceLink ? ` · ${(task as any).evidenceLink}` : ""}</p></div>
+                              {(task as any).onlineMissionary && <div><label className="text-slate-500 text-xs">Online Missionary Attendance</label><p className="text-cyan-200">{(task as any).onlineMissionaryParticipants ?? "Not provided"}</p></div>}
+                            </div>
+                            <p className="text-slate-400 text-xs"><span className="font-medium text-slate-300">Challenges:</span> {task.challenges || "None"}</p>
+                            {(task.coordination || []).length > 0 && <div className="border-t border-slate-700 pt-2"><p className="text-indigo-200 text-xs font-medium mb-1">Multi-country Coordination</p><div className="flex flex-wrap gap-2">{(task.coordination || []).map((item) => <Badge key={`${task.id}-${item.country}`} variant="secondary" className="bg-indigo-950 text-indigo-200">{item.country}: {item.participantsAttended ?? "Not provided"}</Badge>)}</div></div>}
+                          </div>
                       )) : <p className="text-slate-400 text-sm bg-slate-800 rounded p-2">No structured tasks recorded for this historical entry.</p>}
                     </div>
                     <div><label className="text-slate-400 text-sm">Staff Remarks</label><p className="text-white text-sm bg-slate-800 rounded p-2">{record.staffRemarks}</p></div>

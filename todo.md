@@ -925,3 +925,13 @@ The original Phase 1–9 checklist is a historical scaffold. Items marked comple
 - [x] Make People Attended optional while retaining Online Missionary validation when applicable
 - [x] Verify the refined staff workflow at laptop, tablet, and phone widths
 - [x] Add regression coverage for balance refresh, worked-days tally, optional attendees, and removed fields
+
+## Department-Aware Daily Timesheet Redesign
+- [x] Reorganize common daily details as Date, Location / Platform, Organisation, Department / Function, and Programme / Project
+- [x] Add department-aware task mode selection with Admin, standard/non-specialist, Multi-country Coordination, and Online Missionary paths
+- [x] Limit each daily task workflow to up to four clearly numbered tasks with conditional fields
+- [x] Ensure Admin and standard task paths capture all requested activity, duration, activity detail, reach, outcome, follow-up, evidence, challenges, and remarks
+- [x] Ensure Multi-country Coordination captures country and people reached/attended details
+- [x] Ensure Online Missionary captures results and numbers attended without exposing irrelevant fields
+- [x] Reorganize Admin detailed report to show complete submitted task fidelity in readable grouped sections
+- [x] Add regression coverage and verify the redesigned workflow on laptop, tablet, and phone
