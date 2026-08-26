@@ -196,6 +196,12 @@ export const appRouter = router({
       return db.getTodayAttendance(ctx.user.id);
     }),
 
+    getMyHistory: protectedProcedure
+      .input(z.object({ startDate: z.string(), endDate: z.string() }))
+      .query(async ({ ctx, input }) => {
+        return db.getAttendanceRange(ctx.user.id, new Date(input.startDate), new Date(input.endDate));
+      }),
+
     getTodayAllStaff: adminProcedure.query(async () => {
       const staffList = await db.getAllStaffCheckedInToday();
       return {

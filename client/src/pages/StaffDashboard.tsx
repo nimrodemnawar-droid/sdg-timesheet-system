@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { countKenyaWorkingDays } from "../../../shared/leave";
 import { shouldRetryGpsCapture } from "../../../shared/location";
+import { countCompletedAttendanceDays } from "../../../shared/attendanceSummary";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -251,12 +252,18 @@ export default function StaffDashboard() {
     const lastDay = new Date(year, month, 0).getDate();
     return { startDate: `${historyMonth}-01`, endDate: `${historyMonth}-${String(lastDay).padStart(2, "0")}` };
   }, [historyMonth]);
+  const currentMonthRange = useMemo(() => {
+    const [year, month] = currentMonthKey.split("-").map(Number);
+    const lastDay = new Date(year, month, 0).getDate();
+    return { startDate: `${currentMonthKey}-01`, endDate: `${currentMonthKey}-${String(lastDay).padStart(2, "0")}` };
+  }, [currentMonthKey]);
   const { data: monthlyTimesheetHistory, isLoading: isLoadingTimesheetHistory } = trpc.timesheet.getMyComplete.useQuery(historyRange);
-  const { data: allLeaveBalances } = trpc.leave.getAllBalances.useQuery();
+  const { data: monthlyAttendance = [] } = trpc.attendance.getMyHistory.useQuery(currentMonthRange, { refetchInterval: 5000 });
+  const workedDaysThisMonth = useMemo(() => countCompletedAttendanceDays(monthlyAttendance as any[]), [monthlyAttendance]);
+  const { data: allLeaveBalances } = trpc.leave.getAllBalances.useQuery(undefined, { refetchInterval: 5000, refetchOnWindowFocus: true });
   const { data: activeLeaveTypes = [], isLoading: isLoadingLeaveTypes, isError: isLeaveTypesError } = trpc.leave.getTypes.useQuery();
   const myLeaveBalance = useMemo(() => (allLeaveBalances || []).find((balance: any) => balance.userId === user?.id), [allLeaveBalances, user?.id]);
   const { data: myLeaveRequests, isLoading: isLoadingLeaveRequests } = trpc.leave.getMyRequests.useQuery();
-  const { data: kpiList, isLoading: isLoadingKPIs } = trpc.kpi.getKPIs.useQuery();
   const { data: todayWaypoints, refetch: refetchWaypoints } = trpc.attendance.getWaypoints.useQuery(
     todayAttendance?.id ? { attendanceId: todayAttendance.id } : { attendanceId: 0 },
     { enabled: !!todayAttendance?.id }
@@ -573,7 +580,7 @@ export default function StaffDashboard() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-blue-500/30 hover:border-blue-400 transition-all duration-300 shadow-lg">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -598,7 +605,7 @@ export default function StaffDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-slate-400 text-sm mb-1 font-medium">Leave Balance</p>
-                  <p className="text-2xl font-bold text-white">{allLeaveBalances?.[0]?.annual?.remainingDays || 0}</p>
+                  <p className="text-2xl font-bold text-white">{myLeaveBalance?.annual?.remainingDays ?? 0}</p>
                   <p className="text-xs text-slate-500 mt-1">Annual leave days</p>
                 </div>
                 <Clock className="w-10 h-10 text-green-400 opacity-80" />
@@ -644,6 +651,15 @@ export default function StaffDashboard() {
                     ? 'text-red-400'
                     : 'text-yellow-400'
                 }`} />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-cyan-500/30 hover:border-cyan-400 transition-all duration-300 shadow-lg">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div><p className="text-slate-400 text-sm mb-1 font-medium">Worked Days This Month</p><p className="text-2xl font-bold text-white">{workedDaysThisMonth}</p><p className="text-xs text-slate-500 mt-1">Completed check-in and check-out days</p></div>
+                <Calendar className="w-10 h-10 text-cyan-400 opacity-80" />
               </div>
             </CardContent>
           </Card>
@@ -938,16 +954,6 @@ export default function StaffDashboard() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Work Modality</Label>
-                    <Select value={timesheetData.workModality} onValueChange={(value) => setTimesheetData({ ...timesheetData, workModality: value })}>
-                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-slate-800 border-slate-700">
-                        {WORK_MODALITIES.map((modality) => <SelectItem key={modality.value} value={modality.value} className="text-white">{modality.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
                     <Label className="text-slate-300">Organisation *</Label>
                     <Select value={timesheetData.organization || "not-selected"} onValueChange={(value) => setTimesheetData({ ...timesheetData, organization: value === "not-selected" ? "" : value })}>
                       <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Choose organisation" /></SelectTrigger>
@@ -968,18 +974,6 @@ export default function StaffDashboard() {
                     <Input value={timesheetData.programProject} onChange={(event) => setTimesheetData({ ...timesheetData, programProject: event.target.value })} placeholder="Specific programme or project" className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400" />
                   </div>
 
-
-
-                  <div className="space-y-2">
-                    <Label className="text-slate-300 flex items-center gap-2"><Target className="w-4 h-4" />Linked Output / KPI</Label>
-                    <Select value={timesheetData.kpi} onValueChange={(value) => setTimesheetData({ ...timesheetData, kpi: value })}>
-                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Select a KPI (optional)" /></SelectTrigger>
-                      <SelectContent className="bg-slate-800 border-slate-700 max-h-60">
-                        <SelectItem value="none" className="text-slate-400">None</SelectItem>
-                        {isLoadingKPIs ? <div className="p-2 text-slate-400 text-sm">Loading KPIs...</div> : kpiList?.map((kpi) => <SelectItem key={kpi.id} value={kpi.id.toString()} className="text-white">{kpi.name} {kpi.unit ? `(${kpi.unit})` : ''}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -1039,7 +1033,7 @@ export default function StaffDashboard() {
                           {task.countries.map((country, countryIndex) => (
                             <div key={`task-${taskIndex}-country-${countryIndex}`} className="grid grid-cols-1 sm:grid-cols-[1fr_9rem_auto] gap-2 items-end">
                               <div className="space-y-1"><Label className="text-xs text-slate-400">Country *</Label><Select value={country.country || "not-selected"} onValueChange={(value) => updateCountry(taskIndex, countryIndex, { country: value === "not-selected" ? "" : value })}><SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Choose country" /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="not-selected" className="text-slate-400">Choose country</SelectItem>{COUNTRIES.map((countryName) => <SelectItem key={countryName} value={countryName} className="text-white">{countryName}</SelectItem>)}</SelectContent></Select></div>
-                              <div className="space-y-1"><Label className="text-xs text-slate-400">People attended *</Label><Input type="number" min="0" step="1" value={country.participantsAttended} onChange={(event) => updateCountry(taskIndex, countryIndex, { participantsAttended: event.target.value })} className="bg-slate-700/50 border-slate-600 text-white" /></div>
+                              <div className="space-y-1"><Label className="text-xs text-slate-400">People attended (optional)</Label><Input type="number" min="0" step="1" value={country.participantsAttended} onChange={(event) => updateCountry(taskIndex, countryIndex, { participantsAttended: event.target.value })} className="bg-slate-700/50 border-slate-600 text-white" /></div>
                               {task.countries.length > 1 && <Button type="button" size="icon" variant="ghost" onClick={() => removeCountry(taskIndex, countryIndex)} className="text-red-300 hover:text-red-200" aria-label="Remove country"><Trash2 className="w-4 h-4" /></Button>}
                             </div>
                           ))}

@@ -916,3 +916,12 @@
 
 ## Roadmap Reconciliation Note
 The original Phase 1–9 checklist is a historical scaffold. Items marked complete below are covered by the existing Staff Dashboard, Admin Management, responsive styling, error/loading states, test suite, published deployment, and documentation artifacts. The historical AM/PM timesheet wording is superseded by the current expanded task workflow, which intentionally removed those legacy fields without deleting historical data. Remaining verification items are covered by the current 539-test suite and desktop/tablet/phone visual checks.
+
+## Staff Leave, Attendance, and Timesheet Refinements
+- [x] Recalculate and refresh staff leave balances immediately after approval
+- [x] Add monthly worked-days tally based on completed check-in and check-out pairs
+- [x] Remove work modality from the timesheet form because it is captured during attendance
+- [x] Remove Linked Output / KPI from the active timesheet form and compatible reporting surfaces
+- [x] Make People Attended optional while retaining Online Missionary validation when applicable
+- [x] Verify the refined staff workflow at laptop, tablet, and phone widths
+- [x] Add regression coverage for balance refresh, worked-days tally, optional attendees, and removed fields

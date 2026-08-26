@@ -1386,7 +1386,6 @@ export default function AdminDashboard() {
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Overtime (h)</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Distance (km)</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Waypoints</th>
-                        <th className="text-left py-3 px-4 text-slate-300 font-semibold">Linked Output / KPI</th>
                         <th className="text-left py-3 px-4 text-slate-300 font-semibold">Status</th>
                       </tr>
                     </thead>
@@ -1441,9 +1440,6 @@ export default function AdminDashboard() {
                               ) : (
                                 <span className="text-slate-500">-</span>
                               )}
-                            </td>
-                            <td className="py-3 px-4 text-slate-400">
-                              {record.kpiName ? record.kpiName : '-'}
                             </td>
                             <td className="py-3 px-4">
                               <Badge className={record.checkOutTime ? "bg-green-600" : "bg-blue-600"}>
