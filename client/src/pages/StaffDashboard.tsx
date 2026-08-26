@@ -956,6 +956,15 @@ export default function StaffDashboard() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label className="text-slate-300">Activity Type (Task 1) *</Label>
+                    <Select value={timesheetData.tasks[0]?.activityType || "not-selected"} onValueChange={(value) => updateTask(0, { activityType: value === "not-selected" ? "" : value })}>
+                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Choose activity type" /></SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="not-selected" className="text-slate-400">Choose activity type</SelectItem>{ACTIVITY_CATEGORIES.map((item) => <SelectItem key={item} value={item} className="text-white">{item}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <p className="text-xs text-slate-500">Additional tasks can use their own activity type inside each task card.</p>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label className="text-slate-300">Organisation *</Label>
                     <Select value={timesheetData.organization || "not-selected"} onValueChange={(value) => setTimesheetData({ ...timesheetData, organization: value === "not-selected" ? "" : value })}>
                       <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Choose organisation" /></SelectTrigger>
@@ -994,13 +1003,13 @@ export default function StaffDashboard() {
                         {timesheetData.tasks.length > 1 && <Button type="button" size="sm" variant="ghost" onClick={() => removeTask(taskIndex)} className="text-red-300 hover:text-red-200 hover:bg-red-900/20"><Trash2 className="w-4 h-4 mr-1" />Remove</Button>}
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                        {taskIndex > 0 && <div className="space-y-2">
                           <Label className="text-slate-300">Activity Type *</Label>
                           <Select value={task.activityType || "not-selected"} onValueChange={(value) => updateTask(taskIndex, { activityType: value === "not-selected" ? "" : value })}>
                             <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white"><SelectValue placeholder="Choose activity type" /></SelectTrigger>
                             <SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="not-selected" className="text-slate-400">Choose activity type</SelectItem>{ACTIVITY_CATEGORIES.map((item) => <SelectItem key={item} value={item} className="text-white">{item}</SelectItem>)}</SelectContent>
                           </Select>
-                        </div>
+                        </div>}
                         <div className="space-y-2">
                           <Label className="text-slate-300">Estimated Time *</Label>
                           <Select value={task.estimatedDuration} onValueChange={(value) => updateTask(taskIndex, { estimatedDuration: value as TaskDuration })}>

@@ -935,3 +935,7 @@ The original Phase 1–9 checklist is a historical scaffold. Items marked comple
 - [x] Ensure Online Missionary captures results and numbers attended without exposing irrelevant fields
 - [x] Reorganize Admin detailed report to show complete submitted task fidelity in readable grouped sections
 - [x] Add regression coverage and verify the redesigned workflow on laptop, tablet, and phone
+
+## Daily Timesheet Field Order Correction
+- [x] Place Activity Type immediately after Date, followed by Organisation, Department / Function, and Programme / Project
+- [x] Validate the corrected field order on desktop, tablet, and phone layouts
