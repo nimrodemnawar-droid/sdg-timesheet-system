@@ -946,3 +946,10 @@ The original Phase 1–9 checklist is a historical scaffold. Items marked comple
 - [x] Verify Excel export includes complete Admin Timesheet attendance, GPS, context, and task fidelity
 - [x] Verify PDF export is valid and includes complete Admin Timesheet location and task fidelity
 - [x] Run responsive and regression validation, then publish the verified Admin Timesheet release
+
+## Staff Checkout Failure Fix
+- [x] Trace why checkout is blocked after a successful timesheet submission
+- [x] Fix checkout so a submitted daily timesheet permits reliable attendance closure
+- [x] Preserve clear validation when the timesheet is genuinely missing or incomplete
+- [x] Add regression coverage for submitted-timesheet checkout and failure handling
+- [x] Verify the checkout flow on Staff responsive layouts and publish the fix

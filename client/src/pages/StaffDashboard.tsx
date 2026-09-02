@@ -3,6 +3,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { countKenyaWorkingDays } from "../../../shared/leave";
 import { shouldRetryGpsCapture } from "../../../shared/location";
 import { countCompletedAttendanceDays } from "../../../shared/attendanceSummary";
+import { isTimesheetSubmittedForAttendance } from "../../../shared/checkoutEligibility";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -159,10 +160,15 @@ export default function StaffDashboard() {
   const [lastCheckInAddress, setLastCheckInAddress] = useState<string>("");
   const [lastCheckOutAddress, setLastCheckOutAddress] = useState<string>("");
   const [isSubmittingTimesheet, setIsSubmittingTimesheet] = useState(false);
+  const [submittedAttendanceId, setSubmittedAttendanceId] = useState<number | null>(null);
   const submitTimesheetMutation = trpc.attendance.submitTimesheet.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Timesheet submitted successfully!');
       setTimesheetData(createInitialTimesheetData());
+      // Refresh the attendance record so the checkout gate sees isSubmitted=true immediately.
+      await utils.attendance.getToday.invalidate();
+      await utils.attendance.getStaffAttendance.invalidate();
+      await refetchAttendance();
     },
     onError: (error) => {
       toast.error(`Failed to submit timesheet: ${error.message}`);
@@ -498,7 +504,8 @@ export default function StaffDashboard() {
       return;
     }
 
-    if (!todayAttendance.isSubmitted) {
+    const timesheetSubmittedForAttendance = isTimesheetSubmittedForAttendance(todayAttendance, submittedAttendanceId);
+    if (!timesheetSubmittedForAttendance) {
       toast.error("Submit your timesheet before checking out");
       setActiveTab("timesheet");
       return;
@@ -555,7 +562,7 @@ export default function StaffDashboard() {
   };
 
   const isCheckedIn = todayAttendance?.checkInTime && !todayAttendance?.checkOutTime;
-  const hasSubmittedTimesheet = !!todayAttendance?.isSubmitted;
+  const hasSubmittedTimesheet = isTimesheetSubmittedForAttendance(todayAttendance, submittedAttendanceId);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-2 sm:p-4 md:p-8">
@@ -1128,6 +1135,7 @@ export default function StaffDashboard() {
                       };
                       console.log('[StaffDashboard] Submitting timesheet with data:', submitData);
                       await submitTimesheetMutation.mutateAsync(submitData);
+                      setSubmittedAttendanceId(Number(todayAttendance.id));
                     } finally {
                       setIsSubmittingTimesheet(false);
                     }
