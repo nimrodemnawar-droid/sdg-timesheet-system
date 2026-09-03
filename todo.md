@@ -953,3 +953,8 @@ The original Phase 1–9 checklist is a historical scaffold. Items marked comple
 - [x] Preserve clear validation when the timesheet is genuinely missing or incomplete
 - [x] Add regression coverage for submitted-timesheet checkout and failure handling
 - [x] Verify the checkout flow on Staff responsive layouts and publish the fix
+
+## Checkout Button Responsive Verification
+- [x] Verify checkout button state after successful timesheet submission on desktop
+- [x] Verify checkout button state after successful timesheet submission on mobile
+- [x] Confirm no browser or server errors occur during the post-submission checkout flow
