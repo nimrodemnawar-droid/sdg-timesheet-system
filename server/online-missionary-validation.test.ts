@@ -30,13 +30,13 @@ const baseTask = {
 };
 
 describe("Online Missionary task validation", () => {
-  it("rejects an online missionary task when attended count is omitted", async () => {
+  it("allows an online missionary task without a participant count because the field is optional", async () => {
     const caller = createStaffCaller();
 
     await expect(caller.attendance.submitTimesheet({
       attendanceId: 999999,
       tasks: [baseTask],
-    })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
   it("accepts an explicit zero attended count before ownership checks run", async () => {

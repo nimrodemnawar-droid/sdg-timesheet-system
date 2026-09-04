@@ -4,6 +4,7 @@ import { countKenyaWorkingDays } from "../../../shared/leave";
 import { shouldRetryGpsCapture } from "../../../shared/location";
 import { countCompletedAttendanceDays } from "../../../shared/attendanceSummary";
 import { isTimesheetSubmittedForAttendance } from "../../../shared/checkoutEligibility";
+import { parseOptionalNonNegativeInteger } from "../../../shared/countInput";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1086,7 +1087,7 @@ export default function StaffDashboard() {
                       toast.error(`Choose an activity type and add a specific activity for Task ${missingTask + 1}`);
                       return;
                     }
-                    const invalidMissionary = timesheetData.tasks.some((task) => task.onlineMissionary && !/^(0|[1-9]\\d*)$/.test(task.onlineMissionaryParticipants));
+                    const invalidMissionary = timesheetData.tasks.some((task) => task.onlineMissionary && task.onlineMissionaryParticipants.trim() !== "" && parseOptionalNonNegativeInteger(task.onlineMissionaryParticipants) === undefined);
                     if (invalidMissionary) {
                       toast.error('Enter the number attended for every online missionary activity');
                       return;
@@ -1123,12 +1124,12 @@ export default function StaffDashboard() {
                           evidenceLink: task.evidenceLink.trim() || undefined,
                           activityStatus: task.activityStatus,
                           onlineMissionary: task.onlineMissionary,
-                          onlineMissionaryParticipants: task.onlineMissionary ? Number(task.onlineMissionaryParticipants) : undefined,
+                          onlineMissionaryParticipants: task.onlineMissionary ? parseOptionalNonNegativeInteger(task.onlineMissionaryParticipants) : undefined,
                           challenges: task.challenges.trim() || undefined,
                           coordination: task.includesCoordination
                             ? task.countries.map((country) => ({
                                 country: country.country.trim(),
-                                participantsAttended: Number(country.participantsAttended),
+                                participantsAttended: parseOptionalNonNegativeInteger(country.participantsAttended) ?? 0,
                               }))
                             : [],
                         })),

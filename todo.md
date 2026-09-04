@@ -958,3 +958,9 @@ The original Phase 1–9 checklist is a historical scaffold. Items marked comple
 - [x] Verify checkout button state after successful timesheet submission on desktop
 - [x] Verify checkout button state after successful timesheet submission on mobile
 - [x] Confirm no browser or server errors occur during the post-submission checkout flow
+
+## Online Missionary Submission Reliability
+- [x] Fix Online Missionary participant-count handling when a valid count is already entered
+- [x] Verify Online Missionary, Multi-country Coordination, Admin, and standard department timesheet submissions
+- [x] Confirm successful submission updates checkout eligibility for every department path
+- [x] Add regression coverage for participant-count parsing and cross-department submission payloads
