@@ -5,6 +5,7 @@ import { shouldRetryGpsCapture } from "../../../shared/location";
 import { countCompletedAttendanceDays } from "../../../shared/attendanceSummary";
 import { isTimesheetSubmittedForAttendance } from "../../../shared/checkoutEligibility";
 import { parseOptionalNonNegativeInteger } from "../../../shared/countInput";
+import { isBetterGpsAccuracy, isPracticalGpsAccuracy } from "../../../shared/gpsAcquisition";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -335,101 +336,68 @@ export default function StaffDashboard() {
 
     let bestPosition: GeolocationPosition | null = null;
     let bestAccuracy = Infinity;
-
-    // Use watchPosition for more reliable GPS acquisition
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      (position) => {
-        // Keep track of the most accurate position
-        if (position.coords.accuracy < bestAccuracy) {
-          bestAccuracy = position.coords.accuracy;
-          bestPosition = position;
-        }
-
-        // If we have a good accuracy (<50m), use it immediately
-        if (position.coords.accuracy < 50) {
-          const coords = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-          };
-          
-          console.log("🔴 DEBUG: GPS COORDINATES CAPTURED FROM DEVICE");
-          console.log(`Latitude: ${coords.latitude}`);
-          console.log(`Longitude: ${coords.longitude}`);
-          console.log(`Accuracy: ${coords.accuracy}m (HIGH ACCURACY)`);
-          
-          setGpsCoordinates(coords);
-          setGpsStatus("ready");
-          
-          // Stop watching
-          if (watchIdRef.current !== null) {
-            navigator.geolocation.clearWatch(watchIdRef.current);
-            watchIdRef.current = null;
-          }
-          if (watchTimeoutRef.current) {
-            clearTimeout(watchTimeoutRef.current);
-            watchTimeoutRef.current = null;
-          }
-        }
-      },
-      (error) => {
-        console.error("GPS acquisition failed:", error.message);
-        console.error("Error code:", error.code);
-        
-        let errorMsg = "GPS Error: ";
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMsg += "Location permission denied. Please enable location access in your browser settings and try again.";
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMsg += "Location information is unavailable. Please ensure location services are enabled on your device.";
-            break;
-          case error.TIMEOUT:
-            errorMsg += "GPS acquisition timed out. Please try again in an area with better GPS signal.";
-            break;
-          default:
-            errorMsg += error.message;
-        }
-        
-        setGpsError(errorMsg);
-        setGpsStatus("idle");
-        setGpsCoordinates(null);
-        
-        if (watchIdRef.current !== null) {
-          navigator.geolocation.clearWatch(watchIdRef.current);
-          watchIdRef.current = null;
-        }
-      },
-      { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
-    );
-
-    // Set a timeout to stop watching after 30 seconds
-    watchTimeoutRef.current = setTimeout(() => {
+    let resolved = false;
+    const finishWithPosition = (position: GeolocationPosition, source: string) => {
+      if (resolved) return;
+      resolved = true;
+      const coords = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy,
+      };
+      console.log(`[GPS] Coordinates captured from ${source}: ${coords.latitude}, ${coords.longitude} (${coords.accuracy}m)`);
+      setGpsCoordinates(coords);
+      setGpsError(null);
+      setGpsStatus("ready");
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
       }
-
-      // Use the best position we got, even if not perfect
-      if (bestPosition) {
-        const coords = {
-          latitude: bestPosition.coords.latitude,
-          longitude: bestPosition.coords.longitude,
-          accuracy: bestPosition.coords.accuracy,
-        };
-        
-        console.log("🔴 DEBUG: GPS COORDINATES CAPTURED (BEST AVAILABLE)");
-        console.log(`Latitude: ${coords.latitude}`);
-        console.log(`Longitude: ${coords.longitude}`);
-        console.log(`Accuracy: ${coords.accuracy}m`);
-        
-        setGpsCoordinates(coords);
-        setGpsStatus("ready");
-      } else {
-        setGpsError("Could not acquire GPS coordinates. Please ensure location services are enabled and try again.");
-        setGpsStatus("idle");
-        setGpsCoordinates(null);
+      if (watchTimeoutRef.current) {
+        clearTimeout(watchTimeoutRef.current);
+        watchTimeoutRef.current = null;
       }
+    };
+
+    // Accept a practical location result instead of making staff wait for sub-50m accuracy.
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (position) => {
+        if (isBetterGpsAccuracy(position.coords.accuracy, bestAccuracy)) {
+          bestAccuracy = position.coords.accuracy;
+          bestPosition = position;
+        }
+        if (isPracticalGpsAccuracy(position.coords.accuracy)) {
+          finishWithPosition(position, "device");
+        }
+      },
+      (error) => {
+        console.error("GPS acquisition failed:", error.message, "code:", error.code);
+        if (error.code === error.PERMISSION_DENIED) {
+          setGpsError("Location permission denied. Please enable location access in your browser settings and try again.");
+          setGpsStatus("idle");
+          if (watchIdRef.current !== null) {
+            navigator.geolocation.clearWatch(watchIdRef.current);
+            watchIdRef.current = null;
+          }
+          return;
+        }
+        // Keep transient unavailable/timeout errors from discarding a usable position.
+        setGpsError(bestPosition
+          ? "GPS is still improving. Your best available location will be used; retry for better accuracy if needed."
+          : "GPS signal is taking longer than expected. Keep location services enabled while we continue searching.");
+      },
+      { enableHighAccuracy: true, timeout: 30000, maximumAge: 10000 }
+    );
+
+    // Stop after 30 seconds and use the best position collected, even when it is not perfect.
+    watchTimeoutRef.current = setTimeout(() => {
+      if (bestPosition) {
+        finishWithPosition(bestPosition, "best available");
+      } else {
+        setGpsError("Could not acquire GPS coordinates yet. Keep location services enabled and try again.");
+        setGpsStatus("idle");
+      }
+      watchTimeoutRef.current = null;
     }, 30000);
   };
 

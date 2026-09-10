@@ -964,3 +964,9 @@ The original Phase 1–9 checklist is a historical scaffold. Items marked comple
 - [x] Verify Online Missionary, Multi-country Coordination, Admin, and standard department timesheet submissions
 - [x] Confirm successful submission updates checkout eligibility for every department path
 - [x] Add regression coverage for participant-count parsing and cross-department submission payloads
+
+## GPS Acquisition Reliability for Lincoln Julu
+- [x] Diagnose why GPS acquisition repeats more than three times before check-in
+- [x] Improve GPS retry, accuracy, and permission guidance without weakening location validation
+- [x] Add regression coverage for repeated acquisition and poor-accuracy recovery
+- [x] Verify the check-in flow on desktop and mobile layouts and publish the fix
