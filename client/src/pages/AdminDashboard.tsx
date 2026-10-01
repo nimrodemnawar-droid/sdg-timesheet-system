@@ -1780,7 +1780,7 @@ export default function AdminDashboard() {
 
           {/* Admin Management Tab */}
           <TabsContent value="timesheet" className="space-y-4">
-            <TimesheetDetailedView />
+            <TimesheetDetailedView staffList={staffList || []} />
           </TabsContent>
 
           <TabsContent value="admin-management" className="space-y-4">

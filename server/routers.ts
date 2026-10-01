@@ -334,12 +334,14 @@ export const appRouter = router({
       }),
 
     getCompleteTimesheetData: adminProcedure
-      .input(z.object({ startDate: z.string().optional(), endDate: z.string().optional() }))
+      .input(z.object({ startDate: z.string().optional(), endDate: z.string().optional(), staffId: z.number().int().positive().optional(), allHistory: z.boolean().optional() }))
       .query(async ({ input }) => {
         try {
           const data = await db.getCompleteTimesheetData({
             startDate: input.startDate ? new Date(input.startDate) : undefined,
             endDate: input.endDate ? new Date(input.endDate) : undefined,
+            staffId: input.staffId,
+            allHistory: input.allHistory,
           });
           return data;
         } catch (error) {
@@ -1027,12 +1029,14 @@ Report generated at: ${new Date().toISOString()}`;
 
   timesheet: router({
     getComplete: adminProcedure
-      .input(z.object({ startDate: z.string().optional(), endDate: z.string().optional() }))
+      .input(z.object({ startDate: z.string().optional(), endDate: z.string().optional(), staffId: z.number().int().positive().optional(), allHistory: z.boolean().optional() }))
       .query(async ({ input }) => {
         try {
           return await db.getCompleteTimesheetData({
             startDate: input.startDate ? new Date(input.startDate) : undefined,
             endDate: input.endDate ? new Date(input.endDate) : undefined,
+            staffId: input.staffId,
+            allHistory: input.allHistory,
           });
         } catch (error) {
           console.error('[tRPC] Error fetching complete timesheet data:', error);

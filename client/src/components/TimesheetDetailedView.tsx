@@ -5,11 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Download, Search } from "lucide-react";
+import { Download, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { formatCoordinates } from "@shared/location";
 import { TimesheetExportManager } from "@/components/TimesheetExportManager";
+import { buildCompleteTimesheetQuery, filterTimesheetRecords, findMatchingStaff, type StaffDirectoryEntry } from "@shared/timesheetStaffSearch";
 
 interface TimesheetRecord {
   id: string;
@@ -61,32 +62,29 @@ interface TimesheetRecord {
   evidenceFile: string;
 }
 
-export function TimesheetDetailedView() {
+export function TimesheetDetailedView({ staffList = [] }: { staffList?: StaffDirectoryEntry[] }) {
   const [startDate, setStartDate] = useState<string>(
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
   const [endDate, setEndDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("all");
+  const [selectedStaffId, setSelectedStaffId] = useState<number | undefined>();
+
+  const matchingStaff = findMatchingStaff(staffList, searchTerm);
+  const selectedStaff = selectedStaffId ? staffList.find((staff) => staff.id === selectedStaffId) : undefined;
 
   // Fetch timesheet data
   const { data: timesheetData, isLoading } = trpc.timesheet.getComplete.useQuery(
-    {
-      startDate: startDate,
-      endDate: endDate,
-    },
+    buildCompleteTimesheetQuery(startDate, endDate, selectedStaffId),
     {
       refetchInterval: 5000,
     }
   );
 
   // Filter data based on search term
-  const filteredData = (timesheetData || []).filter(
-    (record: any) =>
-      record.staffName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.staffNumber.toString().includes(searchTerm) ||
-      record.staffEmail.toLowerCase().includes(searchTerm.toLowerCase())
-  ).filter((record: any) => selectedDepartment === "all" || (record.departmentFunction || "Unassigned") === selectedDepartment);
+  const filteredData = filterTimesheetRecords(timesheetData || [], searchTerm, selectedStaffId)
+    .filter((record: any) => selectedDepartment === "all" || (record.departmentFunction || "Unassigned") === selectedDepartment);
 
   // Sort by date (newest first)
   const sortedData = [...(filteredData || [])].sort((a: any, b: any) => {
@@ -241,12 +239,48 @@ export function TimesheetDetailedView() {
                 <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
                 <Input
                   type="text"
-                  placeholder="Name, Number, or Email"
+                  placeholder="Search name, staff number, or email"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-slate-700/50 border-slate-600 text-white pl-10"
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    if (selectedStaffId) setSelectedStaffId(undefined);
+                  }}
+                  className="bg-slate-700/50 border-slate-600 text-white pl-10 pr-10"
                 />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    aria-label="Clear staff search"
+                    onClick={() => { setSearchTerm(""); setSelectedStaffId(undefined); }}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
+              {matchingStaff.length > 0 && !selectedStaffId && (
+                <div className="mt-2 rounded-md border border-slate-600 bg-slate-800 shadow-lg overflow-hidden">
+                  {matchingStaff.map((staff) => (
+                    <button
+                      type="button"
+                      key={staff.id}
+                      onClick={() => {
+                        setSelectedStaffId(staff.id);
+                        setSearchTerm(staff.name || staff.email || String(staff.staffNumber || ""));
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-slate-700 text-white text-sm border-b border-slate-700 last:border-b-0"
+                    >
+                      <span className="font-medium">{staff.name || "Unnamed staff"}</span>
+                      <span className="ml-2 text-slate-400">#{staff.staffNumber || staff.id} · {staff.email || "No email"}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {selectedStaff && (
+                <p className="mt-2 text-xs text-emerald-300">
+                  Showing complete history for {selectedStaff.name || selectedStaff.email || `staff #${selectedStaff.id}`} — date filters are bypassed for this staff search.
+                </p>
+              )}
             </div>
           </div>
         </CardContent>

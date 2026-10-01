@@ -2667,6 +2667,7 @@ export async function getCompleteTimesheetData(options?: {
   startDate?: Date;
   endDate?: Date;
   staffId?: number;
+  allHistory?: boolean;
 }) {
   const db = await getDb();
   if (!db) {
@@ -2675,8 +2676,8 @@ export async function getCompleteTimesheetData(options?: {
   }
 
   try {
-    const startDate = options?.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const endDate = options?.endDate || new Date();
+    const startDate = options?.allHistory ? undefined : (options?.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+    const endDate = options?.allHistory ? undefined : (options?.endDate || new Date());
 
     let query = db
       .select({
@@ -2722,13 +2723,11 @@ export async function getCompleteTimesheetData(options?: {
       .leftJoin(kpis, eq(attendance.kpiId, kpis.id))
       .leftJoin(activityCategories, eq(attendance.activityCategoryId, activityCategories.id))
       .leftJoin(sdgGoals, eq(attendance.sdgGoalId, sdgGoals.id))
-      .where(
-        and(
-          gte(attendance.checkInTime, startDate),
-          lte(attendance.checkInTime, endDate),
-          options?.staffId ? eq(attendance.userId, options.staffId) : undefined
-        )
-      )
+      .where(and(
+        startDate ? gte(attendance.checkInTime, startDate) : undefined,
+        endDate ? lte(attendance.checkInTime, endDate) : undefined,
+        options?.staffId ? eq(attendance.userId, options.staffId) : undefined,
+      ))
       .orderBy(desc(attendance.checkInTime));
 
     const records = await query;
@@ -2743,6 +2742,7 @@ export async function getCompleteTimesheetData(options?: {
 
       return {
         id: r.id,
+        userId: r.userId,
         staffNumber: r.staffNumber || "N/A",
         staffName: r.userName || "Unknown",
         staffEmail: r.userEmail || "N/A",
