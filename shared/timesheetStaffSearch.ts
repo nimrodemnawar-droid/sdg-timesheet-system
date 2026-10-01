@@ -15,7 +15,7 @@ export type TimesheetSearchRecord = {
 
 export function findMatchingStaff(staffList: StaffDirectoryEntry[], searchTerm: string, limit = 8) {
   const term = searchTerm.trim().toLowerCase();
-  if (term.length < 2) return [];
+  if (term.length < 1) return [];
 
   return staffList.filter((staff) => [staff.name, staff.email, staff.staffNumber]
     .filter((value) => value !== null && value !== undefined)
