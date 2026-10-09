@@ -2746,7 +2746,12 @@ export async function getCompleteTimesheetData(options?: {
         staffNumber: r.staffNumber || "N/A",
         staffName: r.userName || "Unknown",
         staffEmail: r.userEmail || "N/A",
-        date: checkIn.toISOString().split("T")[0],
+        date: new Intl.DateTimeFormat("en-CA", {
+          timeZone: "Africa/Nairobi",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }).format(checkIn),
         checkInTime: checkIn.toLocaleTimeString("en-US", { hour12: true, timeZone: "Africa/Nairobi" }),
         checkOutTime: checkOut ? checkOut.toLocaleTimeString("en-US", { hour12: true, timeZone: "Africa/Nairobi" }) : "Not checked out",
         checkInCoordinates: r.checkInLat && r.checkInLng 

@@ -17,12 +17,11 @@ describe("Admin staff-centric timesheet search", () => {
     expect(findMatchingStaff(staff, "brian@example.org").map((entry) => entry.id)).toEqual([8]);
   });
 
-  it("requests all history after a staff member is selected", () => {
+  it("keeps the selected date range active after a staff member is selected", () => {
     expect(buildCompleteTimesheetQuery("2026-09-01", "2026-09-30", 7)).toEqual({
       startDate: "2026-09-01",
       endDate: "2026-09-30",
       staffId: 7,
-      allHistory: true,
     });
   });
 

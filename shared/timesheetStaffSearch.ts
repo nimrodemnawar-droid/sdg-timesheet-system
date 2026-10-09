@@ -45,6 +45,5 @@ export function buildCompleteTimesheetQuery(
     startDate,
     endDate,
     staffId: selectedStaffId,
-    allHistory: Boolean(selectedStaffId),
   };
 }

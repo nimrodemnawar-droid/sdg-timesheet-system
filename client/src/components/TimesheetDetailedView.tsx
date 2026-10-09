@@ -280,7 +280,7 @@ export function TimesheetDetailedView({ staffList = [] }: { staffList?: StaffDir
               )}
               {selectedStaff && (
                 <p className="mt-2 text-xs text-emerald-300">
-                  Showing complete history for {selectedStaff.name || selectedStaff.email || `staff #${selectedStaff.id}`} — date filters are bypassed for this staff search.
+                  Showing {selectedStaff.name || selectedStaff.email || `staff #${selectedStaff.id}`} within the selected date range.
                 </p>
               )}
             </div>
