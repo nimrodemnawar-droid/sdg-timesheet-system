@@ -73,12 +73,14 @@ export function TimesheetDetailedView({ staffList = [] }: { staffList?: StaffDir
 
   const matchingStaff = findMatchingStaff(staffList, searchTerm);
   const selectedStaff = selectedStaffId ? staffList.find((staff) => staff.id === selectedStaffId) : undefined;
+  const invalidDateRange = Boolean(startDate && endDate && startDate > endDate);
 
   // Fetch timesheet data
   const { data: timesheetData, isLoading } = trpc.timesheet.getComplete.useQuery(
     buildCompleteTimesheetQuery(startDate, endDate, selectedStaffId),
     {
       refetchInterval: 5000,
+      enabled: !invalidDateRange,
     }
   );
 
@@ -207,7 +209,7 @@ export function TimesheetDetailedView({ staffList = [] }: { staffList?: StaffDir
           <CardTitle className="text-white text-lg">Filters</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="text-sm text-slate-300 block mb-2">Start Date</label>
               <Input
@@ -283,6 +285,11 @@ export function TimesheetDetailedView({ staffList = [] }: { staffList?: StaffDir
               )}
             </div>
           </div>
+          {invalidDateRange && (
+            <p role="alert" className="text-sm text-red-300">
+              Start date must be on or before end date.
+            </p>
+          )}
         </CardContent>
       </Card>
 

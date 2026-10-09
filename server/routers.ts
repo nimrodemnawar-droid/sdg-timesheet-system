@@ -20,6 +20,7 @@ import { storagePut } from "./storage";
 import { generateCSVContent, generateExcelContent, generateTimesheetPDFContent } from "./db";
 import { logAuditEvent } from "./db";
 import { getTimesheetDataForExport } from "./db";
+import { getInclusiveNairobiDateRange } from "../shared/timesheetDateRange";
 import {
   createDatabaseBackup,
   serializeBackup,
@@ -337,9 +338,10 @@ export const appRouter = router({
       .input(z.object({ startDate: z.string().optional(), endDate: z.string().optional(), staffId: z.number().int().positive().optional(), allHistory: z.boolean().optional() }))
       .query(async ({ input }) => {
         try {
+          const dateRange = getInclusiveNairobiDateRange(input.startDate, input.endDate);
           const data = await db.getCompleteTimesheetData({
-            startDate: input.startDate ? new Date(input.startDate) : undefined,
-            endDate: input.endDate ? new Date(input.endDate) : undefined,
+            startDate: dateRange.startDate,
+            endDate: dateRange.endDate,
             staffId: input.staffId,
             allHistory: input.allHistory,
           });
@@ -1032,9 +1034,10 @@ Report generated at: ${new Date().toISOString()}`;
       .input(z.object({ startDate: z.string().optional(), endDate: z.string().optional(), staffId: z.number().int().positive().optional(), allHistory: z.boolean().optional() }))
       .query(async ({ input }) => {
         try {
+          const dateRange = getInclusiveNairobiDateRange(input.startDate, input.endDate);
           return await db.getCompleteTimesheetData({
-            startDate: input.startDate ? new Date(input.startDate) : undefined,
-            endDate: input.endDate ? new Date(input.endDate) : undefined,
+            startDate: dateRange.startDate,
+            endDate: dateRange.endDate,
             staffId: input.staffId,
             allHistory: input.allHistory,
           });
@@ -1051,10 +1054,11 @@ Report generated at: ${new Date().toISOString()}`;
       .input(z.object({ startDate: z.string().optional(), endDate: z.string().optional() }))
       .query(async ({ input, ctx }) => {
         try {
+          const dateRange = getInclusiveNairobiDateRange(input.startDate, input.endDate);
           return await db.getCompleteTimesheetData({
             staffId: ctx.user.id,
-            startDate: input.startDate ? new Date(`${input.startDate}T00:00:00`) : undefined,
-            endDate: input.endDate ? new Date(`${input.endDate}T23:59:59`) : undefined,
+            startDate: dateRange.startDate,
+            endDate: dateRange.endDate,
           });
         } catch (error) {
           console.error('[tRPC] Error fetching personal timesheet history:', error);
@@ -1087,9 +1091,10 @@ Report generated at: ${new Date().toISOString()}`;
         try {
           const format = input.format || 'csv';
           
-          // Parse dates with proper defaults
-          const startDate = input.startDate ? new Date(input.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-          const endDate = input.endDate ? new Date(input.endDate) : new Date();
+          // Parse date-only inputs as inclusive Nairobi calendar days.
+          const requestedRange = getInclusiveNairobiDateRange(input.startDate, input.endDate);
+          const startDate = requestedRange.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+          const endDate = requestedRange.endDate || new Date();
           
           // Fetch complete timesheet data with filters applied
           const data = await db.getTimesheetDataForExport({
