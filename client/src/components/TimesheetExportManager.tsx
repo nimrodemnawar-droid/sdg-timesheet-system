@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Download, FileText, Calendar, Users } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { getEffectiveExportStaffId } from "@shared/timesheetStaffSearch";
 
 interface TimesheetExportManagerProps {
   staffList?: Array<{ id: number; name: string }>;
+  contextStaffId?: number;
+  contextStartDate?: string;
+  contextEndDate?: string;
   onExport?: (data: {
     format: "pdf" | "csv" | "excel";
     staffId?: number;
@@ -21,6 +25,9 @@ interface TimesheetExportManagerProps {
 
 export function TimesheetExportManager({
   staffList = [],
+  contextStaffId,
+  contextStartDate,
+  contextEndDate,
   onExport,
 }: TimesheetExportManagerProps) {
   const [exportFormat, setExportFormat] = useState<"pdf" | "csv" | "excel">("pdf");
@@ -31,6 +38,18 @@ export function TimesheetExportManager({
   );
   const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
   const [isExporting, setIsExporting] = useState(false);
+
+  useEffect(() => {
+    if (contextStaffId) {
+      setStaffSelection("single");
+      setSelectedStaffId(String(contextStaffId));
+    } else if (contextStartDate !== undefined || contextEndDate !== undefined) {
+      setStaffSelection("all");
+      setSelectedStaffId("");
+    }
+    if (contextStartDate) setStartDate(contextStartDate);
+    if (contextEndDate) setEndDate(contextEndDate);
+  }, [contextStaffId, contextStartDate, contextEndDate]);
 
   // Use tRPC mutation for export if onExport not provided
   const exportMutation = trpc.export.timesheets.useMutation();
@@ -46,7 +65,12 @@ export function TimesheetExportManager({
       return;
     }
 
-    if (staffSelection === "single" && !selectedStaffId) {
+    const effectiveStaffId = getEffectiveExportStaffId(
+      staffSelection,
+      selectedStaffId ? parseInt(selectedStaffId, 10) : undefined,
+      contextStaffId,
+    );
+    if (staffSelection === "single" && !effectiveStaffId) {
       toast.error("Please select a staff member");
       return;
     }
@@ -58,14 +82,14 @@ export function TimesheetExportManager({
       if (onExport) {
         result = await onExport({
           format: exportFormat,
-          staffId: staffSelection === "single" ? parseInt(selectedStaffId) : undefined,
+          staffId: effectiveStaffId,
           startDate,
           endDate,
         });
       } else {
         result = await exportMutation.mutateAsync({
           format: exportFormat,
-          staffId: staffSelection === "single" ? parseInt(selectedStaffId) : undefined,
+          staffId: effectiveStaffId,
           startDate,
           endDate,
         });
@@ -173,6 +197,7 @@ export function TimesheetExportManager({
             Staff Selection
           </CardTitle>
           <CardDescription className="text-slate-400">Choose which staff to include</CardDescription>
+          {contextStaffId && <p className="text-xs text-emerald-300">Using the staff member selected in the Timesheet search.</p>}
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-3">

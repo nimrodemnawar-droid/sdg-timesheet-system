@@ -200,7 +200,12 @@ export function TimesheetDetailedView({ staffList = [] }: { staffList?: StaffDir
             Complete staff timesheet with all 20 columns - each day displayed separately
           </p>
         </div>
-        <TimesheetExportManager />
+        <TimesheetExportManager
+          staffList={staffList.map((staff) => ({ id: staff.id, name: staff.name || staff.email || `Staff #${staff.id}` }))}
+          contextStaffId={selectedStaffId}
+          contextStartDate={startDate}
+          contextEndDate={endDate}
+        />
       </div>
 
       {/* Filters */}

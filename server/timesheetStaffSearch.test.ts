@@ -3,6 +3,7 @@ import {
   buildCompleteTimesheetQuery,
   filterTimesheetRecords,
   findMatchingStaff,
+  getEffectiveExportStaffId,
 } from "../shared/timesheetStaffSearch";
 
 describe("Admin staff-centric timesheet search", () => {
@@ -34,5 +35,11 @@ describe("Admin staff-centric timesheet search", () => {
 
     expect(filterTimesheetRecords(records, "Amina Otieno", 7).map((record) => record.id)).toEqual([1, 2]);
     expect(filterTimesheetRecords(records, "brian@example.org").map((record) => record.id)).toEqual([3]);
+  });
+
+  it("uses the staff selected in the Timesheet search for a single-staff export", () => {
+    expect(getEffectiveExportStaffId("single", undefined, 7)).toBe(7);
+    expect(getEffectiveExportStaffId("single", 8, 7)).toBe(8);
+    expect(getEffectiveExportStaffId("all", undefined, 7)).toBeUndefined();
   });
 });

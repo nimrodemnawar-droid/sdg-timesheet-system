@@ -47,3 +47,12 @@ export function buildCompleteTimesheetQuery(
     staffId: selectedStaffId,
   };
 }
+
+export function getEffectiveExportStaffId(
+  staffSelection: "all" | "single",
+  selectedStaffId?: number,
+  contextStaffId?: number,
+) {
+  if (staffSelection === "all") return undefined;
+  return selectedStaffId ?? contextStaffId;
+}
