@@ -8,6 +8,8 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import { getLoginUrl } from "@/const";
 import { ConnectionStatusIndicator } from "@/components/ConnectionStatusIndicator";
+import { Menu, X } from "lucide-react";
+import { useState } from "react";
 
 // Pages
 import Home from "./pages/Home";
@@ -29,6 +31,7 @@ const StaffMonthlyReportsRoute = () => <MonthlyReports mode="staff" />;
 function Navigation() {
   const { user, logout } = useAuth();
   const [location, navigate] = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (!user) return null;
 
@@ -62,6 +65,15 @@ function Navigation() {
             <ConnectionStatusIndicator />
             <span className="hidden sm:inline text-sm text-slate-300 max-w-28 truncate">{user.name}</span>
             <button
+              type="button"
+              onClick={() => setMobileMenuOpen((open) => !open)}
+              className="lg:hidden inline-flex items-center justify-center rounded-md p-2 text-slate-300 hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+            <button
               onClick={() => logout()}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition"
             >
@@ -69,6 +81,29 @@ function Navigation() {
             </button>
           </div>
         </div>
+        {mobileMenuOpen && (
+          <div className="border-t border-slate-700 py-2 lg:hidden">
+            <div className="grid gap-1">
+              {navItems.map((item) => (
+                <button
+                  key={item.href}
+                  type="button"
+                  onClick={() => {
+                    navigate(item.href);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`w-full rounded-md px-3 py-3 text-left text-sm font-medium transition ${
+                    location === item.href
+                      ? "bg-blue-600 text-white"
+                      : "text-slate-300 hover:bg-slate-800"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
