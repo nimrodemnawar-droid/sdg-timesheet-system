@@ -11,6 +11,7 @@ import * as XLSX from "xlsx";
 import { formatCoordinates } from "@shared/location";
 import { TimesheetExportManager } from "@/components/TimesheetExportManager";
 import { buildCompleteTimesheetQuery, filterTimesheetRecords, findMatchingStaff, type StaffDirectoryEntry } from "@shared/timesheetStaffSearch";
+import { summarizeTimesheetPresence } from "@shared/timesheetPresence";
 
 interface TimesheetRecord {
   id: string;
@@ -92,6 +93,8 @@ export function TimesheetDetailedView({ staffList = [] }: { staffList?: StaffDir
   const sortedData = [...(filteredData || [])].sort((a: any, b: any) => {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
+  const presenceSummary = summarizeTimesheetPresence(filteredData || []);
+  const presenceLabel = selectedStaff ? "Days Present" : "Present Staff-Days";
 
   const handleExportExcel = () => {
     if (!filteredData || filteredData.length === 0) {
@@ -179,6 +182,17 @@ export function TimesheetDetailedView({ staffList = [] }: { staffList?: StaffDir
     });
 
     const wb = XLSX.utils.book_new();
+    const summarySheet = XLSX.utils.aoa_to_sheet([
+      ["Timesheet Presence Summary"],
+      ["Staff", selectedStaff?.name || "All Staff"],
+      ["Date Range", `${startDate} to ${endDate}`],
+      [selectedStaff ? "Days Present" : "Present Staff-Days", presenceSummary.presentDays],
+      ["Incomplete Days", presenceSummary.incompleteDays],
+      ["Total Attendance Days", presenceSummary.totalDays],
+      ["Presence Rule", "Check-in + check-out + submitted timesheet"],
+    ]);
+    summarySheet["!cols"] = [{ wch: 28 }, { wch: 55 }];
+    XLSX.utils.book_append_sheet(wb, summarySheet, "Presence Summary");
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
 
     // Set column widths
@@ -299,7 +313,28 @@ export function TimesheetDetailedView({ staffList = [] }: { staffList?: StaffDir
       </Card>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="bg-emerald-950/40 border-emerald-700/60">
+          <CardContent className="pt-6">
+            <p className="text-emerald-300 text-sm">{presenceLabel}</p>
+            <p className="text-3xl font-bold text-white">{presenceSummary.presentDays}</p>
+            <p className="mt-1 text-xs text-slate-400">Checked in, checked out, and submitted</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-amber-950/30 border-amber-700/60">
+          <CardContent className="pt-6">
+            <p className="text-amber-300 text-sm">Incomplete Days</p>
+            <p className="text-3xl font-bold text-white">{presenceSummary.incompleteDays}</p>
+            <p className="mt-1 text-xs text-slate-400">Missing checkout or timesheet submission</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardContent className="pt-6">
+            <p className="text-slate-400 text-sm">Total Attendance Days</p>
+            <p className="text-3xl font-bold text-white">{presenceSummary.totalDays}</p>
+            <p className="mt-1 text-xs text-slate-400">Within the selected date range</p>
+          </CardContent>
+        </Card>
         <Card className="bg-slate-800/50 border-slate-700">
           <CardContent className="pt-6">
             <div>

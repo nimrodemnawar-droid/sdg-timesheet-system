@@ -36,6 +36,7 @@ import {
 import { ENV } from "./_core/env";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { encryptData, decryptData } from "./encryption";
+import { summarizeTimesheetPresence } from "../shared/timesheetPresence";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -1872,6 +1873,8 @@ export async function generateTimesheetPDFContent(data: TimesheetExportData[]): 
   };
   write("SDG Timesheet System — Director-Ready Timesheet Report", true);
   write(`Generated ${new Date().toLocaleString("en-KE", { timeZone: "Africa/Nairobi" })} • ${data.length} record${data.length === 1 ? "" : "s"}`);
+  const presenceSummary = summarizeTimesheetPresence(data);
+  write(`Presence summary: ${presenceSummary.presentDays} present staff-day${presenceSummary.presentDays === 1 ? "" : "s"} with check-in, check-out, and submitted timesheet; ${presenceSummary.incompleteDays} incomplete staff-day${presenceSummary.incompleteDays === 1 ? "" : "s"}.`, true);
   y -= 7;
   data.forEach((row, index) => {
     if (y < margin + 150) { page = pdf.addPage([pageWidth, pageHeight]); y = pageHeight - margin; }
